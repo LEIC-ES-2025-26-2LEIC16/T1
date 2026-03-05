@@ -2,7 +2,7 @@
 
 > [!NOTE] In this file, you will find the structure you should follow to document your mobile app in the README.md file for LEIC-ES-2025-26. It is a single file with guidelines, as comments, only seen in Edit mode, not in Preview mode. You can add more sections, but for assessment reasons and automation, please make sure to include all sections of this template. Your professors will clarify about specificities of your app.
 
-# _[your product name]_ Development Report
+# MyImpact Development Report
 
 Welcome to the documentation of _[your product name]_!
 
@@ -43,7 +43,7 @@ Thank you!
 ---
 ## Business Modelling
 
-Business modeling in software development involves defining the product's vision, understanding market needs, aligning features with user expectations, and setting the groundwork for strategic planning and execution.
+MyImpact will be an app where the users will be able to track their recycling and the same time  
 
 ### Product Vision
 

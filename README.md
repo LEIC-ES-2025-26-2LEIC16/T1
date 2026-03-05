@@ -4,9 +4,9 @@
 
 # MyImpact Development Report
 
-Welcome to the documentation of _[your product name]_!
+Welcome to the documentation of MyImpact!
 
-This Software Development Report, tailored for LEIC-ES-2025-26, provides comprehensive details about _[your product name]_, starting from an high-level vision and going into low-level implementation decisions. 
+This Software Development Report, tailored for LEIC-ES-2025-26, provides comprehensive details about MyImpact, starting from an high-level vision and going into low-level implementation decisions. 
 
 It is organised by the following activities: 
 
@@ -34,11 +34,11 @@ Please contact us!
 
 Thank you!
 
-* team member name and email
-* team member name and email
-* team member name and email
-* team member name and email
-* team member name and email
+* Ariana Lopes da Costa up202404631@edu.fe.up.pt
+* Madalena Cordeiro Rodrigues up202404211@edu.fe.up.pt
+* Miguel Ângelo Quintais Frias up202406974@edu.fe.up.pt
+* Ricardo Manuel da Cunha Estevéns up202405321@edu.fe.up.pt
+* Tiago Rafael Usandivares Meireles up202403644@edu.fe.up.pt
 
 ---
 ## Business Modelling

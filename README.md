@@ -13,6 +13,26 @@ It is organised by the following activities:
 * [Business modeling](#Business-Modelling) 
   * [Product Vision](#Product-Vision)
   * [Features and Assumptions](#Features-and-Assumptions)
+  ### Features and Assumptions
+
+#### Core Features
+To bring our vision to life, the app will include the following key features, designed to make recycling engaging and rewarding:
+
+* **User Accounts & Profile Customization:** Users can easily sign up (via Email or Google), manage their profiles, and recover passwords. As they earn "coins" from recycling, they can spend them to buy profile customizations, like unique avatar borders, to show off their eco-status.
+* **Photo-Verified Recycling:** The core mechanic of the app. Users log their recycling by snapping a quick photo of the items (e.g., paper, plastic, metal) at the bin. This verifies the action and rewards them with coins.
+* **Interactive Eco-Bin Map:** A smart, community-driven map. Users can find nearby recycling bins, see when they were last emptied (or are scheduled to be), and even add unlisted bins. It also includes a reporting tool to alert the community about full or damaged bins, and a feature to leave reviews for specific locations.
+* **Social & Competitive Leaderboards:** Recycling is better with friends. Users can invite friends via a link and compete in weekly or monthly leaderboards to see who recycles the most, turning a chore into a fun competition.
+* **Personal & Corporate Goals:** Users can set their own monthly or yearly recycling goals to earn bonus points. Additionally, we offer a premium/subscription tier where partner companies can sponsor specific recycling challenges for users to complete.
+* **Personalized Insights & "Year in Review":** An analytics dashboard where users can track exactly how much they've recycled each month by category. At the end of the year, they get a highly shareable, "Spotify Wrapped"-style summary (e.g., "You are in the top 1% of recyclers this year!").
+* **Government & Partner Initiatives Hub:** A dedicated informational page keeping users updated on government payback programs for recycling, paving the way for future direct partnerships.
+
+#### Assumptions
+For this application to be successfully developed and used, we are basing our project on a few key assumptions:
+
+1.  **Hardware & Connectivity:** We assume our target users own smartphones with functional cameras (essential for the photo verification feature), active GPS/location services (for the interactive map), and reliable internet access.
+2.  **Image Processing Feasibility:** We assume we can implement a reliable way (either through a third-party API, AI model, or community moderation) to verify the recycling photos submitted by users to prevent cheating and point farming.
+3.  **Community Engagement:** The map's accuracy relies heavily on crowdsourcing. We assume users will be motivated enough by the gamification system to actively report bin issues, review locations, and add missing bins.
+4.  **Partnership Viability:** For the corporate goals and the information on government paybacks, we assume that businesses and local governments are willing to collaborate with eco-friendly platforms to sponsor sustainability initiatives.
 * [Requirements](#Requirements)
   * [User stories](#User-stories)
   * [Domain model](#Domain-model)

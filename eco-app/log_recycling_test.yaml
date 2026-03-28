@@ -1,4 +1,4 @@
-appId: com.ecoapp.dev 
+appId: host.exp.exponent
 ---
 # i gotta make sure the app is launched before doing anything else
 - launchApp

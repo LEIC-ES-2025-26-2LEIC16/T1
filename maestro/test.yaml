@@ -1,0 +1,15 @@
+# register.flow.yaml
+appId: com.tpc3
+---
+
+- launchApp: {}
+- tapOn:
+    id: emailInput
+- inputText: "test@example.com"
+- tapOn:
+    id: passwordInput
+- inputText: "Test123!"
+- tapOn:
+    id: registerButton
+- assertVisible:
+    id: successMessage

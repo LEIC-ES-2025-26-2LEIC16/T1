@@ -1,5 +1,5 @@
-// Mock Detox globals for running acceptance tests without an emulator.
-// Tests will fail indicating which UI elements/actions are missing in the app.
+
+
 
 global.device = {
   launchApp: async () => { throw new Error('[device] App is not running — no React Native project built'); },

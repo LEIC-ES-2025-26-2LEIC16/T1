@@ -8,7 +8,6 @@ describe('User Story 1 - Report problems with recycling bins', () => {
     await device.reloadReactNative();
   });
 
-  // ─── Scenario 1: Normal case (Report a problem) ───────────────────────────
 
   describe('Scenario 1 - Normal case: Report a problem', () => {
 
@@ -48,7 +47,6 @@ describe('User Story 1 - Report problems with recycling bins', () => {
 
   });
 
-  // ─── Scenario 2: Exceptional case (Invalid report) ────────────────────────
 
   describe('Scenario 2 - Exceptional case: Invalid report (no problem type selected)', () => {
 

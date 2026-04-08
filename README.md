@@ -43,7 +43,7 @@ Thank you!
 ---
 ## Business Modelling
 
-MyImpact will be an app where the users will be able to track their recycling and the same time  
+MyImpact will be an app where the users will be able to track their recycling and the same time at the same time contribute to a more sustainable community through gamified challenges. 
 
 ### Product Vision
 
@@ -205,6 +205,13 @@ You can find below information and references related with the project managemen
 -->
 
 ### Sprint 0
+
+During Sprint 0, the team established the project foundation and a shared vision. We successfully:
+* Defined the **Product Vision** and core requirements using INVEST-compliant User Stories.
+* Designed the **Domain Model** and the **Logical/Physical Architectures** to guide development.
+* Set up the development environment and CI/CD pipelines (GitHub Actions).
+* Developed a **Functional Prototype** (v1.0.0) focusing on the "Report Problem" user journey, validated by automated E2E tests .
+* Simulated our first defect tracking cycle to ensure rigorous QA standards.
 
 ### Sprint 1
 

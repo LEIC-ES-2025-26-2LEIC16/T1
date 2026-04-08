@@ -101,10 +101,6 @@ To provide a clear understanding of the MyImpact ecosystem, our domain model is 
 
 ## Architecture and Design
 
-The physical architecture outlines the deployment of the MylImpact system nodes and communication protocols.
-
-![Physical Architecture Diagram](umls/physical_architecture.png)
-
 ### Logical architecture
 The logical architecture separates the presentation layer (mobile app) from the core business logic and external APIs, ensuring modularity and easier testing.
 
@@ -169,16 +165,10 @@ flowchart TB
 
 
 ### Physical architecture
-<!--
-The goal of this subsection is to document the high-level physical structure of the software system (machines, connections, software components installed, and their dependencies) using UML deployment diagrams (Deployment View) or component diagrams (Implementation View), separate or integrated, showing the physical structure of the system.
 
-It should describe also the technologies considered and justify the selections made. Examples of technologies relevant for ESOF are, for example, frameworks for mobile applications (such as Flutter).
+The physical architecture outlines the deployment of the MylImpact system nodes and communication protocols.
 
-Example of _UML deployment diagram_ showing a _deployment view_ of the Eletronic Ticketing System (please notice that, instead of software components, one should represent their physical/executable manifestations for deployment, called artifacts in UML; the diagram should be accompanied by a short description of each node and artifact):
-
-![DeploymentView](https://user-images.githubusercontent.com/9655877/160592491-20e85af9-0758-4e1e-a704-0db1be3ee65d.png)
--->
-
+![Physical Architecture Diagram](umls/physical_architecture.png)
 
 ### Functional prototype
 

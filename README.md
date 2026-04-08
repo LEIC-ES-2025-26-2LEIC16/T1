@@ -100,16 +100,10 @@ To provide a clear understanding of the MyImpact ecosystem, our domain model is 
 ![Diagrama UML do Modelo de Domínio](umls/domain_model.png)
 
 ## Architecture and Design
-<!--
-The architecture of a software system encompasses the set of key decisions about its organization. 
 
-A well written architecture document is brief and reduces the amount of time it takes new programmers to a project to understand the code to feel able to make modifications and enhancements.
+The physical architecture outlines the deployment of the MylImpact system nodes and communication protocols.
 
-To document the architecture requires describing the decomposition of the system in their parts (high-level components) and the key behaviors and collaborations between them. 
-
-In this section you should start by briefly describing the components of the project and their interrelations. You should describe how you solved typical problems you may have encountered, pointing to well-known architectural and design patterns, if applicable.
--->
-
+![Physical Architecture Diagram](umls/physical_architecture.png)
 
 ### Logical architecture
 The logical architecture separates the presentation layer (mobile app) from the core business logic and external APIs, ensuring modularity and easier testing.

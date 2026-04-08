@@ -97,7 +97,7 @@ To provide a clear understanding of the MyImpact ecosystem, our domain model is 
 * **Feedback & Support (Yellow):** `Report` (community tickets regarding bin issues) and `Review` (user ratings).
 * **Gamification & Business (Purple):** `Goal`, `Company`, and `YearlyWrap` managing targets, corporate subscriptions, and annual metrics.
 
-*(Note: Domain Model UML diagram pending upload)*
+![Diagrama UML do Modelo de Domínio](umls/domain_model.png)
 
 ## Architecture and Design
 <!--

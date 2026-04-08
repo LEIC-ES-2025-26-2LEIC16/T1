@@ -112,15 +112,66 @@ In this section you should start by briefly describing the components of the pro
 
 
 ### Logical architecture
-<!--
-The purpose of this subsection is to document the high-level logical structure of the code (Logical View), using a UML diagram with logical packages, without the worry of allocating to components, processes or machines.
+The logical architecture separates the presentation layer (mobile app) from the core business logic and external APIs, ensuring modularity and easier testing.
 
-It can be beneficial to present the system in a horizontal decomposition, defining layers and implementation concepts, such as the user interface, business logic and concepts.
+```mermaid
+flowchart TB
+    %% Core User
+    User((Eco-App User))
 
-Example of _UML package diagram_ showing a _logical view_ of the Eletronic Ticketing System (to be accompanied by a short description of each package):
+    %% 1. Presentation Layer (Mobile App)
+    subgraph Presentation ["Presentation Layer (React Native)"]
+        UI[UI Components]
+        State[Local State Management]
+        APIClient[API Client]
+    end
 
-![LogicalView](https://user-images.githubusercontent.com/9655877/160585416-b1278ad7-18d7-463c-b8c6-afa4f7ac7639.png)
--->
+    %% 2. Business Logic Layer (Backend)
+    subgraph BusinessLogic ["Business Logic Layer (Node.js / Express)"]
+        Gateway[API Gateway / Router]
+        
+        subgraph CoreServices ["Core Services"]
+            Auth[Authentication Service]
+            RecycleLog[Recycling Logger Service]
+            Points[Gamification Engine]
+            GeoMap[Location & Reviews Service]
+        end
+    end
+
+    %% 3. Data Access Layer
+    subgraph DataAccess ["Data Access Layer"]
+        MainDB[(Main Relational Database)]
+        PhotoStorage[(Cloud Blob Storage)]
+    end
+
+    %% External Systems
+    ExternalMaps[External Maps API]
+
+    %% Interactions and Data Flow
+    User -->|Interacts with screens| UI
+    UI <-->|Updates| State
+    State -->|Triggers actions| APIClient
+    
+    APIClient -->|JSON over HTTPS| Gateway
+    
+    Gateway --> Auth
+    Gateway --> RecycleLog
+    Gateway --> Points
+    Gateway --> GeoMap
+    
+    %% Internal Logic dependencies
+    RecycleLog -->|Triggers points calculation| Points
+    
+    %% Database Connections
+    Auth --> MainDB
+    Points --> MainDB
+    GeoMap --> MainDB
+    RecycleLog --> MainDB
+    RecycleLog -->|Saves evidence photos| PhotoStorage
+    
+    %% External API Connection
+    GeoMap -->|Fetches coordinates| ExternalMaps
+```
 
 
 ### Physical architecture

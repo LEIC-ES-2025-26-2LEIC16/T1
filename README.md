@@ -57,13 +57,13 @@ Our product actively motivates users through a point-based reward system, weekly
 ### Features and Assumptions
 ### Features
 
-- Account Management & Customization - Users can register (via email or Google), manage their profiles, and spend earned coins on cosmetic upgrades like profile borders.
-- Photo-Verified Recycling - A core system where users log their recycling by snapping a photo of the items at the bin to earn reward points.
-- Interactive Eco-Bin Map - A community-driven map to locate nearby recycling bins, check their current capacity, report issues, and add unlisted bins.
-- Social Leaderboards - A competitive space where users can invite friends via a link and compare their recycling progress in weekly or monthly rankings.
-- Personal & Corporate Goals - Users can set their own recycling milestones or participate in sponsored challenges created by partner companies to earn bonus rewards.
-- Yearly Recycling Insights - A personal analytics dashboard tracking monthly habits, culminating in a highly shareable, "Wrapped"-style annual summary.
-- Government Initiatives Hub - An informational feed keeping users updated on local government recycling payback programs and future partnerships.
+- **Account Management & Customization:** Users can register (via email or Google), manage their profiles, and spend earned coins on cosmetic upgrades like profile borders.
+- **Photo-Verified Recycling:** A core system where users log their recycling by snapping a photo of the items at the bin to earn reward points.
+- **Interactive Eco-Bin Map:** A community-driven map to locate nearby recycling bins, check their current capacity, report issues, and add unlisted bins.
+- **Social Leaderboards:** A competitive space where users can invite friends via a link and compare their recycling progress in weekly or monthly rankings.
+- **Personal & Corporate Goals:** Users can set their own recycling milestones or participate in sponsored challenges created by partner companies to earn bonus rewards.
+- **Yearly Recycling Insights:** A personal analytics dashboard tracking monthly habits, culminating in a highly shareable, "Wrapped"-style annual summary.
+- **Government Initiatives Hub:** An informational feed keeping users updated on local government recycling payback programs and future partnerships.
 
 ### Assumptions and Dependencies
 
@@ -80,46 +80,24 @@ Our product actively motivates users through a point-based reward system, weekly
 ## Requirements
 
 ### User Stories
-<!-- 
-In this section you should describe all kinds of requirements for your module: functional and non-functional requirements.
 
-For LEIC-ES-2025-26, the requirements will be gathered and documented as user stories. 
+To address our product vision, the requirements for MyImpact were structured into user stories following the INVEST guidelines. Rather than listing every individual story here, they are grouped into four main core epics (fully detailed with Gherkin acceptance tests in our GitHub Project Board):
 
-Please add in this section a concise summary of all the user stories (not each user story!).
-
-**User stories as GitHub Project Items**
-The user stories themselves should be created and described as items in your GitHub Project with the label "user story". 
-
-A user story is a description of a desired functionality told from the perspective of the user or customer. A starting template for the description of a user story is *As a < user role >, I want < goal > so that < reason >.*
-
-Name the item with either the full user story or a shorter name (recommended). In the “comments” field, add relevant notes, mockup images, and acceptance test scenarios, linking to the acceptance tests when available, and finally estimate value and effort.
-
-**INVEST in good user stories**. 
-You may add more details after, but the shorter and complete, the better. In order to decide if the user story is good, please follow the [INVEST guidelines](https://xp123.com/articles/invest-in-good-stories-and-smart-tasks/).
-
-**User interface mockups**.
-After the user story text, you should add a draft of the corresponding user interfaces, a simple mockup or draft, if applicable.
-
-**Acceptance tests**.
-For each user story you should write also the acceptance tests (textually in [Gherkin](https://cucumber.io/docs/gherkin/reference/)), i.e., a description of scenarios (situations) that will help to confirm that the system satisfies the requirements addressed by the user story.
-
-**Value and effort**.
-At the end, it is good to add a rough indication of the value of the user story to the customers (e.g. [MoSCoW](https://en.wikipedia.org/wiki/MoSCoW_method) method) and the team should add an estimation of the effort to implement it using points in a kind-of-a Fibonnacci scale (1,2,3,5,8,13,20,40, no idea).
-
--->
+* **User Management & Customization:** Authentication, profile management, password recovery, and cosmetic progression.
+* **Tracking & Gamification:** The core loop of logging recycling via photo verification, viewing history, leaderboards, and setting goals.
+* **Interactive Mapping & Community:** Locating nearby Eco-bins, checking capacity, adding bins, leaving reviews, and reporting maintenance issues.
+* **Social & Corporate Integration:** Inviting friends and participating in B2B corporate-sponsored recycling challenges.
 
 ### Domain model
 
-<!-- 
-To better understand the context of the software system, it is useful to have a simple UML class diagram with all and only the key concepts (names, attributes) and relationships involved of the problem domain addressed by your app. 
-Also provide a short textual description of each concept (domain class). 
+To provide a clear understanding of the MyImpact ecosystem, our domain model is structured into four main logical areas:
 
-Example:
- <p align="center" justify="center">
-  <img src="https://github.com/FEUP-LEIC-ES-2022-23/templates/blob/main/images/DomainModel.png"/>
-</p>
--->
+* **Identity & Access (Blue):** `User`, `Profile`, and `Friendship` manage authentication, social connections, and cosmetic preferences.
+* **Core Operations (Green):** `EcoPoint` (physical recycling bins) and `RecyclingAction` (the transactional log connecting a user to a bin, recording material and points).
+* **Feedback & Support (Yellow):** `Report` (community tickets regarding bin issues) and `Review` (user ratings).
+* **Gamification & Business (Purple):** `Goal`, `Company`, and `YearlyWrap` managing targets, corporate subscriptions, and annual metrics.
 
+*(Note: Domain Model UML diagram pending upload)*
 
 ## Architecture and Design
 <!--
@@ -158,13 +136,16 @@ Example of _UML deployment diagram_ showing a _deployment view_ of the Eletronic
 
 
 ### Functional prototype
-<!--
-To help on validating all the architectural, design and technological decisions made, we usually implement a functional prototype, a thin vertical slice of the system integrating as much technologies as we can.
 
-In this subsection please describe which feature, or part of it, you have implemented, and how, together with a snapshot of the user interface, if applicable.
+For our Sprint 0 increment, we implemented a vertical slice of the MyImpact application using **React Native** and the **Expo Router**. 
 
-At this phase, instead of a complete user story, you can simply implement a small part of a feature that demonstrates thay you can use the technology, for example, show a screen with the app credits (name and authors).
--->
+Currently, the prototype includes:
+* **Core Interface:** Navigation structure and primary screens (e.g., Report Problem workflow).
+* **Automated Quality Assurance:** We integrated **Detox** for End-to-End (E2E) automated acceptance testing. The prototype includes automated flows that launch the app, navigate the map interface, select a bin, and successfully submit a problem report, ensuring critical user journeys function properly. We also experimented with **Maestro** (`log_recycling_test.yaml`) for secondary UI validations.
+
+![Lista de Ecopontos](images/ecopontos.png)
+![Ecrã de Reportar Problema](images/report.png)
+![Sucesso na submissão do report](images/submit_rep.png)
 
 ## Project management
 <!--

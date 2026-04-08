@@ -166,7 +166,7 @@ flowchart TB
 
 ### Physical architecture
 
-The physical architecture outlines the deployment of the MylImpact system nodes and communication protocols.
+The physical architecture outlines the deployment of the MyImpact system nodes and communication protocols.
 
 ![Physical Architecture Diagram](umls/physical_architecture.png)
 

@@ -214,7 +214,7 @@ During Sprint 0, the team established the project foundation and a shared vision
 * Simulated our first defect tracking cycle to ensure rigorous QA standards.
 
 
-![screenshot](docs/Screenshot.png)
+![screenshot](images/Screenshot.png)
 
 
 ### Sprint 1

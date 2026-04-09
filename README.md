@@ -193,6 +193,7 @@ During Sprint 0, the team established the project foundation and a shared vision
 * Developed a **Functional Prototype** (v1.0.0) focusing on the "Report Problem" user journey, validated by automated E2E tests .
 * Simulated our first defect tracking cycle to ensure rigorous QA standards.
 
+
 #### Retrospective
 
 **Did well:**
@@ -222,6 +223,11 @@ During Sprint 0, the team established the project foundation and a shared vision
 - Coordinate with the teaching staff early on regarding repository permissions or external integrations to avoid blocked tasks.
 
 - Kick off Sprint 1 by picking the highest priority "Must-have" user stories from the "Ready" column during our Sprint Planning.
+
+
+![screenshot](images/Screenshot.png)
+
+
 
 ### Sprint 1
 

@@ -1,4 +1,4 @@
-<!-- Template file for README.md for LEIC-ES-2025-26 -->
+
 
 > [!NOTE] In this file, you will find the structure you should follow to document your mobile app in the README.md file for LEIC-ES-2025-26. It is a single file with guidelines, as comments, only seen in Edit mode, not in Preview mode. You can add more sections, but for assessment reasons and automation, please make sure to include all sections of this template. Your professors will clarify about specificities of your app.
 
@@ -183,26 +183,6 @@ Currently, the prototype includes:
 ![Sucesso na submissão do report](images/submit_rep.png)
 
 ## Project management
-<!--
-Software project management is the art and science of planning and leading software projects, in which they are planned, implemented, monitored and controlled.
-
-In the context of ESOF, we recommend each team to adopt a set of project management practices and tools capable of registering tasks, assigning tasks to team members, adding estimations to tasks, monitor tasks progress, and therefore being able to track their projects.
-
-Common practices of managing agile software development with Scrum are: backlog management, release management, estimation, Sprint planning, Sprint development, acceptance tests, and Sprint retrospectives.
-
-You can find below information and references related with the project management: 
-
-* Backlog management: Product backlog and Sprint backlog in a [Github Projects board](https://github.com/orgs/FEUP-LEIC-ES-2023-24/projects/64);
-* Release management: [v0](#), v1, v2, v3, ...;
-* Sprint planning and retrospectives: 
-  * plans: screenshots of Github Projects board at begin and end of each Sprint;
-  * retrospectives: meeting notes in a document in the repository, addressing the following questions:
-    * Did well: things we did well and should continue;
-    * Do differently: things we should do differently and how;
-    * Puzzles: things we don’t know yet if they are right or wrong;
-    * list of a few improvements to implement next Sprint;
-
--->
 
 ### Sprint 0
 
@@ -214,7 +194,39 @@ During Sprint 0, the team established the project foundation and a shared vision
 * Simulated our first defect tracking cycle to ensure rigorous QA standards.
 
 
+#### Retrospective
+
+**Did well:**
+
+- We had a great distribution of tasks across the team, allowing us to parallelize the work (e.g., UI mockups, architecture design, and CI/CD setup were done simultaneously).
+
+- Successfully integrated automated E2E testing (Detox/Maestro) right from the start, which gives us a solid safety net for future development.
+
+- Diagrammed our logical architecture as code (Mermaid.js) directly in GitHub, keeping our documentation clean and version-controlled.
+
+**Do differently:**
+
+- We should verify repository permissions on day one. We tried to set up branch protection rules for the main branch but realized too late that we lacked Admin rights in the organization repo.
+
+- We left the README cleanup and template formatting to the very end of the sprint. Next time, we should update the documentation iteratively as tasks are completed.
+
+**Puzzles:**
+
+ - We are still unsure if our chosen external Map API will integrate smoothly with the React Native prototype without performance hiccups on older mobile devices.
+
+- Are the Maestro automated tests robust enough to handle the complex UI flows of the gamification features, or will they become flaky?
+
+**List of a few improvements to implement next Sprint:**
+
+- Enforce a strict "Accepted" column workflow: tasks shouldn't just stop at "Done"; they need a formal QA check by another team member before moving to "Accepted".
+
+- Coordinate with the teaching staff early on regarding repository permissions or external integrations to avoid blocked tasks.
+
+- Kick off Sprint 1 by picking the highest priority "Must-have" user stories from the "Ready" column during our Sprint Planning.
+
+
 ![screenshot](images/Screenshot.png)
+
 
 
 ### Sprint 1

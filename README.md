@@ -101,66 +101,53 @@ To provide a clear understanding of the MyImpact ecosystem, our domain model is 
 
 ## Architecture and Design
 
+
 ### Logical architecture
 The logical architecture separates the presentation layer (mobile app) from the core business logic and external APIs, ensuring modularity and easier testing.
 
 ```mermaid
-flowchart TB
-    %% Core User
-    User((Eco-App User))
-
-    %% 1. Presentation Layer (Mobile App)
-    subgraph Presentation ["Presentation Layer (React Native)"]
-        UI[UI Components]
-        State[Local State Management]
-        APIClient[API Client]
+flowchart TD
+    %% Client side logic
+    subgraph ClientLayer ["Client Layer"]
+        UI["User Interface Components"]
+        State["Local State & Cache"]
     end
 
-    %% 2. Business Logic Layer (Backend)
-    subgraph BusinessLogic ["Business Logic Layer (Node.js / Express)"]
-        Gateway[API Gateway / Router]
+    %% Backend business modules
+    subgraph BusinessLogicLayer ["Business Logic Layer"]
+        Gateway["API Gateway / Request Router"]
         
-        subgraph CoreServices ["Core Services"]
-            Auth[Authentication Service]
-            RecycleLog[Recycling Logger Service]
-            Points[Gamification Engine]
-            GeoMap[Location & Reviews Service]
-        end
+        AuthModule["Account & Auth Module"]
+        RecyclingModule["Recycling Operations Module"]
+        GamificationModule["Points & Leaderboard Module"]
+        MapModule["Mapping & Eco-bins Module"]
     end
 
-    %% 3. Data Access Layer
-    subgraph DataAccess ["Data Access Layer"]
-        MainDB[(Main Relational Database)]
-        PhotoStorage[(Cloud Blob Storage)]
+    %% Data management components
+    subgraph DataLayer ["Data Layer"]
+        UserDB[("User & Profile Data")]
+        ImpactDB[("Recycling & Points Data")]
+        BlobData[("Photo Verification Data")]
     end
 
-    %% External Systems
-    ExternalMaps[External Maps API]
+    %% External logical services
+    ExternalMap["External Maps API"]
 
-    %% Interactions and Data Flow
-    User -->|Interacts with screens| UI
-    UI <-->|Updates| State
-    State -->|Triggers actions| APIClient
+    %% Flow of data and requests
+    UI --> State
+    State -->|API Calls| Gateway
     
-    APIClient -->|JSON over HTTPS| Gateway
+    Gateway --> AuthModule
+    Gateway --> RecyclingModule
+    Gateway --> GamificationModule
+    Gateway --> MapModule
     
-    Gateway --> Auth
-    Gateway --> RecycleLog
-    Gateway --> Points
-    Gateway --> GeoMap
+    AuthModule --> UserDB
+    RecyclingModule --> ImpactDB
+    RecyclingModule --> BlobData
+    GamificationModule --> ImpactDB
     
-    %% Internal Logic dependencies
-    RecycleLog -->|Triggers points calculation| Points
-    
-    %% Database Connections
-    Auth --> MainDB
-    Points --> MainDB
-    GeoMap --> MainDB
-    RecycleLog --> MainDB
-    RecycleLog -->|Saves evidence photos| PhotoStorage
-    
-    %% External API Connection
-    GeoMap -->|Fetches coordinates| ExternalMaps
+    MapModule --> ExternalMap
 ```
 
 

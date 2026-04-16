@@ -1,15 +1,39 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ECOPONTOS } from '@/constants/ecopontos';
+import { Ecoponto } from '@/constants/ecopontos';
+import { getEcopontos, seedEcopontos } from '@/services/firestore';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function carregar() {
+      await seedEcopontos(); // popula a BD se estiver vazia
+      const dados = await getEcopontos();
+      setEcopontos(dados);
+      setLoading(false);
+    }
+    carregar();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1B4332" />
+        <Text style={styles.loadingTexto}>A carregar ecopontos...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Ecopontos</Text>
 
       <FlatList
-        data={ECOPONTOS}
+        data={ecopontos}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card} testID="recycling-bin-marker">
@@ -46,6 +70,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  loadingTexto: { marginTop: 12, fontSize: 14, color: '#666' },
   titulo: { fontSize: 24, fontWeight: 'bold', marginBottom: 16, marginTop: 40 },
   card: { backgroundColor: '#f0f0f0', borderRadius: 10, padding: 16, marginBottom: 12 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

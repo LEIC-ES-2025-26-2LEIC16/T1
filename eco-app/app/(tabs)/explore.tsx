@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import MapLibreGL from '@maplibre/maplibre-react-native';
-import { ECOPONTOS, type Ecoponto } from '@/constants/ecopontos';
+import { type Ecoponto } from '@/constants/ecopontos';
+import { getEcopontos } from '@/services/firestore';
 
 MapLibreGL.setAccessToken(null);
 
@@ -28,7 +29,12 @@ const CENTRO_PORTO = [
 
 export default function MapaScreen() {
   const router = useRouter();
+  const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
   const [ecopontoSelecionado, setEcopontoSelecionado] = useState<Ecoponto | null>(null);
+
+  useEffect(() => {
+    getEcopontos().then(setEcopontos);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -39,7 +45,7 @@ export default function MapaScreen() {
           animationDuration={0}
         />
 
-        {ECOPONTOS.map((ecoponto) => (
+        {ecopontos.map((ecoponto) => (
           <MapLibreGL.PointAnnotation
             key={ecoponto.id}
             id={ecoponto.id}
@@ -97,18 +103,18 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   mapa: { flex: 1 },
   marcador: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: '#1B4332',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#fff',
   },
   marcadorCheio: { backgroundColor: '#D97706' },
   marcadorDanificado: { backgroundColor: '#DC2626' },
-  marcadorTexto: { fontSize: 18 },
+  marcadorTexto: { fontSize: 11 },
   card: {
     position: 'absolute',
     bottom: 24,

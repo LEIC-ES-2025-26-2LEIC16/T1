@@ -1,0 +1,22 @@
+appId: com.ecoapp.dev 
+---
+# i gotta make sure the app is launched before doing anything else
+- launchApp
+
+# i am assuming the user is already logged in for this happy path
+# first, lets tap the plastic material option on the screen
+- tapOn:
+    id: "material-plastic"
+
+# now we simulate taking a picture of the bin
+- tapOn:
+    id: "take-photo-btn"
+
+# hit the submit button to send the log to our backend
+- tapOn:
+    id: "submit-log-btn"
+
+# finally, we can verify if the success message popped up with the right points
+# if this is visible, my core loop works 
+- assertVisible:
+    text: "Recycling logged successfully! You earned +50 points."

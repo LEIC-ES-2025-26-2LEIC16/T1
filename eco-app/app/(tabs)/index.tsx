@@ -1,40 +1,39 @@
-// Importamos as ferramentas que vamos usar
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { ECOPONTOS } from '@/constants/ecopontos';
 
-// Lista de ecopontos com dados fixos (sem base de dados por agora)
-const ECOPONTOS = [
-  { id: '1', nome: 'Ecoponto Rua das Flores', estado: 'Operacional' },
-  { id: '2', nome: 'Ecoponto Praça do Município', estado: 'Cheio' },
-  { id: '3', nome: 'Ecoponto Av. dos Aliados', estado: 'Operacional' },
-];
-
-// Este é o ecrã principal da app
 export default function HomeScreen() {
   const router = useRouter();
   return (
-    // View é um contentor, como uma caixa
     <View style={styles.container}>
-
-      {/* Título no topo do ecrã */}
       <Text style={styles.titulo}>Ecopontos</Text>
 
-      {/* FlatList percorre a lista ECOPONTOS e cria um card para cada um */}
       <FlatList
         data={ECOPONTOS}
-        keyExtractor={(item) => item.id} // id único para cada item
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-
-          // Card de cada ecoponto
           <View style={styles.card} testID="recycling-bin-marker">
-            <Text style={styles.nome}>{item.nome}</Text>
-            <Text style={styles.estado}>{item.estado}</Text>
+            <View style={styles.cardTop}>
+              <Text style={styles.nome}>{item.nome}</Text>
+              <View style={[
+                styles.estadoBadge,
+                item.estado === 'Cheio' && styles.estadoCheio,
+                item.estado === 'Danificado' && styles.estadoDanificado,
+              ]}>
+                <Text style={styles.estadoTexto}>{item.estado}</Text>
+              </View>
+            </View>
+            <Text style={styles.morada}>{item.morada}</Text>
 
-            {/* Botão para reportar problema — navega para o formulário */}
             <TouchableOpacity
               style={styles.botao}
               testID="report-problem-button"
-              onPress={() => router.push({ pathname: '/report-problem' as any, params: { ecopontoNome: item.nome, ecopontoMorada: item.estado } })}
+              onPress={() =>
+                router.push({
+                  pathname: '/report-problem',
+                  params: { ecopontoNome: item.nome, ecopontoMorada: item.morada },
+                } as any)
+              }
             >
               <Text style={styles.botaoTexto}>Reportar Problema</Text>
             </TouchableOpacity>
@@ -45,13 +44,17 @@ export default function HomeScreen() {
   );
 }
 
-// Estilos de cada elemento (funciona como CSS)
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   titulo: { fontSize: 24, fontWeight: 'bold', marginBottom: 16, marginTop: 40 },
   card: { backgroundColor: '#f0f0f0', borderRadius: 10, padding: 16, marginBottom: 12 },
-  nome: { fontSize: 16, fontWeight: '600' },
-  estado: { fontSize: 14, color: '#666', marginTop: 4 },
-  botao: { backgroundColor: '#126439ff', borderRadius: 8, padding: 10, marginTop: 10 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  nome: { fontSize: 16, fontWeight: '600', flex: 1 },
+  morada: { fontSize: 13, color: '#666', marginTop: 4, marginBottom: 10 },
+  estadoBadge: { backgroundColor: '#D1FAE5', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  estadoCheio: { backgroundColor: '#FEF3C7' },
+  estadoDanificado: { backgroundColor: '#FEE2E2' },
+  estadoTexto: { fontSize: 12, fontWeight: '600', color: '#1B4332' },
+  botao: { backgroundColor: '#126439', borderRadius: 8, padding: 10 },
   botaoTexto: { color: '#fff', textAlign: 'center', fontWeight: '600' },
 });

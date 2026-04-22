@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ecoponto } from '@/constants/ecopontos';
-import { getEcopontos, seedEcopontos } from '@/services/firestore';
+import { ouvirEcopontos, seedEcopontos } from '@/services/firestore';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -10,13 +10,12 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function carregar() {
-      await seedEcopontos(); // popula a BD se estiver vazia
-      const dados = await getEcopontos();
+    seedEcopontos(); // popula a BD se estiver vazia
+    const unsubscribe = ouvirEcopontos((dados) => {
       setEcopontos(dados);
       setLoading(false);
-    }
-    carregar();
+    });
+    return unsubscribe; // cancela o listener ao sair do ecrã
   }, []);
 
   if (loading) {

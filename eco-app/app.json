@@ -31,6 +31,12 @@
       "expo-router",
       "@maplibre/maplibre-react-native",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Esta app precisa da tua localização para registar a posição do ecoponto."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",

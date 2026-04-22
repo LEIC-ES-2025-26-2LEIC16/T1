@@ -4,6 +4,7 @@ import {
   addDoc,
   doc,
   setDoc,
+  onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -13,6 +14,13 @@ import { Ecoponto, ECOPONTOS } from '@/constants/ecopontos';
 export async function getEcopontos(): Promise<Ecoponto[]> {
   const snapshot = await getDocs(collection(db, 'ecopontos'));
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Ecoponto));
+}
+
+// Ouve mudanças em tempo real na coleção de ecopontos
+export function ouvirEcopontos(callback: (ecopontos: Ecoponto[]) => void) {
+  return onSnapshot(collection(db, 'ecopontos'), (snapshot) => {
+    callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Ecoponto)));
+  });
 }
 
 // Adiciona um novo ecoponto à BD

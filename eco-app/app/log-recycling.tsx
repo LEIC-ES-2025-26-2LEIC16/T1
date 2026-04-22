@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Linking, Scroll
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { guardarRegistoReciclagem } from '@/services/firestore';
+import { calcularPontosGanhos, calcularPoupancaCO2, tabelaPontos } from '@/utils/recyclingUtils';
 
 export default function LogRecyclingScreen() {
   const router = useRouter();
@@ -11,19 +12,6 @@ export default function LogRecyclingScreen() {
   const [amount, setAmount] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [permissionResponse, requestPermission] = ImagePicker.useCameraPermissions();
-
-const tabelaPontos: Record<string, number> = {
-    'Plástico': 10,
-    'Papel': 5,
-    'Vidro': 15,
-    'Metal': 20,
-  };
-const tabelaCO2: Record<string, number> = {
-    'Plástico': 1.5,
-    'Papel': 0.9,
-    'Vidro': 0.3,
-    'Metal': 2.5,
-  };
   
   const materials = Object.keys(tabelaPontos);
 
@@ -63,31 +51,39 @@ const tabelaCO2: Record<string, number> = {
       Alert.alert("Informação em falta", "Por favor, seleciona o tipo de material primeiro.");
       return;
     }
+    if (!amount || isNaN(Number(amount))) {
+      Alert.alert("Informação em falta", "Por favor, introduz um peso válido em kg.");
+      return;
+    }
     if (!image) {
-      Alert.alert("Foto em falta", "Por favor, tira uma foto da tua reciclagem para ganhares os pontos.");
+      Alert.alert("Foto em falta", "Por favor, tira uma foto da tua reciclagem.");
       return;
     }
 
     setIsSubmitting(true);
 
-   try {
-      const pontosGanhos = tabelaPontos[selectedMaterial];
-      // Invoca a arquitetura de backend
-      await guardarRegistoReciclagem(image, selectedMaterial, pontosGanhos);
+    try {
+      const pontosGanhos = calcularPontosGanhos(selectedMaterial);
+      const pesoEmKg = Number(amount);
+      const co2Calculado = calcularPoupancaCO2(pesoEmKg, selectedMaterial); // Calcula e arredonda a 2 casas decimais
+
+      // Tens de atualizar a tua função no firestore.ts para receber estes novos dados
+      await guardarRegistoReciclagem(
+        image, 
+        selectedMaterial, 
+        pontosGanhos, 
+        `${pesoEmKg}kg`, 
+        `${co2Calculado}kg CO2`
+      );
 
       Alert.alert(
         "Sucesso!",
-        `Reciclagem registada com sucesso! Ganhaste +${pontosGanhos} pontos.`,
-        [
-          { 
-            text: "Fantástico", 
-            onPress: () => router.back() 
-          }
-        ]
+        `Reciclagem registada! Ganhaste +${pontosGanhos} pts e poupaste ${co2Calculado}kg de CO2.`,
+        [{ text: "Fantástico", onPress: () => router.back() }]
       );
-    } catch (error) {
-      console.error("Erro no upload:", error);
-      Alert.alert("Erro", "Não foi possível guardar o registo. Confirma se tens sessão iniciada e tenta novamente.");
+  } catch (error) {
+      Alert.alert("Erro", "Não foi possível guardar o registo. Tenta novamente.");
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }

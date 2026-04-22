@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import { type Ecoponto } from '@/constants/ecopontos';
-import { getEcopontos } from '@/services/firestore';
+import { ouvirEcopontos } from '@/services/firestore';
 
 MapLibreGL.setAccessToken(null);
 
@@ -33,12 +33,13 @@ export default function MapaScreen() {
   const [ecopontoSelecionado, setEcopontoSelecionado] = useState<Ecoponto | null>(null);
 
   useEffect(() => {
-    getEcopontos().then(setEcopontos);
+    const unsubscribe = ouvirEcopontos(setEcopontos);
+    return unsubscribe;
   }, []);
 
   return (
     <View style={styles.container}>
-      <MapLibreGL.MapView style={styles.mapa} mapStyle={MAPA_ESTILO}>
+       <MapLibreGL.MapView style={styles.mapa} mapStyle={MAPA_ESTILO}>
         <MapLibreGL.Camera
           zoomLevel={13}
           centerCoordinate={CENTRO_PORTO}
@@ -62,11 +63,11 @@ export default function MapaScreen() {
           </MapLibreGL.PointAnnotation>
         ))}
       </MapLibreGL.MapView>
-
+      
       {/* Card com info do ecoponto selecionado */}
       {ecopontoSelecionado && (
         <View style={styles.card}>
-          <View style={styles.cardHeader}>
+<View style={styles.cardHeader}>
             <View>
               <Text style={styles.cardNome}>{ecopontoSelecionado.nome}</Text>
               <Text style={styles.cardMorada}>{ecopontoSelecionado.morada}</Text>
@@ -79,20 +80,39 @@ export default function MapaScreen() {
               <Text style={styles.estadoTexto}>{ecopontoSelecionado.estado}</Text>
             </View>
           </View>
-          <TouchableOpacity
-            style={styles.botao}
-            onPress={() =>
-              router.push({
-                pathname: '/report-problem',
-                params: {
-                  ecopontoNome: ecopontoSelecionado.nome,
-                  ecopontoMorada: ecopontoSelecionado.morada,
-                },
-              } as any)
-            }
-          >
-            <Text style={styles.botaoTexto}>Reportar Problema</Text>
-          </TouchableOpacity>
+          
+          {/* NOVOS BOTÕES (LADO A LADO) */}
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity
+              style={[styles.botao, { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#1B4332' }]}
+              onPress={() =>
+                router.push({
+                  pathname: '/review-bin',
+                  params: {
+                    ecopontoId: ecopontoSelecionado.id,
+                    ecopontoNome: ecopontoSelecionado.nome,
+                  },
+                } as any)
+              }
+            >
+              <Text style={[styles.botaoTexto, { color: '#1B4332' }]}>⭐ Avaliar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.botao, { flex: 1 }]}
+              onPress={() =>
+                router.push({
+                  pathname: '/report-problem',
+                  params: {
+                    ecopontoNome: ecopontoSelecionado.nome,
+                    ecopontoMorada: ecopontoSelecionado.morada,
+                  },
+                } as any)
+              }
+            >
+              <Text style={styles.botaoTexto}>Reportar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>

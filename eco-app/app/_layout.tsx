@@ -48,6 +48,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="report-problem" options={{ title: 'Reportar Problema' }} />
+        <Stack.Screen name="review-bin" options={{ title: 'Avaliar Ecoponto' }} />
         <Stack.Screen name="report-success" options={{ headerShown: false }} />
         <Stack.Screen name="add-ecoponto" options={{ title: 'Adicionar Ecoponto' }} />
       </Stack>

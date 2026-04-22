@@ -1,4 +1,4 @@
-<!-- Template file for README.md for LEIC-ES-2025-26 -->
+
 
 > [!NOTE] In this file, you will find the structure you should follow to document your mobile app in the README.md file for LEIC-ES-2025-26. It is a single file with guidelines, as comments, only seen in Edit mode, not in Preview mode. You can add more sections, but for assessment reasons and automation, please make sure to include all sections of this template. Your professors will clarify about specificities of your app.
 
@@ -43,7 +43,7 @@ Thank you!
 ---
 ## Business Modelling
 
-MyImpact will be an app where the users will be able to track their recycling and the same time  
+MyImpact will be an app where the users will be able to track their recycling and the same time at the same time contribute to a more sustainable community through gamified challenges. 
 
 ### Product Vision
 
@@ -57,13 +57,13 @@ Our product actively motivates users through a point-based reward system, weekly
 ### Features and Assumptions
 ### Features
 
-- Account Management & Customization - Users can register (via email or Google), manage their profiles, and spend earned coins on cosmetic upgrades like profile borders.
-- Photo-Verified Recycling - A core system where users log their recycling by snapping a photo of the items at the bin to earn reward points.
-- Interactive Eco-Bin Map - A community-driven map to locate nearby recycling bins, check their current capacity, report issues, and add unlisted bins.
-- Social Leaderboards - A competitive space where users can invite friends via a link and compare their recycling progress in weekly or monthly rankings.
-- Personal & Corporate Goals - Users can set their own recycling milestones or participate in sponsored challenges created by partner companies to earn bonus rewards.
-- Yearly Recycling Insights - A personal analytics dashboard tracking monthly habits, culminating in a highly shareable, "Wrapped"-style annual summary.
-- Government Initiatives Hub - An informational feed keeping users updated on local government recycling payback programs and future partnerships.
+- **Account Management & Customization:** Users can register (via email or Google), manage their profiles, and spend earned coins on cosmetic upgrades like profile borders.
+- **Photo-Verified Recycling:** A core system where users log their recycling by snapping a photo of the items at the bin to earn reward points.
+- **Interactive Eco-Bin Map:** A community-driven map to locate nearby recycling bins, check their current capacity, report issues, and add unlisted bins.
+- **Social Leaderboards:** A competitive space where users can invite friends via a link and compare their recycling progress in weekly or monthly rankings.
+- **Personal & Corporate Goals:** Users can set their own recycling milestones or participate in sponsored challenges created by partner companies to earn bonus rewards.
+- **Yearly Recycling Insights:** A personal analytics dashboard tracking monthly habits, culminating in a highly shareable, "Wrapped"-style annual summary.
+- **Government Initiatives Hub:** An informational feed keeping users updated on local government recycling payback programs and future partnerships.
 
 ### Assumptions and Dependencies
 
@@ -90,85 +90,144 @@ To address our product vision, the requirements for MyImpact were structured int
 
 ### Domain model
 
-<!-- 
-To better understand the context of the software system, it is useful to have a simple UML class diagram with all and only the key concepts (names, attributes) and relationships involved of the problem domain addressed by your app. 
-Also provide a short textual description of each concept (domain class). 
+To provide a clear understanding of the MyImpact ecosystem, our domain model is structured into four main logical areas:
 
-Example:
- <p align="center" justify="center">
-  <img src="https://github.com/FEUP-LEIC-ES-2022-23/templates/blob/main/images/DomainModel.png"/>
-</p>
--->
+* **Identity & Access (Blue):** `User`, `Profile`, and `Friendship` manage authentication, social connections, and cosmetic preferences.
+* **Core Operations (Green):** `EcoPoint` (physical recycling bins) and `RecyclingAction` (the transactional log connecting a user to a bin, recording material and points).
+* **Feedback & Support (Yellow):** `Report` (community tickets regarding bin issues) and `Review` (user ratings).
+* **Gamification & Business (Purple):** `Goal`, `Company`, and `YearlyWrap` managing targets, corporate subscriptions, and annual metrics.
 
+![Diagrama UML do Modelo de Domínio](umls/domain_model.png)
 
 ## Architecture and Design
-<!--
-The architecture of a software system encompasses the set of key decisions about its organization. 
-
-A well written architecture document is brief and reduces the amount of time it takes new programmers to a project to understand the code to feel able to make modifications and enhancements.
-
-To document the architecture requires describing the decomposition of the system in their parts (high-level components) and the key behaviors and collaborations between them. 
-
-In this section you should start by briefly describing the components of the project and their interrelations. You should describe how you solved typical problems you may have encountered, pointing to well-known architectural and design patterns, if applicable.
--->
-
 
 ### Logical architecture
-<!--
-The purpose of this subsection is to document the high-level logical structure of the code (Logical View), using a UML diagram with logical packages, without the worry of allocating to components, processes or machines.
+The logical architecture separates the presentation layer (mobile app) from the core business logic and external APIs, ensuring modularity and easier testing.
 
-It can be beneficial to present the system in a horizontal decomposition, defining layers and implementation concepts, such as the user interface, business logic and concepts.
+```mermaid
+flowchart TB
+    %% Core User
+    User((Eco-App User))
 
-Example of _UML package diagram_ showing a _logical view_ of the Eletronic Ticketing System (to be accompanied by a short description of each package):
+    %% 1. Presentation Layer (Mobile App)
+    subgraph Presentation ["Presentation Layer (React Native)"]
+        UI[UI Components]
+        State[Local State Management]
+        APIClient[API Client]
+    end
 
-![LogicalView](https://user-images.githubusercontent.com/9655877/160585416-b1278ad7-18d7-463c-b8c6-afa4f7ac7639.png)
--->
+    %% 2. Business Logic Layer (Backend)
+    subgraph BusinessLogic ["Business Logic Layer (Node.js / Express)"]
+        Gateway[API Gateway / Router]
+        
+        subgraph CoreServices ["Core Services"]
+            Auth[Authentication Service]
+            RecycleLog[Recycling Logger Service]
+            Points[Gamification Engine]
+            GeoMap[Location & Reviews Service]
+        end
+    end
+
+    %% 3. Data Access Layer
+    subgraph DataAccess ["Data Access Layer"]
+        MainDB[(Main Relational Database)]
+        PhotoStorage[(Cloud Blob Storage)]
+    end
+
+    %% External Systems
+    ExternalMaps[External Maps API]
+
+    %% Interactions and Data Flow
+    User -->|Interacts with screens| UI
+    UI <-->|Updates| State
+    State -->|Triggers actions| APIClient
+    
+    APIClient -->|JSON over HTTPS| Gateway
+    
+    Gateway --> Auth
+    Gateway --> RecycleLog
+    Gateway --> Points
+    Gateway --> GeoMap
+    
+    %% Internal Logic dependencies
+    RecycleLog -->|Triggers points calculation| Points
+    
+    %% Database Connections
+    Auth --> MainDB
+    Points --> MainDB
+    GeoMap --> MainDB
+    RecycleLog --> MainDB
+    RecycleLog -->|Saves evidence photos| PhotoStorage
+    
+    %% External API Connection
+    GeoMap -->|Fetches coordinates| ExternalMaps
+```
 
 
 ### Physical architecture
-<!--
-The goal of this subsection is to document the high-level physical structure of the software system (machines, connections, software components installed, and their dependencies) using UML deployment diagrams (Deployment View) or component diagrams (Implementation View), separate or integrated, showing the physical structure of the system.
 
-It should describe also the technologies considered and justify the selections made. Examples of technologies relevant for ESOF are, for example, frameworks for mobile applications (such as Flutter).
+The physical architecture outlines the deployment of the MyImpact system nodes and communication protocols.
 
-Example of _UML deployment diagram_ showing a _deployment view_ of the Eletronic Ticketing System (please notice that, instead of software components, one should represent their physical/executable manifestations for deployment, called artifacts in UML; the diagram should be accompanied by a short description of each node and artifact):
-
-![DeploymentView](https://user-images.githubusercontent.com/9655877/160592491-20e85af9-0758-4e1e-a704-0db1be3ee65d.png)
--->
-
+![Physical Architecture Diagram](umls/physical_architecture.png)
 
 ### Functional prototype
-<!--
-To help on validating all the architectural, design and technological decisions made, we usually implement a functional prototype, a thin vertical slice of the system integrating as much technologies as we can.
 
-In this subsection please describe which feature, or part of it, you have implemented, and how, together with a snapshot of the user interface, if applicable.
+For our Sprint 0 increment, we implemented a vertical slice of the MyImpact application using **React Native** and the **Expo Router**. 
 
-At this phase, instead of a complete user story, you can simply implement a small part of a feature that demonstrates thay you can use the technology, for example, show a screen with the app credits (name and authors).
--->
+Currently, the prototype includes:
+* **Core Interface:** Navigation structure and primary screens (e.g., Report Problem workflow).
+* **Automated Quality Assurance:** We integrated **Detox** for End-to-End (E2E) automated acceptance testing. The prototype includes automated flows that launch the app, navigate the map interface, select a bin, and successfully submit a problem report, ensuring critical user journeys function properly. We also experimented with **Maestro** (`log_recycling_test.yaml`) for secondary UI validations.
+
+![Lista de Ecopontos](images/ecopontos.png)
+![Ecrã de Reportar Problema](images/report.png)
+![Sucesso na submissão do report](images/submit_rep.png)
 
 ## Project management
-<!--
-Software project management is the art and science of planning and leading software projects, in which they are planned, implemented, monitored and controlled.
-
-In the context of ESOF, we recommend each team to adopt a set of project management practices and tools capable of registering tasks, assigning tasks to team members, adding estimations to tasks, monitor tasks progress, and therefore being able to track their projects.
-
-Common practices of managing agile software development with Scrum are: backlog management, release management, estimation, Sprint planning, Sprint development, acceptance tests, and Sprint retrospectives.
-
-You can find below information and references related with the project management: 
-
-* Backlog management: Product backlog and Sprint backlog in a [Github Projects board](https://github.com/orgs/FEUP-LEIC-ES-2023-24/projects/64);
-* Release management: [v0](#), v1, v2, v3, ...;
-* Sprint planning and retrospectives: 
-  * plans: screenshots of Github Projects board at begin and end of each Sprint;
-  * retrospectives: meeting notes in a document in the repository, addressing the following questions:
-    * Did well: things we did well and should continue;
-    * Do differently: things we should do differently and how;
-    * Puzzles: things we don’t know yet if they are right or wrong;
-    * list of a few improvements to implement next Sprint;
-
--->
 
 ### Sprint 0
+
+During Sprint 0, the team established the project foundation and a shared vision. We successfully:
+* Defined the **Product Vision** and core requirements using INVEST-compliant User Stories.
+* Designed the **Domain Model** and the **Logical/Physical Architectures** to guide development.
+* Set up the development environment and CI/CD pipelines (GitHub Actions).
+* Developed a **Functional Prototype** (v1.0.0) focusing on the "Report Problem" user journey, validated by automated E2E tests .
+* Simulated our first defect tracking cycle to ensure rigorous QA standards.
+
+
+#### Retrospective
+
+**Did well:**
+
+- We had a great distribution of tasks across the team, allowing us to parallelize the work (e.g., UI mockups, architecture design, and CI/CD setup were done simultaneously).
+
+- Successfully integrated automated E2E testing (Detox/Maestro) right from the start, which gives us a solid safety net for future development.
+
+- Diagrammed our logical architecture as code (Mermaid.js) directly in GitHub, keeping our documentation clean and version-controlled.
+
+**Do differently:**
+
+- We should verify repository permissions on day one. We tried to set up branch protection rules for the main branch but realized too late that we lacked Admin rights in the organization repo.
+
+- We left the README cleanup and template formatting to the very end of the sprint. Next time, we should update the documentation iteratively as tasks are completed.
+
+**Puzzles:**
+
+ - We are still unsure if our chosen external Map API will integrate smoothly with the React Native prototype without performance hiccups on older mobile devices.
+
+- Are the Maestro automated tests robust enough to handle the complex UI flows of the gamification features, or will they become flaky?
+
+**List of a few improvements to implement next Sprint:**
+
+- Enforce a strict "Accepted" column workflow: tasks shouldn't just stop at "Done"; they need a formal QA check by another team member before moving to "Accepted".
+
+- Coordinate with the teaching staff early on regarding repository permissions or external integrations to avoid blocked tasks.
+
+- Kick off Sprint 1 by picking the highest priority "Must-have" user stories from the "Ready" column during our Sprint Planning.
+
+
+![screenshot](images/Screenshot.png)
+
+
 
 ### Sprint 1
 

@@ -16,18 +16,13 @@ export default function RegisterScreen() {
       Alert.alert("Erro", "Preenche todos os campos.");
       return;
     }
-    
     setLoading(true);
     try {
-      // Cria o utilizador no Firebase Authentication
       const credencial = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Guarda o perfil do utilizador no Firestore
       await setDoc(doc(db, 'utilizadores', credencial.user.uid), {
         email: credencial.user.email,
         criadoEm: serverTimestamp(),
       });
-
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
     } catch (e: any) {
       const mensagens: Record<string, string> = {
@@ -45,36 +40,10 @@ export default function RegisterScreen() {
     <ThemedView style={styles.container}>
       <ThemedText type="title">Bem-vindo ao My Impact</ThemedText>
       <ThemedText style={styles.subtitle}>Cria a tua conta para começar</ThemedText>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#ccc"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#ccc"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <TouchableOpacity 
-        style={[styles.button, loading && { opacity: 0.7 }]} 
-        onPress={handleRegister}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <ThemedText style={styles.buttonText}>Registar</ThemedText>
-        )}
+      <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#ccc" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+      <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#ccc" value={password} onChangeText={setPassword} secureTextEntry />
+      <TouchableOpacity style={[styles.button, loading && { opacity: 0.7 }]} onPress={handleRegister} disabled={loading}>
+        {loading ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.buttonText}>Registar</ThemedText>}
       </TouchableOpacity>
     </ThemedView>
   );
@@ -83,19 +52,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, justifyContent: 'center' },
   subtitle: { marginBottom: 30, opacity: 0.7 },
-  input: {
-    backgroundColor: '#1c1c1e', // Ajusta conforme o teu tema
-    color: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-  button: {
-    backgroundColor: '#1B4332',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
+  input: { backgroundColor: '#1c1c1e', color: '#fff', padding: 15, borderRadius: 10, marginBottom: 15 },
+  button: { backgroundColor: '#1B4332', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
   buttonText: { color: '#fff', fontWeight: 'bold' }
 });

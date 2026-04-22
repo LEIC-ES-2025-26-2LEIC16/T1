@@ -16,6 +16,11 @@ export async function getEcopontos(): Promise<Ecoponto[]> {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Ecoponto));
 }
 
+// Adiciona um novo ecoponto à BD
+export async function addEcoponto(dados: Omit<Ecoponto, 'id'>) {
+  await addDoc(collection(db, 'ecopontos'), dados);
+}
+
 // Guarda um reporte de problema na BD
 export async function guardarReporte(dados: {
   ecopontoNome: string;

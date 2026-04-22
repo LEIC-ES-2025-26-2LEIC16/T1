@@ -31,7 +31,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Ecopontos</Text>
+      <View style={styles.cabecalho}>
+        <Text style={styles.titulo}>Ecopontos</Text>
+        <TouchableOpacity style={styles.botaoAdicionar} onPress={() => router.push('/add-ecoponto' as any)}>
+          <Text style={styles.botaoAdicionarTexto}>+ Adicionar</Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={ecopontos}
@@ -85,7 +90,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   loadingTexto: { marginTop: 12, fontSize: 14, color: '#666' },
-  titulo: { fontSize: 24, fontWeight: 'bold', marginBottom: 16, marginTop: 40 },
+  cabecalho: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 40, marginBottom: 16 },
+  titulo: { fontSize: 24, fontWeight: 'bold' },
+  botaoAdicionar: { backgroundColor: '#1B4332', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+  botaoAdicionarTexto: { color: '#fff', fontSize: 13, fontWeight: '600' },
   card: { backgroundColor: '#f0f0f0', borderRadius: 10, padding: 16, marginBottom: 12 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   nome: { fontSize: 16, fontWeight: '600', flex: 1 },

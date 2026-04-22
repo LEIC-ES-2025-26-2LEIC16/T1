@@ -38,7 +38,7 @@ export default function MapaScreen() {
 
   return (
     <View style={styles.container}>
-      <MapLibreGL.MapView style={styles.mapa} mapStyle={MAPA_ESTILO}>
+      {/* <MapLibreGL.MapView style={styles.mapa} mapStyle={MAPA_ESTILO}>
         <MapLibreGL.Camera
           zoomLevel={13}
           centerCoordinate={CENTRO_PORTO}
@@ -61,7 +61,11 @@ export default function MapaScreen() {
             </View>
           </MapLibreGL.PointAnnotation>
         ))}
-      </MapLibreGL.MapView>
+      </MapLibreGL.MapView> */}
+
+      <Text style={{ marginTop: 80, textAlign: 'center', fontSize: 16, padding: 20 }}>
+        Mapa escondido para testar a câmara no emulador 🚧
+      </Text>
 
       {/* Card com info do ecoponto selecionado */}
       {ecopontoSelecionado && (

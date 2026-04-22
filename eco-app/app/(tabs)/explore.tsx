@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import { type Ecoponto } from '@/constants/ecopontos';
-import { getEcopontos } from '@/services/firestore';
+import { ouvirEcopontos } from '@/services/firestore';
 
 MapLibreGL.setAccessToken(null);
 
@@ -33,12 +33,13 @@ export default function MapaScreen() {
   const [ecopontoSelecionado, setEcopontoSelecionado] = useState<Ecoponto | null>(null);
 
   useEffect(() => {
-    getEcopontos().then(setEcopontos);
+    const unsubscribe = ouvirEcopontos(setEcopontos);
+    return unsubscribe;
   }, []);
 
   return (
     <View style={styles.container}>
-      <MapLibreGL.MapView style={styles.mapa} mapStyle={MAPA_ESTILO}>
+       <MapLibreGL.MapView style={styles.mapa} mapStyle={MAPA_ESTILO}>
         <MapLibreGL.Camera
           zoomLevel={13}
           centerCoordinate={CENTRO_PORTO}
@@ -62,7 +63,7 @@ export default function MapaScreen() {
           </MapLibreGL.PointAnnotation>
         ))}
       </MapLibreGL.MapView>
-
+      
       {/* Card com info do ecoponto selecionado */}
       {ecopontoSelecionado && (
         <View style={styles.card}>

@@ -1,0 +1,19 @@
+name: React Native CI
+
+# this tells github exactly when to run our automated tasks
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Sprint 0 Sanity Check
+      run: echo "GitHub Actions is alive and well! Ready for the app merge."

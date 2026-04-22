@@ -39,7 +39,7 @@ export default function MapaScreen() {
 
   return (
     <View style={styles.container}>
-      <MapLibreGL.MapView style={styles.mapa} mapStyle={MAPA_ESTILO}>
+       <MapLibreGL.MapView style={styles.mapa} mapStyle={MAPA_ESTILO}>
         <MapLibreGL.Camera
           zoomLevel={13}
           centerCoordinate={CENTRO_PORTO}
@@ -63,7 +63,7 @@ export default function MapaScreen() {
           </MapLibreGL.PointAnnotation>
         ))}
       </MapLibreGL.MapView>
-
+      
       {/* Card com info do ecoponto selecionado */}
       {ecopontoSelecionado && (
         <View style={styles.card}>

@@ -1,0 +1,8 @@
+appId: com.ecoapp.dev
+---
+- launchApp
+- tapOn: "Mapa"
+- tapOn: "Adicionar Ecoponto"
+- tapOn: "Vidro"
+- tapOn: "Confirmar Localização"
+- assertVisible: "Ecoponto adicionado com sucesso"

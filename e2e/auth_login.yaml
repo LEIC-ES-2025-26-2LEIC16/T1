@@ -1,0 +1,12 @@
+appId: com.ecoapp.dev
+---
+- launchApp
+- tapOn: "Sign Up"
+- inputText:
+    id: "email-input"
+    text: "teste@esof.pt"
+- inputText:
+    id: "password-input"
+    text: "password123"
+- tapOn: "Create Account"
+- assertVisible: "Welcome to MyImpact"

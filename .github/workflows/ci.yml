@@ -1,23 +1,27 @@
-name: React Native CI
-
-# this tells github exactly when to run our automated tasks
+name: CI - Sprint 1
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ main, prototype ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ main ]
 
 jobs:
-  build:
-    # we need a virtual machine to run our stuff, ubuntu is the standard go-to
+  test:
     runs-on: ubuntu-latest
-
     steps:
-    # first, we grab our code from the repo so the runner can see it
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: eco-app/package-lock.json
 
-    # since the actual app code is still in another branch awaiting review,
-    # let's just make sure the CI pipeline is wired up correctly for now
-    - name: Sprint 0 Sanity Check
-      run: echo "GitHub Actions is alive and well! Ready for the app merge."
+      - name: Install dependencies
+        run: |
+          cd eco-app
+          npm install
+
+      - name: Run unit tests
+        run: |
+          cd eco-app
+          npm test

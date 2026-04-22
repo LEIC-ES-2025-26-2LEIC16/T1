@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Linking, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Linking, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { guardarRegistoReciclagem } from '@/services/firestore';
@@ -8,6 +8,7 @@ export default function LogRecyclingScreen() {
   const router = useRouter();
   const [image, setImage] = useState<string | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
+  const [amount, setAmount] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [permissionResponse, requestPermission] = ImagePicker.useCameraPermissions();
 
@@ -16,6 +17,12 @@ const tabelaPontos: Record<string, number> = {
     'Papel': 5,
     'Vidro': 15,
     'Metal': 20,
+  };
+const tabelaCO2: Record<string, number> = {
+    'Plástico': 1.5,
+    'Papel': 0.9,
+    'Vidro': 0.3,
+    'Metal': 2.5,
   };
   
   const materials = Object.keys(tabelaPontos);
@@ -70,7 +77,7 @@ const tabelaPontos: Record<string, number> = {
 
       Alert.alert(
         "Sucesso!",
-        "Reciclagem registada com sucesso! Ganhaste +${pontosGanhos} pontos.",
+        `Reciclagem registada com sucesso! Ganhaste +${pontosGanhos} pontos.`,
         [
           { 
             text: "Fantástico", 
@@ -92,6 +99,15 @@ const tabelaPontos: Record<string, number> = {
 
       {/* 1. Seletor de Material */}
       <Text style={styles.label}>1. O que vais reciclar?</Text>
+      {/* 1.5. Input de Quantidade */}
+      <Text style={styles.label}>Quantidade (em kg):</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        placeholder="Ex: 2.5"
+        value={amount}
+        onChangeText={setAmount}
+      />
       <View style={styles.materialContainer}>
         {materials.map((material) => (
           <TouchableOpacity
@@ -186,6 +202,15 @@ const styles = StyleSheet.create({
   },
   materialTextSelected: {
     color: '#fff',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#cbd5e0',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#f7fafc',
+    marginBottom: 20,
   },
   cameraButton: {
     backgroundColor: '#edf2f7',

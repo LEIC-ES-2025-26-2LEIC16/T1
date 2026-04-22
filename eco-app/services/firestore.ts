@@ -45,7 +45,8 @@ export async function seedEcopontos() {
   }
 }
 
-export async function guardarRegistoReciclagem(imageUri: string, material: string, pontos: number) {
+export async function guardarRegistoReciclagem(imageUri: string, material: string, pontos: number, peso: string,     // <-- Adicionado
+  co2: string) {
   const user = auth.currentUser;
   
   //garante que a transação só ocorre se existir um login válido
@@ -84,6 +85,8 @@ export async function guardarRegistoReciclagem(imageUri: string, material: strin
     material: material,
     imagemUrl: downloadUrl,
     pontosAtribuidos: pontos,
+    quantidade: peso,
+    impactoCO2: co2,
     criadoEm: serverTimestamp(),
   });
 }

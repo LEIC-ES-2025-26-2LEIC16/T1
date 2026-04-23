@@ -63,8 +63,8 @@ export default function LogRecyclingScreen() {
     setIsSubmitting(true);
 
     try {
-      const pontosGanhos = calcularPontosGanhos(selectedMaterial);
       const pesoEmKg = Number(amount);
+      const pontosGanhos = Math.round(calcularPontosGanhos(selectedMaterial) * pesoEmKg);
       const co2Calculado = calcularPoupancaCO2(pesoEmKg, selectedMaterial); // Calcula e arredonda a 2 casas decimais
 
       // Tens de atualizar a tua função no firestore.ts para receber estes novos dados
@@ -87,6 +87,12 @@ export default function LogRecyclingScreen() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+  const getPontosTotais = () => {
+    if (!selectedMaterial) return 0;
+    const base = tabelaPontos[selectedMaterial];
+    const peso = amount && !isNaN(Number(amount)) ? Number(amount) : 1;
+    return Math.round(base * peso);
   };
 
   return (
@@ -147,7 +153,7 @@ export default function LogRecyclingScreen() {
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.submitButtonText}>
-            Submeter (+{selectedMaterial ? tabelaPontos[selectedMaterial] : 0} pts)
+            Submeter (+{getPontosTotais()} pts)
           </Text>
         )}
       </TouchableOpacity>

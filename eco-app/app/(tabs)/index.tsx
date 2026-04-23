@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Link } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { Ecoponto } from '@/constants/ecopontos';
 import { ouvirEcopontos, seedEcopontos } from '@/services/firestore';
 
@@ -12,8 +11,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     seedEcopontos(); // popula a BD se estiver vazia
-    const unsubscribe = ouvirEcopontos((dados) => {
-      setEcopontos(dados);
+    const unsubscribe = ouvirEcopontos((dados: Ecoponto[]) => {      setEcopontos(dados);
       setLoading(false);
     });
     return unsubscribe; // cancela o listener ao sair do ecrã
@@ -109,4 +107,4 @@ const styles = StyleSheet.create({
   textContainer: {flex: 1,},
   cardTitle: {fontSize: 16,fontWeight: 'bold',color: '#1a1a1a',marginBottom: 4,},
   cardSubtitle: {fontSize: 13,color: '#666666',},
-});
+}); 

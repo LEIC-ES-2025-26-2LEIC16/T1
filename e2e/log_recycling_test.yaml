@@ -1,0 +1,32 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: true #limpa a cache para começar um teste fresco
+
+#garante que estamos na Home
+- assertVisible: "Ecopontos"
+
+#navega para o ecrã de Registo
+- tapOn: "Registar Reciclagem"
+- assertVisible: "1. O que vais reciclar?"
+
+#testa a primeira validação (tentar submeter sem material)
+- tapOn: "Submeter .*" # O .* serve para ignorar os pontos dinâmicos no texto
+- assertVisible: "Informação em falta"
+- tapOn: "OK" # Fecha o Alerta
+
+#preenche a Quantidade
+- tapOn: "Ex: 2.5"
+- inputText: "2"
+- hideKeyboard
+
+#seleciona o Material 
+- tapOn: "Plástico" #confirma que este texto existe na tua tabelaPontos
+
+#testa a validação da foto 
+- tapOn: "Submeter .*"
+- assertVisible: "Foto em falta"
+- tapOn: "OK"
+
+#garantie que o botão da câmara está visível e pronto a ser usado
+- assertVisible: "Abrir Câmara"

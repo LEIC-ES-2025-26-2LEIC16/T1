@@ -11,8 +11,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     seedEcopontos(); // popula a BD se estiver vazia
-    const unsubscribe = ouvirEcopontos((dados: Ecoponto[]) => {
-      setEcopontos(dados);
+    const unsubscribe = ouvirEcopontos((dados: Ecoponto[]) => {      setEcopontos(dados);
       setLoading(false);
     });
     return unsubscribe; // cancela o listener ao sair do ecrã

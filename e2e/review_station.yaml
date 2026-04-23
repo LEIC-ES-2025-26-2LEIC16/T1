@@ -1,0 +1,32 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+
+- extendedWaitUntil:
+    visible: "Entra na tua conta"
+    timeout: 30000
+
+- tapOn: "Email"
+- inputText: "up202406974@up.pt"
+- tapOn: "Password"
+- inputText: "123456"
+
+- hideKeyboard
+
+- tapOn: "Entrar"
+
+- assertVisible: "Ecopontos"
+
+- tapOn: "Ecoponto Rua das Flores"
+
+- tapOn: "Avaliar Ecoponto"
+
+- tapOn: "★"
+- tapOn: "Ex: Muito limpo e f.cil de aceder.*"
+- inputText: "Muito bem localizado e limpo."
+
+- tapOn: "Submit Review"
+
+- assertVisible: "Sucesso"
+- tapOn: "OK"

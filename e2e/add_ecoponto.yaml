@@ -3,32 +3,25 @@ appId: com.myimpact.app
 - launchApp:
     clearState: false
 
-#login
 - tapOn: "Email"
 - inputText: "up202406974@up.pt"
 - tapOn: "Password"
 - inputText: "123456"
 - tapOn: "Entrar"
 
-#espera pela Home
 - assertVisible: "Ecopontos"
 
-#clica no botão de Adicionar
 - tapOn: "\\+ Adicionar"
 
-#rreenche o formulário
 - tapOn: "Ex: Ecoponto Rua das Flores"
 - inputText: "Ecoponto FEUP Teste"
 
 - tapOn: "Ex: Rua das Flores, Porto"
 - inputText: "Rua Dr. Roberto Frias, Porto"
 
-#seleciona o estado
 - tapOn: "Operacional"
 
-#guarda o Ecoponto
 - tapOn: "Guardar Ecoponto"
 
-#valida o sucesso
 - assertVisible: "Sucesso"
 - tapOn: "OK"

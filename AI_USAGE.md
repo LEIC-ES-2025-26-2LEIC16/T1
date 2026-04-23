@@ -19,4 +19,12 @@ Este projeto utilizou ferramentas de Inteligência Artificial para acelerar o de
    * *Prompt/Objetivo:* Configurar o Jest num ambiente Expo com TypeScript e automatizar o processo através do GitHub Actions.
    * *Resultado:* Criação do ficheiro `ci.yml` e testes unitários funcionais.
 
+4. **Automação de Testes E2E (User Acceptance Tests):**
+   * *Prompt/Objetivo:* Criar scripts de teste end-to-end robustos usando o Maestro Mobile, superando bloqueios de hardware (ADB, permissões MIUI) e navegação em ambiente emulado.
+   * *Resultado:* Criação dos scripts E2E (ex: `e2e/report_problem.yaml`, `e2e/add_ecoponto.yaml`) validados com sucesso no emulador Android.
+
+5. **Gestão Ágil e Conformidade de Processos (Scrum/GitHub):**
+   * *Prompt/Objetivo:* Estruturar o repositório de acordo com as métricas de avaliação do Sprint 1, incluindo o ciclo de vida de resolução de defeitos e documentação do Sprint.
+   * *Resultado:* Criação do Issue Tracker modelado para reportar bugs (câmara), gestão de labels (`MisterAI`, `Task`, `Bug`) e estruturação do documento `sprint1_retrospective.md`.
+
 **Nota:** As PBI's com intervenção de IA estão marcadas com a label `MisterAI` no GitHub.

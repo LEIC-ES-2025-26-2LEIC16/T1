@@ -3,32 +3,32 @@ appId: com.myimpact.app
 - launchApp:
     clearState: false
 
-#login
+- extendedWaitUntil:
+    visible: "Entra na tua conta"
+    timeout: 30000
+
 - tapOn: "Email"
 - inputText: "up202406974@up.pt"
 - tapOn: "Password"
 - inputText: "123456"
+
+- hideKeyboard
+
 - tapOn: "Entrar"
 
-#espera que a Home carregue
 - assertVisible: "Ecopontos"
 
-#clica no botão do primeiro ecoponto
 - tapOn:
     id: "report-problem-button"
     index: 0
 
-#valida que entrou no ecrã (procurar pela label obrigatória)
 - assertVisible: "Tipo de problema \\*"
 
-#preenche a descrição
 - tapOn: "Descreve o problema..."
 - inputText: "O ecoponto amarelo esta a transbordar e tem sacos no chao."
 
-#escolhe o tipo de problema 
 - tapOn:
     id: "problem-type-bin-full"
-#submete (o texto muda para A enviar... mas o tap inicial é este)
 - tapOn: "Enviar Reporte"
 
 #o Maestro apenas precisa de esperar que o clique não dê erro.

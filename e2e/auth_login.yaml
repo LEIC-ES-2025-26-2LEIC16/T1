@@ -1,12 +1,18 @@
-appId: com.ecoapp.dev
+appId: com.myimpact.app
 ---
-- launchApp
-- tapOn: "Sign Up"
-- inputText:
-    id: "email-input"
-    text: "teste@esof.pt"
-- inputText:
-    id: "password-input"
-    text: "password123"
-- tapOn: "Create Account"
-- assertVisible: "Welcome to MyImpact"
+- launchApp:
+    clearState: false
+
+- assertVisible: "Entra na tua conta"
+
+- tapOn: "Email"
+- inputText: "up202406974@up.pt"
+
+- tapOn: "Password"
+- inputText: "123456"
+- hideKeyboard
+
+- tapOn: "Entrar"
+
+- waitForAnimationToEnd
+- assertVisible: "Ecopontos"

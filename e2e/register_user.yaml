@@ -1,0 +1,21 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+
+- assertVisible: "Entra na tua conta"
+- tapOn: "Não tens conta? Cria uma aqui"
+
+- assertVisible: "Cria a tua conta para começar"
+
+- tapOn: "Email"
+- inputText: "maestro.test.new@up.pt"
+
+- tapOn: "Password"
+- inputText: "secure123"
+- hideKeyboard
+
+- tapOn: "Registar"
+
+- waitForAnimationToEnd
+- assertVisible: "Ecopontos"

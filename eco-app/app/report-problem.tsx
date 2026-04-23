@@ -1,7 +1,8 @@
 // Ecrã do formulário de reporte de problema
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { guardarReporte } from '@/services/firestore';
 
 // Tipos de problema disponíveis
 const TIPOS_PROBLEMA = [
@@ -16,16 +17,30 @@ export default function ReportProblemScreen() {
   const [tipoSelecionado, setTipSelecionado] = useState('');
   // descricao guarda o texto opcional que o utilizador escreve
   const [descricao, setDescricao] = useState('');
+  const [enviando, setEnviando] = useState(false);
   const router = useRouter();
   const { ecopontoNome, ecopontoMorada } = useLocalSearchParams();
 
-  const enviarReporte = () => {
-    // Navega para o ecrã de sucesso
-    router.push('/report-success');
+  const enviarReporte = async () => {
+    setEnviando(true);
+    try {
+      await guardarReporte({
+        ecopontoNome: String(ecopontoNome),
+        ecopontoMorada: String(ecopontoMorada),
+        tipo: tipoSelecionado,
+        descricao,
+      });
+      router.push('/report-success');
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível enviar o reporte. Tenta novamente.');
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
 
       {/* Info do ecoponto selecionado */}
       <View style={styles.ecopontoCard}>
@@ -64,15 +79,16 @@ export default function ReportProblemScreen() {
 
       {/* Botão enviar */}
       <TouchableOpacity
-        style={[styles.botaoEnviar, !tipoSelecionado && styles.botaoDesativado]}
+        style={[styles.botaoEnviar, (!tipoSelecionado || enviando) && styles.botaoDesativado]}
         onPress={enviarReporte}
-        disabled={!tipoSelecionado}
+        disabled={!tipoSelecionado || enviando}
         testID="submit-report-button"
       >
-        <Text style={styles.botaoTexto}>Enviar Reporte</Text>
+        <Text style={styles.botaoTexto}>{enviando ? 'A enviar...' : 'Enviar Reporte'}</Text>
       </TouchableOpacity>
 
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

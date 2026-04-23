@@ -218,6 +218,8 @@ During Sprint 0, the team established the project foundation and a shared vision
 
 ### Sprint 1
 
+![screenshot](images/Screenshot1.png)
+
 ### Sprint 2
 
 ### Sprint 3

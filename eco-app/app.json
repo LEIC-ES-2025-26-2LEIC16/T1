@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.myimpact.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,6 +29,19 @@
     },
     "plugins": [
       "expo-router",
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Esta app precisa da tua localização para registar a posição do ecoponto."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow MyImpact to access your camera to log recycling."
+        }
+      ],
       [
         "expo-splash-screen",
         {

@@ -43,6 +43,13 @@
         }
       ],
       [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow MyImpact to access your camera to log recycling.",
+          "photosPermission": "Allow MyImpact to access your photos."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",

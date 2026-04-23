@@ -1,21 +1,9 @@
-import { StyleSheet, ScrollView, View } from 'react-native';
+import { useState, useCallback } from 'react';
+import { StyleSheet, ScrollView, View, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-
-const MOCK_DATA = [
-  { id: '1',  date: '2026-04-15', type: 'Plástico', amount: '2kg',  impact: '0.5kg CO2' },
-  { id: '2',  date: '2026-04-14', type: 'Papel',    amount: '5kg',  impact: '1.2kg CO2' },
-  { id: '3',  date: '2026-04-12', type: 'Vidro',    amount: '1kg',  impact: '0.3kg CO2' },
-  { id: '4',  date: '2026-03-28', type: 'Plástico', amount: '3kg',  impact: '0.7kg CO2' },
-  { id: '5',  date: '2026-03-20', type: 'Metal',    amount: '2kg',  impact: '0.9kg CO2' },
-  { id: '6',  date: '2026-03-10', type: 'Papel',    amount: '4kg',  impact: '1.0kg CO2' },
-  { id: '7',  date: '2026-02-22', type: 'Vidro',    amount: '3kg',  impact: '0.8kg CO2' },
-  { id: '8',  date: '2026-02-14', type: 'Plástico', amount: '1kg',  impact: '0.3kg CO2' },
-  { id: '9',  date: '2026-02-03', type: 'Papel',    amount: '6kg',  impact: '1.5kg CO2' },
-  { id: '10', date: '2026-01-25', type: 'Metal',    amount: '1kg',  impact: '0.4kg CO2' },
-  { id: '11', date: '2026-01-15', type: 'Vidro',    amount: '2kg',  impact: '0.6kg CO2' },
-  { id: '12', date: '2026-01-05', type: 'Plástico', amount: '4kg',  impact: '1.0kg CO2' },
-];
+import { getHistoricoReciclagem } from '@/services/firestore';
 
 const formatDate = (date) =>
   new Date(date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' });
@@ -32,10 +20,20 @@ const groupByMonth = (data) => {
   return Object.entries(groups).map(([month, items]) => ({ month, items }));
 };
 
-const totalKg = MOCK_DATA.reduce((s, i) => s + parseFloat(i.amount), 0);
-const totalCO2 = MOCK_DATA.reduce((s, i) => s + parseFloat(i.impact), 0).toFixed(1);
-
 export default function HistoryScreen() {
+  const [registos, setRegistos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(useCallback(() => {
+    setLoading(true);
+    getHistoricoReciclagem()
+      .then(setRegistos)
+      .finally(() => setLoading(false));
+  }, []));
+
+  const totalKg = registos.reduce((s, i) => s + parseFloat(i.amount), 0).toFixed(1);
+  const totalCO2 = registos.reduce((s, i) => s + parseFloat(i.impact), 0).toFixed(1);
+
   const renderCard = (item) => (
     <View key={item.id} style={styles.card}>
       <View style={styles.left}>
@@ -53,7 +51,7 @@ export default function HistoryScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.subtitle}>desde janeiro 2026</ThemedText>
+      <ThemedText style={styles.subtitle}>histórico de reciclagem</ThemedText>
       <ThemedText type="title" style={styles.header}>My impact</ThemedText>
 
       <View style={styles.summaryRow}>
@@ -67,14 +65,20 @@ export default function HistoryScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {groupByMonth(MOCK_DATA).map(({ month, items }) => (
-          <View key={month} style={styles.group}>
-            <ThemedText style={styles.sectionLabel}>{month.toUpperCase()}</ThemedText>
-            {items.map(item => renderCard(item))}
-          </View>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: 40 }} color="#639922" />
+      ) : registos.length === 0 ? (
+        <ThemedText style={styles.empty}>Ainda não tens registos de reciclagem.</ThemedText>
+      ) : (
+        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+          {groupByMonth(registos).map(({ month, items }) => (
+            <View key={month} style={styles.group}>
+              <ThemedText style={styles.sectionLabel}>{month.toUpperCase()}</ThemedText>
+              {items.map(item => renderCard(item))}
+            </View>
+          ))}
+        </ScrollView>
+      )}
     </ThemedView>
   );
 }
@@ -90,6 +94,7 @@ const styles = StyleSheet.create({
   list:         { paddingBottom: 40 },
   group:        { marginBottom: 16 },
   sectionLabel: { fontSize: 11, color: '#aaa', letterSpacing: 0.8, marginBottom: 8, fontWeight: '500' },
+  empty:        { textAlign: 'center', color: '#aaa', marginTop: 40 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 10,

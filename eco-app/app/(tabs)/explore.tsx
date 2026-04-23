@@ -57,8 +57,12 @@ export default function MapaScreen() {
               styles.marcador,
               ecoponto.estado === 'Cheio' && styles.marcadorCheio,
               ecoponto.estado === 'Danificado' && styles.marcadorDanificado,
+              ecopontoSelecionado?.id === ecoponto.id && styles.marcadorSelecionado,
             ]}>
-              <Text style={styles.marcadorTexto}>♻</Text>
+              <Text style={[
+                styles.marcadorTexto,
+                ecopontoSelecionado?.id === ecoponto.id && styles.marcadorTextoSelecionado,
+              ]}>♻</Text>
             </View>
           </MapLibreGL.PointAnnotation>
         ))}
@@ -139,6 +143,16 @@ marcador: {
   },
   marcadorCheio: { backgroundColor: '#D97706' },
   marcadorDanificado: { backgroundColor: '#DC2626' },
+  marcadorSelecionado: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 3,
+    borderColor: '#1B4332',
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+  },
+  marcadorTextoSelecionado: { fontSize: 28 },
   marcadorTexto: { 
     fontSize: 22, // Duplicámos o tamanho do emoji de reciclagem
   },

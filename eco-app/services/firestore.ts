@@ -6,6 +6,8 @@ import {
   setDoc,
   onSnapshot,
   serverTimestamp,
+  query,
+  where,
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 
@@ -89,4 +91,79 @@ export async function guardarRegistoReciclagem(imageUri: string, material: strin
     impactoCO2: co2,
     criadoEm: serverTimestamp(),
   });
+}
+
+export type PerfilUtilizador = {
+  nome: string;
+  username: string;
+  bio: string;
+};
+
+export async function getPerfilUtilizador(): Promise<PerfilUtilizador> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+  const snap = await getDocs(query(collection(db, 'utilizadores'), where('uid', '==', user.uid)));
+  if (snap.empty) return { nome: user.displayName ?? '', username: '', bio: '' };
+  const data = snap.docs[0].data();
+  return { nome: data.nome ?? '', username: data.username ?? '', bio: data.bio ?? '' };
+}
+
+export async function guardarPerfilUtilizador(perfil: PerfilUtilizador) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+  await setDoc(doc(db, 'utilizadores', user.uid), { uid: user.uid, ...perfil });
+}
+
+export async function getEstatisticasUtilizador() {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+
+  const q = query(
+    collection(db, 'registos_reciclagem'),
+    where('userId', '==', user.uid)
+  );
+
+  const snapshot = await getDocs(q);
+  let totalKg = 0;
+  let totalCO2 = 0;
+  let totalPontos = 0;
+
+  snapshot.docs.forEach(d => {
+    const data = d.data();
+    totalKg += parseFloat(data.quantidade) || 0;
+    totalCO2 += parseFloat(data.impactoCO2) || 0;
+    totalPontos += (data.pontosAtribuidos as number) || 0;
+  });
+
+  return {
+    totalReciclagens: snapshot.size,
+    totalKg: totalKg.toFixed(1),
+    totalCO2: totalCO2.toFixed(1),
+    totalPontos,
+  };
+}
+
+export async function getHistoricoReciclagem() {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+
+  const q = query(
+    collection(db, 'registos_reciclagem'),
+    where('userId', '==', user.uid)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs
+    .map(d => {
+      const data = d.data();
+      const date = data.criadoEm?.toDate?.()?.toISOString().split('T')[0] ?? new Date().toISOString().split('T')[0];
+      return {
+        id: d.id,
+        type: data.material as string,
+        amount: data.quantidade as string,
+        impact: data.impactoCO2 as string,
+        date,
+      };
+    })
+    .sort((a, b) => b.date.localeCompare(a.date));
 }

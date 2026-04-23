@@ -63,6 +63,19 @@ export default function HomeScreen() {
               </View>
              </TouchableOpacity>
             </Link>
+            
+            <TouchableOpacity
+              style={[styles.botao, { backgroundColor: '#4B5563', marginBottom: 8 }]}
+              testID="review-bin-button"
+              onPress={() =>
+                router.push({
+                  pathname: '/review-bin',
+                  params: { ecopontoId: item.id, ecopontoNome: item.nome },
+                } as any)
+              }
+            >
+              <Text style={styles.botaoTexto}>Avaliar Ecoponto</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.botao}

@@ -7,8 +7,10 @@ import {
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage, auth } from './firebase';
+import { db, auth } from './firebase';
+
+const CLOUDINARY_CLOUD_NAME = 'dly87uk53';
+const CLOUDINARY_UPLOAD_PRESET = 'eco-app';
 import { Ecoponto, ECOPONTOS } from '@/constants/ecopontos';
 
 // Vai buscar todos os ecopontos da BD
@@ -62,30 +64,20 @@ export async function guardarRegistoReciclagem(imageUri: string, material: strin
     throw new Error("Utilizador não autenticado.");
   }
  
-  //converte o URI local num Blob
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.onload = function () {
-      resolve(xhr.response);
-    };
-    xhr.onerror = function (e) {
-      console.error(e);
-      reject(new TypeError("Falha ao criar o Blob da imagem"));
-    };
-    xhr.responseType = "blob";
-    xhr.open("GET", imageUri, true);
-    xhr.send(null);
-  });
+  // faz upload da imagem para o Cloudinary
+  const formData = new FormData();
+  formData.append('file', { uri: imageUri, type: 'image/jpeg', name: 'reciclagem.jpg' } as any);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', `reciclagens/${user.uid}`);
 
-  //define o caminho no Storage (Ex: reciclagens/ID_DO_USER/170000000.jpg)
-  const caminhoFicheiro = `reciclagens/${user.uid}/${Date.now()}.jpg`;
-  const storageRef = ref(storage, caminhoFicheiro);
+  const respostaCloudinary = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: 'POST', body: formData }
+  );
+  const dadosCloudinary = await respostaCloudinary.json();
+  const downloadUrl = dadosCloudinary.secure_url;
 
-  //executa o Upload
-  await uploadBytes(storageRef, blob);
-
-  //recupera o URL público da imagem guardada
-  const downloadUrl = await getDownloadURL(storageRef);
+  if (!downloadUrl) throw new Error('Falha no upload da imagem.');
 
   //registar a entrada na Base de Dados com os pontos e o URL
   await addDoc(collection(db, 'registos_reciclagem'), {

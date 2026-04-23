@@ -220,6 +220,23 @@ During Sprint 0, the team established the project foundation and a shared vision
 
 ![screenshot](images/Screenshot1.png)
 
+### Retrospective
+
+**Did well (Start / Continue):**
+* **Value Delivery:** We successfully completed 6 core features (Authentication, Reporting, Map, Camera Validation). The prototype is fully functional.
+* **Database Integration:** Firestore is connected and successfully writing real data.
+* **Quality Infrastructure:** We managed to configure CI in GitHub Actions and implemented unit tests with Jest in the codebase.
+
+**Do differently (Pain Points):**
+* **Folder and Dependency Management:** We ran `npm` and `expo` commands in the repository root folder (`T1`) instead of the project folder (`eco-app`). This caused duplicated `node_modules` and `.expo` folders, breaking TypeScript and VS Code.
+* **Expo Router Navigation:** There was confusion with files sharing the same name (the main `index.tsx` vs the tabs `index.tsx`), leading to Git conflicts and temporarily lost code.
+* **E2E Testing Environment:** Leaving the Maestro configuration for the final hours of the Sprint generated extra stress due to environment variables and system path issues on Windows.
+
+**Actionable Improvements for Sprint 2:**
+* Enforce a strict rule: all terminals must always be in `cd eco-app` before installing any package.
+* Configure the project as a VS Code Workspace for all team members, preventing the editor from getting lost in root folders.
+* Ensure testing tools (Maestro, Jest) are properly configured and running on everyone's local machines on day one of the Sprint.
+
 ### Sprint 2
 
 ### Sprint 3

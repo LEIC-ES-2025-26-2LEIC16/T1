@@ -1,22 +1,22 @@
 appId: com.ecoapp.dev 
 ---
-# i gotta make sure the app is launched before doing anything else
 - launchApp
 
-# i am assuming the user is already logged in for this happy path
-# first, lets tap the plastic material option on the screen
-- tapOn:
-    id: "material-plastic"
+# 1. Selecionar o Material (Plástico)
+- tapOn: "Plástico"
 
-# now we simulate taking a picture of the bin
-- tapOn:
-    id: "take-photo-btn"
+# 2. Inserir o peso (NOVIDADE)
+- tapOn: "Ex: 2.5"
+- inputText: "2"
+- hideKeyboard
 
-# hit the submit button to send the log to our backend
-- tapOn:
-    id: "submit-log-btn"
+# 3. Tirar Foto
+- tapOn: "Abrir Câmara"
+# Nota: O Maestro em modo dev não tira fotos reais, mas clica no botão.
 
-# finally, we can verify if the success message popped up with the right points
-# if this is visible, my core loop works 
+# 4. Submeter
+- tapOn: "Submeter (+10 pts)"
+
+# 5. Validar a mensagem dinâmica (Plástico * 1.5 = 3.00kg CO2)
 - assertVisible:
-    text: "Recycling logged successfully! You earned +50 points."
+    text: "Reciclagem registada! Ganhaste +10 pts e poupaste 3.00kg de CO2."

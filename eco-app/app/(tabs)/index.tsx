@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { Ecoponto } from '@/constants/ecopontos';
-import { getEcopontos, seedEcopontos } from '@/services/firestore';
+import { ouvirEcopontos, seedEcopontos } from '@/services/firestore';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -10,13 +10,11 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function carregar() {
-      await seedEcopontos(); // popula a BD se estiver vazia
-      const dados = await getEcopontos();
-      setEcopontos(dados);
+    seedEcopontos(); // popula a BD se estiver vazia
+    const unsubscribe = ouvirEcopontos((dados: Ecoponto[]) => {      setEcopontos(dados);
       setLoading(false);
-    }
-    carregar();
+    });
+    return unsubscribe; // cancela o listener ao sair do ecrã
   }, []);
 
   if (loading) {
@@ -53,6 +51,18 @@ export default function HomeScreen() {
               </View>
             </View>
             <Text style={styles.morada}>{item.morada}</Text>
+
+            <Link href="/log-recycling" asChild>
+             <TouchableOpacity style={styles.actionCard} activeOpacity={0.8}>
+              <View style={styles.iconContainer}>
+               <Text style={styles.iconText}>📸</Text>
+              </View>
+              <View style={styles.textContainer}>
+               <Text style={styles.cardTitle}>Registar Reciclagem</Text>
+               <Text style={styles.cardSubtitle}>Valida o material e ganha +50 pontos</Text>
+              </View>
+             </TouchableOpacity>
+            </Link>
 
             <TouchableOpacity
               style={styles.botao}
@@ -91,4 +101,10 @@ const styles = StyleSheet.create({
   estadoTexto: { fontSize: 12, fontWeight: '600', color: '#1B4332' },
   botao: { backgroundColor: '#126439', borderRadius: 8, padding: 10 },
   botaoTexto: { color: '#fff', textAlign: 'center', fontWeight: '600' },
+  actionCard: {flexDirection: 'row',backgroundColor: '#ffffff',padding: 16,borderRadius: 12,alignItems: 'center',marginBottom: 12, },
+  iconContainer: {backgroundColor: '#E6F4FE',padding: 12,borderRadius: 10,marginRight: 16,},
+  iconText: {fontSize: 24,},
+  textContainer: {flex: 1,},
+  cardTitle: {fontSize: 16,fontWeight: 'bold',color: '#1a1a1a',marginBottom: 4,},
+  cardSubtitle: {fontSize: 13,color: '#666666',},
 });

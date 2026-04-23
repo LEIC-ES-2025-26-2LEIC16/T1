@@ -3,41 +3,26 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
-import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { addEcoponto } from '@/services/firestore';
 import { Ecoponto } from '@/constants/ecopontos';
 
 const ESTADOS: Ecoponto['estado'][] = ['Operacional', 'Cheio', 'Danificado'];
 
+async function geocodificarMorada(morada: string) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(morada)}&format=json&limit=1`;
+  const resposta = await fetch(url, { headers: { 'User-Agent': 'MyImpact-EcoApp/1.0' } });
+  const dados = await resposta.json();
+  if (!dados.length) return null;
+  return { latitude: parseFloat(dados[0].lat), longitude: parseFloat(dados[0].lon) };
+}
+
 export default function AddEcopontoScreen() {
   const router = useRouter();
   const [nome, setNome] = useState('');
   const [morada, setMorada] = useState('');
   const [estado, setEstado] = useState<Ecoponto['estado']>('Operacional');
-  const [coordenadas, setCoordenadas] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [loadingLocalizacao, setLoadingLocalizacao] = useState(false);
   const [guardando, setGuardando] = useState(false);
-
-  const obterLocalizacao = async () => {
-    setLoadingLocalizacao(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'É necessário permitir o acesso à localização.');
-        return;
-      }
-      const loc = await Location.getCurrentPositionAsync({});
-      setCoordenadas({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-      });
-    } catch {
-      Alert.alert('Erro', 'Não foi possível obter a localização.');
-    } finally {
-      setLoadingLocalizacao(false);
-    }
-  };
 
   const guardar = async () => {
     if (!nome.trim()) {
@@ -48,13 +33,14 @@ export default function AddEcopontoScreen() {
       Alert.alert('Erro', 'A morada é obrigatória.');
       return;
     }
-    if (!coordenadas) {
-      Alert.alert('Erro', 'É necessário obter a localização.');
-      return;
-    }
 
     setGuardando(true);
     try {
+      const coordenadas = await geocodificarMorada(morada);
+      if (!coordenadas) {
+        Alert.alert('Morada não encontrada', 'Não foi possível encontrar esta morada. Tenta ser mais específico (ex: "Rua das Flores, Porto").');
+        return;
+      }
       await addEcoponto({ nome, morada, estado, coordenadas });
       Alert.alert('Sucesso', 'Ecoponto adicionado!', [
         { text: 'OK', onPress: () => router.back() },
@@ -99,30 +85,13 @@ export default function AddEcopontoScreen() {
         ))}
       </View>
 
-      <Text style={styles.label}>Localização *</Text>
-      <TouchableOpacity style={styles.botaoLocalizacao} onPress={obterLocalizacao} disabled={loadingLocalizacao}>
-        {loadingLocalizacao
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.botaoLocalizacaoTexto}>
-              {coordenadas ? '📍 Localização obtida — atualizar' : '📍 Usar localização atual'}
-            </Text>
-        }
-      </TouchableOpacity>
-
-      {coordenadas && (
-        <View style={styles.coordenadasCard}>
-          <Text style={styles.coordenadasTexto}>Lat: {coordenadas.latitude.toFixed(6)}</Text>
-          <Text style={styles.coordenadasTexto}>Lng: {coordenadas.longitude.toFixed(6)}</Text>
-        </View>
-      )}
-
       <TouchableOpacity
         style={[styles.botaoGuardar, guardando && { opacity: 0.7 }]}
         onPress={guardar}
         disabled={guardando}
       >
         {guardando
-          ? <ActivityIndicator color="#fff" />
+          ? <><ActivityIndicator color="#fff" /><Text style={styles.botaoGuardarTexto}>  A localizar morada...</Text></>
           : <Text style={styles.botaoGuardarTexto}>Guardar Ecoponto</Text>
         }
       </TouchableOpacity>
@@ -145,18 +114,9 @@ const styles = StyleSheet.create({
   estadoBtnAtivo: { borderColor: '#1B4332', backgroundColor: '#D1FAE5' },
   estadoBtnTexto: { fontSize: 13, color: '#333' },
   estadoBtnTextoAtivo: { color: '#1B4332', fontWeight: '700' },
-  botaoLocalizacao: {
-    backgroundColor: '#2563EB', borderRadius: 10, padding: 14, alignItems: 'center',
-  },
-  botaoLocalizacaoTexto: { color: '#fff', fontWeight: '600', fontSize: 15 },
-  coordenadasCard: {
-    backgroundColor: '#f0fdf4', borderRadius: 10, padding: 12,
-    marginTop: 10, borderWidth: 1, borderColor: '#bbf7d0',
-  },
-  coordenadasTexto: { fontSize: 13, color: '#166534', fontFamily: 'monospace' },
   botaoGuardar: {
-    backgroundColor: '#1B4332', borderRadius: 12, padding: 16,
-    alignItems: 'center', marginTop: 32, marginBottom: 40,
+    backgroundColor: '#1B4332', borderRadius: 12, padding: 16, flexDirection: 'row',
+    alignItems: 'center', justifyContent: 'center', marginTop: 32, marginBottom: 40,
   },
   botaoGuardarTexto: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

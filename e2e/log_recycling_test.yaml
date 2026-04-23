@@ -1,22 +1,32 @@
-appId: com.ecoapp.dev 
+appId: com.myimpact.app
 ---
-# i gotta make sure the app is launched before doing anything else
-- launchApp
+- launchApp:
+    clearState: true #limpa a cache para começar um teste fresco
 
-# i am assuming the user is already logged in for this happy path
-# first, lets tap the plastic material option on the screen
-- tapOn:
-    id: "material-plastic"
+#garante que estamos na Home
+- assertVisible: "Ecopontos"
 
-# now we simulate taking a picture of the bin
-- tapOn:
-    id: "take-photo-btn"
+#navega para o ecrã de Registo
+- tapOn: "Registar Reciclagem"
+- assertVisible: "1. O que vais reciclar?"
 
-# hit the submit button to send the log to our backend
-- tapOn:
-    id: "submit-log-btn"
+#testa a primeira validação (tentar submeter sem material)
+- tapOn: "Submeter .*" # O .* serve para ignorar os pontos dinâmicos no texto
+- assertVisible: "Informação em falta"
+- tapOn: "OK" # Fecha o Alerta
 
-# finally, we can verify if the success message popped up with the right points
-# if this is visible, my core loop works 
-- assertVisible:
-    text: "Recycling logged successfully! You earned +50 points."
+#preenche a Quantidade
+- tapOn: "Ex: 2.5"
+- inputText: "2"
+- hideKeyboard
+
+#seleciona o Material 
+- tapOn: "Plástico" #confirma que este texto existe na tua tabelaPontos
+
+#testa a validação da foto 
+- tapOn: "Submeter .*"
+- assertVisible: "Foto em falta"
+- tapOn: "OK"
+
+#garantie que o botão da câmara está visível e pronto a ser usado
+- assertVisible: "Abrir Câmara"

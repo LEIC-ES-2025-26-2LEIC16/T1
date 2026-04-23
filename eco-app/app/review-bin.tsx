@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import NetInfo from '@react-native-community/netinfo';
 
 export default function ReviewBinScreen() {
   const router = useRouter();
@@ -13,36 +14,46 @@ export default function ReviewBinScreen() {
   // Estados de controlo do fluxo
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
-
   const handleSubmit = async () => {
-    if (rating === 0) {
-      Alert.alert('Atenção', 'Por favor, seleciona pelo menos 1 estrela.');
-      return;
-    }
+      if (rating === 0) {
+        Alert.alert('Atenção', 'Por favor, seleciona pelo menos 1 estrela.');
+        return;
+      }
 
-    setIsSubmitting(true);
-    setShowErrorModal(false);
+      setIsSubmitting(true);
+      setShowErrorModal(false);
 
-    // Simulação de chamada à API/Base de Dados
-    setTimeout(() => {
-      // Vamos simular uma falha de rede aleatória (30% de probabilidade) para testares o Cenário 2
-      const networkFailure = Math.random() < 0.3;
+      try {
+        // 2. VERIFICAÇÃO REAL DE REDE: Pergunta ao telemóvel se tem internet
+        const networkState = await NetInfo.fetch();
+        
+        if (!networkState.isConnected) {
+          // Sem internet! Mostra o modal e cancela o envio
+          setIsSubmitting(false);
+          setShowErrorModal(true);
+          return; 
+        }
 
-      setIsSubmitting(false);
+        // 3. AQUI FICA O ENVIO REAL PARA A BASE DE DADOS
+        // Exemplo: await guardarReview({ ecopontoId, rating, comment });
+        
+        // Simulação do tempo de resposta do servidor (podes remover quando ligares ao Firebase)
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (networkFailure) {
-        // Cenário 2: Excecional - Falha de rede. O modal abre, mas os estados 'rating' e 'comment' são preservados.
-        setShowErrorModal(true);
-      } else {
         // Cenário 1: Normal - Sucesso.
         Alert.alert(
           'Sucesso',
-          'Thank you for your feedback!', // Mensagem exata do teu critério de aceitação
+          'Thank you for your feedback!',
           [{ text: 'OK', onPress: () => router.back() }]
         );
+
+      } catch (error) {
+        // Se a internet cair a meio do envio ou o servidor falhar, também apanhamos o erro aqui
+        setShowErrorModal(true);
+      } finally {
+        setIsSubmitting(false);
       }
-    }, 1500);
-  };
+    };
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
@@ -95,7 +106,7 @@ export default function ReviewBinScreen() {
             <View style={styles.modalBox}>
               <Text style={styles.modalIcone}>📶</Text>
               <Text style={styles.modalTitulo}>Erro de Ligação</Text>
-              <Text style={styles.modalMensagem}>
+              <Text style={styles.modalMensagem}> 
                 We couldn't post your review. Please check your internet connection and try again.
               </Text>
               <View style={styles.modalBotoes}>

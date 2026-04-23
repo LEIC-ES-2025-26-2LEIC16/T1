@@ -122,19 +122,26 @@ export default function MapaScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   mapa: { flex: 1 },
-  marcador: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#1B4332',
+marcador: {
+    width: 44, // Duplicámos a largura (antes era 22)
+    height: 44, // Duplicámos a altura (antes era 22)
+    borderRadius: 22, // Tem de ser sempre metade da largura/altura para fazer um círculo perfeito
+    backgroundColor: '#279840',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
+    borderWidth: 2, // Aumentámos ligeiramente a margem branca
     borderColor: '#fff',
+    elevation: 4, // Adicionamos uma pequena sombra no Android para destacar do mapa
+    shadowColor: '#000', // Sombra para iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   marcadorCheio: { backgroundColor: '#D97706' },
   marcadorDanificado: { backgroundColor: '#DC2626' },
-  marcadorTexto: { fontSize: 11 },
+  marcadorTexto: { 
+    fontSize: 22, // Duplicámos o tamanho do emoji de reciclagem
+  },
   card: {
     position: 'absolute',
     bottom: 24,

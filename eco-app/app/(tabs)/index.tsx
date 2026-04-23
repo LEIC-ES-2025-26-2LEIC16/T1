@@ -120,4 +120,4 @@ const styles = StyleSheet.create({
   textContainer: {flex: 1,},
   cardTitle: {fontSize: 16,fontWeight: 'bold',color: '#1a1a1a',marginBottom: 4,},
   cardSubtitle: {fontSize: 13,color: '#666666',},
-}); 
+});

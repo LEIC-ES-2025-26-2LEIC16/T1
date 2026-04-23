@@ -101,66 +101,53 @@ To provide a clear understanding of the MyImpact ecosystem, our domain model is 
 
 ## Architecture and Design
 
+
 ### Logical architecture
 The logical architecture separates the presentation layer (mobile app) from the core business logic and external APIs, ensuring modularity and easier testing.
 
 ```mermaid
-flowchart TB
-    %% Core User
-    User((Eco-App User))
-
-    %% 1. Presentation Layer (Mobile App)
-    subgraph Presentation ["Presentation Layer (React Native)"]
-        UI[UI Components]
-        State[Local State Management]
-        APIClient[API Client]
+flowchart TD
+    %% Client side logic
+    subgraph ClientLayer ["Client Layer"]
+        UI["User Interface Components"]
+        State["Local State & Cache"]
     end
 
-    %% 2. Business Logic Layer (Backend)
-    subgraph BusinessLogic ["Business Logic Layer (Node.js / Express)"]
-        Gateway[API Gateway / Router]
+    %% Backend business modules
+    subgraph BusinessLogicLayer ["Business Logic Layer"]
+        Gateway["API Gateway / Request Router"]
         
-        subgraph CoreServices ["Core Services"]
-            Auth[Authentication Service]
-            RecycleLog[Recycling Logger Service]
-            Points[Gamification Engine]
-            GeoMap[Location & Reviews Service]
-        end
+        AuthModule["Account & Auth Module"]
+        RecyclingModule["Recycling Operations Module"]
+        GamificationModule["Points & Leaderboard Module"]
+        MapModule["Mapping & Eco-bins Module"]
     end
 
-    %% 3. Data Access Layer
-    subgraph DataAccess ["Data Access Layer"]
-        MainDB[(Main Relational Database)]
-        PhotoStorage[(Cloud Blob Storage)]
+    %% Data management components
+    subgraph DataLayer ["Data Layer"]
+        UserDB[("User & Profile Data")]
+        ImpactDB[("Recycling & Points Data")]
+        BlobData[("Photo Verification Data")]
     end
 
-    %% External Systems
-    ExternalMaps[External Maps API]
+    %% External logical services
+    ExternalMap["External Maps API"]
 
-    %% Interactions and Data Flow
-    User -->|Interacts with screens| UI
-    UI <-->|Updates| State
-    State -->|Triggers actions| APIClient
+    %% Flow of data and requests
+    UI --> State
+    State -->|API Calls| Gateway
     
-    APIClient -->|JSON over HTTPS| Gateway
+    Gateway --> AuthModule
+    Gateway --> RecyclingModule
+    Gateway --> GamificationModule
+    Gateway --> MapModule
     
-    Gateway --> Auth
-    Gateway --> RecycleLog
-    Gateway --> Points
-    Gateway --> GeoMap
+    AuthModule --> UserDB
+    RecyclingModule --> ImpactDB
+    RecyclingModule --> BlobData
+    GamificationModule --> ImpactDB
     
-    %% Internal Logic dependencies
-    RecycleLog -->|Triggers points calculation| Points
-    
-    %% Database Connections
-    Auth --> MainDB
-    Points --> MainDB
-    GeoMap --> MainDB
-    RecycleLog --> MainDB
-    RecycleLog -->|Saves evidence photos| PhotoStorage
-    
-    %% External API Connection
-    GeoMap -->|Fetches coordinates| ExternalMaps
+    MapModule --> ExternalMap
 ```
 
 
@@ -232,6 +219,23 @@ During Sprint 0, the team established the project foundation and a shared vision
 ### Sprint 1
 
 ![screenshot](images/Screenshot1.png)
+
+### Retrospective
+
+**Did well (Start / Continue):**
+* **Value Delivery:** We successfully completed 6 core features (Authentication, Reporting, Map, Camera Validation). The prototype is fully functional.
+* **Database Integration:** Firestore is connected and successfully writing real data.
+* **Quality Infrastructure:** We managed to configure CI in GitHub Actions and implemented unit tests with Jest in the codebase.
+
+**Do differently (Pain Points):**
+* **Folder and Dependency Management:** We ran `npm` and `expo` commands in the repository root folder (`T1`) instead of the project folder (`eco-app`). This caused duplicated `node_modules` and `.expo` folders, breaking TypeScript and VS Code.
+* **Expo Router Navigation:** There was confusion with files sharing the same name (the main `index.tsx` vs the tabs `index.tsx`), leading to Git conflicts and temporarily lost code.
+* **E2E Testing Environment:** Leaving the Maestro configuration for the final hours of the Sprint generated extra stress due to environment variables and system path issues on Windows.
+
+**Actionable Improvements for Sprint 2:**
+* Enforce a strict rule: all terminals must always be in `cd eco-app` before installing any package.
+* Configure the project as a VS Code Workspace for all team members, preventing the editor from getting lost in root folders.
+* Ensure testing tools (Maestro, Jest) are properly configured and running on everyone's local machines on day one of the Sprint.
 
 ### Sprint 2
 

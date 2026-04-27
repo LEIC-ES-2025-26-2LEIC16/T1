@@ -4,8 +4,15 @@ import { useRouter } from 'expo-router';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import { type Ecoponto } from '@/constants/ecopontos';
 import { ouvirEcopontos } from '@/services/firestore';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-MapLibreGL.setAccessToken(null);
+// Check if we're not running inside Expo Go
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+if (!isExpoGo) {
+  // will only run in our final APK, safe from emulator crashes
+  MapLibreGL.setAccessToken(null);
+}
 
 // Estilo raster com OpenStreetMap — gratuito, sem API key
 const MAPA_ESTILO = {
@@ -180,3 +187,4 @@ marcador: {
   botao: { backgroundColor: '#1B4332', borderRadius: 10, padding: 12 },
   botaoTexto: { color: '#fff', textAlign: 'center', fontWeight: '700', fontSize: 14 },
 });
+

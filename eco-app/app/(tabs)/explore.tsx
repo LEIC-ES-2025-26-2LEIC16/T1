@@ -4,16 +4,9 @@ import { useRouter } from 'expo-router';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import { type Ecoponto } from '@/constants/ecopontos';
 import { ouvirEcopontos } from '@/services/firestore';
-import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-// verifica se a aplicação está a ser executada no ambiente expo go.
-const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient; 
-
-if (!isExpoGo) {
-  // define o token de acesso como nulo para usar estilos gratuitos como openstreetmap.
-  // esta linha só é executada em builds nativas (apk/aab), evitando crashes no expo go.
-  MapLibreGL.setAccessToken(null);
-}
+// define o token de acesso como nulo para usar estilos gratuitos como openstreetmap.
+MapLibreGL.setAccessToken(null);
 
 // definição do estilo do mapa, utilizando um tile server gratuito do openstreetmap.
 const MAP_STYLE = {
@@ -56,18 +49,8 @@ export default function MapaScreen() {
 
   return (
     <View style={styles.container}>
-      {isExpoGo ? (
-        // renderiza um ecrã de fallback se estiver no expo go, pois o maplibre não é compatível.
-        <View style={[styles.mapa, styles.expoGoFallback]}>
-          <Text style={styles.expoGoTitle}>Modo de Visualização: Expo Go</Text>
-          <Text style={styles.expoGoSubtitle}>
-            O mapa real (MapLibre) só será carregado no APK final. Podes testar o resto das
-            funções aqui!
-          </Text>
-        </View>
-      ) : (
-        // renderiza o mapa real na build final (apk/aab).
-        <MapLibreGL.MapView style={styles.mapa} styleURL={JSON.stringify(MAP_STYLE)}>
+      {/* renderiza o mapa real na build final (apk/aab). */}
+      <MapLibreGL.MapView style={styles.mapa} styleURL={JSON.stringify(MAP_STYLE)}>
         <MapLibreGL.Camera
           zoomLevel={13}
           centerCoordinate={CENTRO_PORTO}
@@ -75,7 +58,7 @@ export default function MapaScreen() {
         />
 
         {/* mostra um overlay de carregamento enquanto os dados dos ecopontos são obtidos. */}
-        {loading && !isExpoGo && (
+        {loading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#1B4332" />
             <Text style={styles.loadingTexto}>A carregar mapa...</Text>
@@ -104,8 +87,7 @@ export default function MapaScreen() {
             </View>
           </MapLibreGL.PointAnnotation>
         ))}
-        </MapLibreGL.MapView>
-      )}
+      </MapLibreGL.MapView>
       
       {/* card de informação que aparece quando um ecoponto é selecionado. */}
       {ecopontoSelecionado && (
@@ -166,21 +148,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   // o mapa deve ocupar todo o espaço disponível.
   mapa: { flex: 1 },
-  expoGoFallback: {
-    backgroundColor: '#f0fdf4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#dcfce7',
-  },
-  expoGoTitle: { color: '#1B4332', fontWeight: '700', fontSize: 16, textAlign: 'center' },
-  expoGoSubtitle: {
-    color: '#1B4332',
-    textAlign: 'center',
-    paddingHorizontal: 30,
-    marginTop: 8,
-    opacity: 0.8,
-  },
   loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.8)', zIndex: 1 },
   loadingTexto: { marginTop: 12, fontSize: 14, color: '#666' },
 

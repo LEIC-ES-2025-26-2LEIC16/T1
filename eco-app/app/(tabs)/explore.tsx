@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import { type Ecoponto } from '@/constants/ecopontos';
 import { ouvirEcopontos } from '@/services/firestore';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-// define o token de acesso como nulo para usar estilos gratuitos como openstreetmap.
-MapLibreGL.setAccessToken(null);
+// checking if we are using expo go or the real dev client
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
-// definição do estilo do mapa, utilizando um tile server gratuito do openstreetmap.
-const MAP_STYLE = {
+if (!isExpoGo) {
+  MapLibreGL.setAccessToken(null);
+}
+
+// openstreetmap style
+const MAPA_ESTILO = {
   version: 8,
   sources: {
     osm: {
@@ -23,76 +28,69 @@ const MAP_STYLE = {
   layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
 };
 
-// coordenadas do centro do porto para a câmara inicial do mapa.
-const CENTRO_PORTO = [
-  -8.6291, // longitude
-  41.1579, // latitude
-];
+const CENTRO_PORTO = [-8.6291, 41.1579];
 
 export default function MapaScreen() {
   const router = useRouter();
-  // estado para armazenar a lista de ecopontos vinda do firestore.
   const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
-  // estado para controlar a visibilidade do indicador de carregamento.
-  const [loading, setLoading] = useState(true);
-  // estado para guardar o ecoponto que o utilizador selecionou no mapa.
   const [ecopontoSelecionado, setEcopontoSelecionado] = useState<Ecoponto | null>(null);
+  
+  // new state to prevent crashing before map is loaded
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
-    // subscreve a alterações em tempo real na coleção de ecopontos.
-    const unsubscribe = ouvirEcopontos((dados: Ecoponto[]) => {
-      setEcopontos(dados);
-      setLoading(false);
-    });
+    const unsubscribe = ouvirEcopontos(setEcopontos);
     return unsubscribe;
   }, []);
 
   return (
     <View style={styles.container}>
-      {/* renderiza o mapa real na build final (apk/aab). */}
-      <MapLibreGL.MapView style={styles.mapa} styleURL={JSON.stringify(MAP_STYLE)}>
-        <MapLibreGL.Camera
-          zoomLevel={13}
-          centerCoordinate={CENTRO_PORTO}
-          animationDuration={0}
-        />
+      {isExpoGo ? (
+        <View style={[styles.mapa, { backgroundColor: '#f0fdf4', justifyContent: 'center', alignItems: 'center' }]}>
+          <Text style={{ fontSize: 40, marginBottom: 10 }}>📍</Text>
+          <Text style={{ color: '#1B4332', fontWeight: '700', fontSize: 16 }}>Modo: Expo Go</Text>
+          <Text style={{ textAlign: 'center', padding: 20 }}>O mapa real só carrega no Dev Client!</Text>
+        </View>
+      ) : (
+        <MapLibreGL.MapView
+          style={styles.mapa}
+          mapStyle={MAPA_ESTILO}
+          onDidFinishLoadingMap={() => setIsMapReady(true)} // sets map as ready
+        >
+          <MapLibreGL.Camera
+            zoomLevel={13}
+            centerCoordinate={CENTRO_PORTO}
+            animationDuration={0}
+          />
 
-        {/* mostra um overlay de carregamento enquanto os dados dos ecopontos são obtidos. */}
-        {loading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#1B4332" />
-            <Text style={styles.loadingTexto}>A carregar mapa...</Text>
-          </View>
-        )}
+          {/* only renders markers when map is fully ready to avoid index errors */}
+          {isMapReady && ecopontos.map((ecoponto) => (
+            <MapLibreGL.PointAnnotation
+              key={ecoponto.id}
+              id={ecoponto.id}
+              coordinate={[ecoponto.coordenadas.longitude, ecoponto.coordenadas.latitude]}
+              onSelected={() => setEcopontoSelecionado(ecoponto)}
+            >
+              <View style={[
+                styles.marcador,
+                ecoponto.estado === 'Cheio' && styles.marcadorCheio,
+                ecoponto.estado === 'Danificado' && styles.marcadorDanificado,
+                ecopontoSelecionado?.id === ecoponto.id && styles.marcadorSelecionado,
+              ]}>
+                <Text style={[
+                  styles.marcadorTexto,
+                  ecopontoSelecionado?.id === ecoponto.id && styles.marcadorTextoSelecionado,
+                ]}>♻</Text>
+              </View>
+            </MapLibreGL.PointAnnotation>
+          ))}
+        </MapLibreGL.MapView>
+      )}
 
-        {/* itera sobre a lista de ecopontos e renderiza um marcador para cada um. */}
-        {ecopontos.map((ecoponto) => (
-          <MapLibreGL.PointAnnotation
-            key={ecoponto.id}
-            id={ecoponto.id}
-            coordinate={[ecoponto.coordenadas.longitude, ecoponto.coordenadas.latitude]}
-            onSelected={() => setEcopontoSelecionado(ecoponto)}
-          >
-            {/* o view representa o marcador visual no mapa, com estilos dinâmicos. */}
-            <View style={[
-              styles.marcador,
-              ecoponto.estado === 'Cheio' && styles.marcadorCheio,
-              ecoponto.estado === 'Danificado' && styles.marcadorDanificado,
-              ecopontoSelecionado?.id === ecoponto.id && styles.marcadorSelecionado,
-            ]}>
-              <Text style={[
-                styles.marcadorTexto,
-                ecopontoSelecionado?.id === ecoponto.id && styles.marcadorTextoSelecionado,
-              ]}>♻</Text>
-            </View>
-          </MapLibreGL.PointAnnotation>
-        ))}
-      </MapLibreGL.MapView>
-      
-      {/* card de informação que aparece quando um ecoponto é selecionado. */}
+      {/* info card for selected bins */}
       {ecopontoSelecionado && (
         <View style={styles.card}>
-<View style={styles.cardHeader}>
+          <View style={styles.cardHeader}>
             <View>
               <Text style={styles.cardNome}>{ecopontoSelecionado.nome}</Text>
               <Text style={styles.cardMorada}>{ecopontoSelecionado.morada}</Text>
@@ -106,7 +104,6 @@ export default function MapaScreen() {
             </View>
           </View>
           
-          {/* botões de ação para o ecoponto selecionado. */}
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity
               style={[styles.botao, { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#1B4332' }]}
@@ -120,7 +117,7 @@ export default function MapaScreen() {
                 } as any)
               }
             >
-              <Text style={[styles.botaoTexto, { color: '#1B4332' }]}>⭐ Avaliar</Text>
+              <Text style={[styles.botaoTexto, { color: '#1B4332' }]}>⭐ avaliar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -135,7 +132,7 @@ export default function MapaScreen() {
                 } as any)
               }
             >
-              <Text style={styles.botaoTexto}>Reportar</Text>
+              <Text style={styles.botaoTexto}>reportar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -146,29 +143,22 @@ export default function MapaScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  // o mapa deve ocupar todo o espaço disponível.
   mapa: { flex: 1 },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.8)', zIndex: 1 },
-  loadingTexto: { marginTop: 12, fontSize: 14, color: '#666' },
-
-  // estilo base para os marcadores (pins) no mapa.
   marcador: {
-    width: 44,
+    width: 44, 
     height: 44, 
-    borderRadius: 22, // metade da largura/altura para criar um círculo.
+    borderRadius: 22, 
     backgroundColor: '#279840',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 2, 
     borderColor: '#fff',
-    // sombra para dar profundidade e destacar o marcador do mapa.
-    elevation: 4, // sombra para android.
-    shadowColor: '#000', // sombra para ios.
+    elevation: 4, 
+    shadowColor: '#000', 
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
   },
-  // estilos condicionais para o marcador, baseados no estado do ecoponto.
   marcadorCheio: { backgroundColor: '#D97706' },
   marcadorDanificado: { backgroundColor: '#DC2626' },
   marcadorSelecionado: {
@@ -180,10 +170,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 6,
   },
-  // estilos para o ícone de reciclagem dentro do marcador.
   marcadorTextoSelecionado: { fontSize: 28 },
   marcadorTexto: { fontSize: 22 },
-  // estilo para o card de informações que flutua sobre o mapa.
   card: {
     position: 'absolute',
     bottom: 24,

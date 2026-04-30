@@ -4,10 +4,14 @@ import {
   addDoc,
   doc,
   setDoc,
+  getDoc,
   onSnapshot,
   serverTimestamp,
   query,
   where,
+  arrayUnion,
+  arrayRemove,
+  updateDoc,
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 
@@ -111,7 +115,25 @@ export async function getPerfilUtilizador(): Promise<PerfilUtilizador> {
 export async function guardarPerfilUtilizador(perfil: PerfilUtilizador) {
   const user = auth.currentUser;
   if (!user) throw new Error('Utilizador não autenticado.');
-  await setDoc(doc(db, 'utilizadores', user.uid), { uid: user.uid, ...perfil });
+  await setDoc(doc(db, 'utilizadores', user.uid), { uid: user.uid, ...perfil }, { merge: true });
+}
+
+export async function getFavoritos(): Promise<string[]> {
+  const user = auth.currentUser;
+  if (!user) return [];
+  const snap = await getDoc(doc(db, 'utilizadores', user.uid));
+  return (snap.data()?.favoritos as string[]) ?? [];
+}
+
+export async function toggleFavorito(ecopontoId: string, isFavorito: boolean): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+  const ref = doc(db, 'utilizadores', user.uid);
+  await updateDoc(ref, {
+    favoritos: isFavorito ? arrayRemove(ecopontoId) : arrayUnion(ecopontoId),
+  }).catch(() =>
+    setDoc(ref, { uid: user.uid, favoritos: [ecopontoId] }, { merge: true })
+  );
 }
 
 export async function getEstatisticasUtilizador() {
@@ -141,6 +163,49 @@ export async function getEstatisticasUtilizador() {
     totalCO2: totalCO2.toFixed(1),
     totalPontos,
   };
+}
+
+export type Objetivo = {
+  id: string;
+  material: string;
+  metaKg: number;
+  periodo: 'semanal' | 'mensal';
+  criadoEm: string;
+};
+
+export async function getObjetivos(): Promise<Objetivo[]> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+  const q = query(collection(db, 'objetivos'), where('userId', '==', user.uid));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => {
+    const data = d.data();
+    return {
+      id: d.id,
+      material: data.material,
+      metaKg: data.metaKg,
+      periodo: data.periodo,
+      criadoEm: data.criadoEm?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+    };
+  });
+}
+
+export async function criarObjetivo(material: string, metaKg: number, periodo: 'semanal' | 'mensal') {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+  await addDoc(collection(db, 'objetivos'), {
+    userId: user.uid,
+    material,
+    metaKg,
+    periodo,
+    criadoEm: serverTimestamp(),
+  });
+}
+
+export async function eliminarObjetivo(id: string) {
+  await import('firebase/firestore').then(({ deleteDoc, doc: firestoreDoc }) =>
+    deleteDoc(firestoreDoc(db, 'objetivos', id))
+  );
 }
 
 export async function getHistoricoReciclagem() {

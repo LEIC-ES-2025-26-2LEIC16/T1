@@ -52,6 +52,7 @@ export default function RootLayout() {
         <Stack.Screen name="report-success" options={{ headerShown: false }} />
         <Stack.Screen name="add-ecoponto" options={{ title: 'Adicionar Ecoponto' }} />
         <Stack.Screen name="wrapped" options={{ presentation: 'modal', title: 'O teu Wrapped' }} />
+        <Stack.Screen name="ecopontos" options={{ title: 'Ecopontos' }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

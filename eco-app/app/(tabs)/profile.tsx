@@ -272,6 +272,6 @@ const styles = StyleSheet.create({
 
   botaoSair:      { marginHorizontal: 20, marginTop: 0.1, borderWidth: 1.5, borderColor: '#DC2626', borderRadius: 10, padding: 14, alignItems: 'center' },
   botaoSairTexto: { color: '#DC2626', fontWeight: '700', fontSize: 15 },
-  botaoWrapped: { backgroundColor: '#1B4332', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 20, shadowColor: '#1B4332', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,},
+  botaoWrapped: { marginHorizontal: 20, backgroundColor: '#1B4332', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 20, shadowColor: '#1B4332', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4},
   botaoWrappedTexto: { color: '#fff', fontWeight: '700', fontSize: 16,},
 });

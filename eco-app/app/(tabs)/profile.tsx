@@ -187,26 +187,91 @@ export default function ProfileScreen() {
         <Text style={styles.botaoWrappedTexto}>✨ Ver o meu Wrapped 2026</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.botaoSair} onPress={handleLogout}>
-        <Text style={styles.botaoSairTexto}>Terminar sessão</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.botaoSair} onPress={handleLogout}>
+          <Text style={styles.botaoSairTexto}>Terminar sessão</Text>
+        </TouchableOpacity>
+
+  
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container:     { flexGrow: 1, padding: 24, backgroundColor: '#fff' },
-  header:        { alignItems: 'center', paddingTop: 20, marginBottom: 32 },
-  avatar:        { width: 80, height: 80, borderRadius: 40, backgroundColor: '#1B4332', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  avatarTexto:   { fontSize: 30, fontWeight: '700', color: '#fff' },
-  nome:          { fontSize: 20, fontWeight: '700', color: '#1a1a1a', marginBottom: 4 },
-  email:         { fontSize: 14, color: '#888' },
-  secaoTitulo:   { fontSize: 13, fontWeight: '600', color: '#aaa', letterSpacing: 0.8, marginBottom: 12 },
-  grelha:        { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 40 },
-  statCard:      { flex: 1, minWidth: '45%', backgroundColor: '#f7f7f7', borderRadius: 12, padding: 16, alignItems: 'center', borderWidth: 0.5, borderColor: '#e0e0e0' },
-  statCardVerde: { backgroundColor: '#EAF3DE', borderColor: '#c4e0a0' },
-  statValor:     { fontSize: 22, fontWeight: '700', color: '#1a1a1a', marginBottom: 4 },
-  statLabel:     { fontSize: 12, color: '#888' },
-  botaoSair:     { borderWidth: 1.5, borderColor: '#DC2626', borderRadius: 10, padding: 14, alignItems: 'center' },
-  botaoSairTexto:{ color: '#DC2626', fontWeight: '700', fontSize: 15 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  container:        { backgroundColor: '#fff', paddingBottom: 48 },
+
+  banner: {
+    height: BANNER_HEIGHT,
+    backgroundColor: '#1B4332',
+  },
+
+  avatarRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: 20,
+    marginTop: -(AVATAR_SIZE / 2),
+    marginBottom: 12,
+  },
+  avatar: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    backgroundColor: '#639922',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  avatarTexto: { fontSize: 34, fontWeight: '700', color: '#fff' },
+
+  botaoEditar: {
+    marginLeft: 'auto',
+    borderWidth: 1.5,
+    borderColor: '#1B4332',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    marginBottom: 6,
+  },
+  botaoEditarTexto: { color: '#1B4332', fontWeight: '600', fontSize: 13 },
+
+  infoContainer: { paddingHorizontal: 20, marginBottom: 4 },
+
+  nome:     { fontSize: 20, fontWeight: '700', color: '#1a1a1a' },
+  username: { fontSize: 14, color: '#639922', fontWeight: '600', marginTop: 2 },
+  email:    { fontSize: 13, color: '#999', marginTop: 2 },
+  bio:      { fontSize: 14, color: '#444', marginTop: 10, lineHeight: 20 },
+  bioVazia: { fontSize: 14, color: '#bbb', marginTop: 10, fontStyle: 'italic' },
+
+  fieldLabel: { fontSize: 12, color: '#888', fontWeight: '600', marginBottom: 4, marginTop: 14 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    color: '#1a1a1a',
+    backgroundColor: '#fafafa',
+  },
+  inputBio:         { height: 80, textAlignVertical: 'top' },
+  botoesEdicao:     { flexDirection: 'row', gap: 10, marginTop: 20 },
+  botaoCancelar:    { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 10, padding: 13, alignItems: 'center' },
+  botaoCancelarTexto: { color: '#666', fontWeight: '600' },
+  botaoGuardar:     { flex: 1, backgroundColor: '#1B4332', borderRadius: 10, padding: 13, alignItems: 'center' },
+  botaoGuardarTexto:{ color: '#fff', fontWeight: '700' },
+
+  separador:    { height: 1, backgroundColor: '#f0f0f0', marginVertical: 20, marginHorizontal: 20 },
+  secaoTitulo:  { fontSize: 11, fontWeight: '600', color: '#aaa', letterSpacing: 0.8, marginBottom: 12, paddingHorizontal: 20 },
+
+  grelha:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 20, marginBottom: 32 },
+  statCard:     { flex: 1, minWidth: '45%', backgroundColor: '#f7f7f7', borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 0.5, borderColor: '#e8e8e8' },
+  statCardVerde:{ backgroundColor: '#EAF3DE', borderColor: '#c4e0a0' },
+  statValor:    { fontSize: 20, fontWeight: '700', color: '#1a1a1a', marginBottom: 3 },
+  statLabel:    { fontSize: 11, color: '#888' },
+
+  botaoSair:      { marginHorizontal: 20, marginTop: 0.1, borderWidth: 1.5, borderColor: '#DC2626', borderRadius: 10, padding: 14, alignItems: 'center' },
+  botaoSairTexto: { color: '#DC2626', fontWeight: '700', fontSize: 15 },
+  botaoWrapped: { backgroundColor: '#1B4332', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 20, shadowColor: '#1B4332', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,},
+  botaoWrappedTexto: { color: '#fff', fontWeight: '700', fontSize: 16,},
 });

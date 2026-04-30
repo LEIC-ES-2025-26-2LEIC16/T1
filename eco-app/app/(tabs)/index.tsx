@@ -1,14 +1,51 @@
-import { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { useState, useCallback, useEffect } from 'react';
+import {
+  View, Text, TouchableOpacity, StyleSheet,
+  ActivityIndicator, ScrollView,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ecoponto } from '@/constants/ecopontos';
-import { ouvirEcopontos, seedEcopontos, getFavoritos, toggleFavorito } from '@/services/firestore';
-import { useEffect } from 'react';
+import {
+  ouvirEcopontos, seedEcopontos, getFavoritos,
+  getHistoricoReciclagem, getObjetivos, getPerfilUtilizador, type Objetivo,
+} from '@/services/firestore';
 
-const ESTADO_STYLE: Record<string, object> = {
-  'Cheio':      { backgroundColor: '#FEF3C7' },
-  'Danificado': { backgroundColor: '#FEE2E2' },
+function saudacao() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 19) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+function getIniciais(nome: string): string {
+  const partes = nome.trim().split(' ').filter(Boolean);
+  if (partes.length >= 2) return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+  return nome.slice(0, 2).toUpperCase();
+}
+
+function calcularProgressoObjetivo(
+  objetivo: Objetivo,
+  registos: { date: string; amount: string; type: string }[]
+): number {
+  const hoje = new Date();
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const total = registos
+    .filter(r => new Date(r.date) >= inicio && (objetivo.material === 'Todos' || r.type === objetivo.material))
+    .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  return Math.min(total / objetivo.metaKg, 1);
+}
+
+const ESTADO_COR: Record<string, string> = {
+  Operacional: '#4ADE80',
+  Cheio: '#F59E0B',
+  Danificado: '#F87171',
+};
+
+const ESTADO_LABEL: Record<string, string> = {
+  Operacional: 'Disponível',
+  Cheio: 'Cheio',
+  Danificado: 'Danificado',
 };
 
 export default function HomeScreen() {
@@ -17,6 +54,11 @@ export default function HomeScreen() {
   const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [registos, setRegistos] = useState<{ date: string; amount: string; type: string; pontos: number }[]>([]);
+  const [objetivo, setObjetivo] = useState<Objetivo | null>(null);
+  const [nome, setNome] = useState('');
+
+  const iniciais = getIniciais(nome || 'U');
 
   useEffect(() => {
     seedEcopontos();
@@ -28,33 +70,67 @@ export default function HomeScreen() {
   }, []);
 
   useFocusEffect(useCallback(() => {
-    getFavoritos().then(setFavoritos);
+    Promise.all([getFavoritos(), getHistoricoReciclagem(), getObjetivos(), getPerfilUtilizador()])
+      .then(([favs, reg, objs, perfil]) => {
+        setFavoritos(favs);
+        setRegistos(reg);
+        setObjetivo(objs.find(o => o.periodo === 'mensal') ?? objs[0] ?? null);
+        setNome(perfil.nome || perfil.username || 'Utilizador');
+      });
   }, []));
 
-  const handleDesfavoritar = async (id: string) => {
-    setFavoritos(prev => prev.filter(f => f !== id));
-    await toggleFavorito(id, true);
-  };
+  const agora = new Date();
+  const mesAtual = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
+  const registosMes = registos.filter(r => r.date.startsWith(mesAtual));
+  const visitas = registosMes.length;
+  const kgMes = registosMes.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const pontosMes = registosMes.reduce((s, r) => s + r.pontos, 0);
 
-  const ecopontosFavoritos = ecopontos.filter(e => favoritos.includes(e.id));
+  const ecopontosFav = ecopontos.filter(e => favoritos.includes(e.id));
+
+  const progresso = objetivo ? calcularProgressoObjetivo(objetivo, registos) : 0;
+  const kgFeitos = objetivo ? (progresso * objetivo.metaKg).toFixed(1) : '0';
+  const percentagem = Math.round(progresso * 100);
+  const kgEmFalta = objetivo ? Math.max(0, objetivo.metaKg - Number(kgFeitos)).toFixed(1) : '0';
+
+  const nomeMes = agora.toLocaleString('pt-PT', { month: 'long' });
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1B4332" />
+        <ActivityIndicator size="large" color="#4ADE80" />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Avatar topo direito */}
+      <View style={[styles.avatarRow, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          style={styles.avatar}
+          onPress={() => router.push('/(tabs)/profile' as any)}
+        >
+          <Text style={styles.avatarTexto}>{iniciais}</Text>
+        </TouchableOpacity>
+      </View>
 
-      <Text style={styles.titulo}>Ecopontos</Text>
+      {/* Header saudação */}
+      <View style={styles.header}>
+        <Text style={styles.saudacaoLabel}>{saudacao()},</Text>
+        <Text style={styles.saudacaoNome}>{nome} 👋</Text>
+      </View>
 
-      {/* Botão para ir à lista completa */}
+      {/* Ver todos os ecopontos */}
       <TouchableOpacity style={styles.botaoLista} onPress={() => router.push('/ecopontos' as any)}>
         <View style={styles.botaoListaEsq}>
-          <Text style={styles.botaoListaIcone}>♻</Text>
+          <View style={styles.botaoListaIconeWrap}>
+            <Text style={styles.botaoListaIcone}>♻</Text>
+          </View>
           <View>
             <Text style={styles.botaoListaTitulo}>Ver todos os ecopontos</Text>
             <Text style={styles.botaoListaSub}>Pesquisar, adicionar e favoritar</Text>
@@ -63,99 +139,169 @@ export default function HomeScreen() {
         <Text style={styles.botaoListaSeta}>›</Text>
       </TouchableOpacity>
 
-      {/* Favoritos */}
-      <Text style={styles.secaoTitulo}>★  Favoritos</Text>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-        {ecopontosFavoritos.length === 0 ? (
-          <View style={styles.favVazio}>
-            <Text style={styles.favVazioEmoji}>⭐</Text>
-            <Text style={styles.favVazioTexto}>Ainda não tens favoritos</Text>
-            <Text style={styles.favVazioSub}>Vai à lista de ecopontos e carrega em ☆ para adicionar.</Text>
+      {/* Impacto este mês */}
+      <View style={styles.impactoCard}>
+        <Text style={styles.impactoLabel}>O TEU IMPACTO ESTE MÊS</Text>
+        <View style={styles.impactoRow}>
+          <View style={styles.impactoItem}>
+            <Text style={styles.impactoValor}>{visitas}</Text>
+            <Text style={styles.impactoSub}>visitas</Text>
           </View>
-        ) : (
-          ecopontosFavoritos.map(e => (
-            <View key={e.id} style={styles.card} testID="recycling-bin-marker">
-              <View style={styles.cardTopo}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardNome}>{e.nome}</Text>
-                  <Text style={styles.cardMorada}>{e.morada}</Text>
-                </View>
-                <View style={styles.cardTopoDireita}>
-                  <View style={[styles.estadoBadge, ESTADO_STYLE[e.estado]]}>
-                    <Text style={styles.estadoTexto}>{e.estado}</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => handleDesfavoritar(e.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Text style={styles.starAtivo}>★</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+          <View style={styles.impactoDivider} />
+          <View style={styles.impactoItem}>
+            <Text style={styles.impactoValor}>{kgMes.toFixed(0)}kg</Text>
+            <Text style={styles.impactoSub}>reciclado</Text>
+          </View>
+          <View style={styles.impactoDivider} />
+          <View style={styles.impactoItem}>
+            <Text style={styles.impactoValor}>{pontosMes}</Text>
+            <Text style={styles.impactoSub}>pontos</Text>
+          </View>
+        </View>
+      </View>
 
-              <View style={styles.acoes}>
-                <TouchableOpacity style={[styles.acao, { backgroundColor: '#1B4332' }]} onPress={() => router.push('/log-recycling' as any)}>
-                  <Text style={styles.acaoTexto}>📸  Registar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.acao, { backgroundColor: '#4B5563' }]}
-                  testID="review-bin-button"
-                  onPress={() => router.push({ pathname: '/review-bin', params: { ecopontoId: e.id, ecopontoNome: e.nome } } as any)}
-                >
-                  <Text style={styles.acaoTexto}>⭐  Avaliar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.acao, { backgroundColor: '#B91C1C' }]}
-                  testID="report-problem-button"
-                  onPress={() => router.push({ pathname: '/report-problem', params: { ecopontoNome: e.nome, ecopontoMorada: e.morada } } as any)}
-                >
-                  <Text style={styles.acaoTexto}>⚠  Reportar</Text>
-                </TouchableOpacity>
-              </View>
+      {/* Favoritos */}
+      <View style={styles.secaoHeader}>
+        <Text style={styles.secaoTitulo}>⭐  Favoritos</Text>
+        <TouchableOpacity onPress={() => router.push('/ecopontos' as any)}>
+          <Text style={styles.verTodos}>ver todos</Text>
+        </TouchableOpacity>
+      </View>
+
+      {ecopontosFav.length === 0 ? (
+        <View style={styles.favVazio}>
+          <Text style={styles.favVazioTexto}>Ainda não tens favoritos</Text>
+          <Text style={styles.favVazioSub}>Vai à lista de ecopontos e carrega em ☆ para adicionar.</Text>
+        </View>
+      ) : (
+        ecopontosFav.map(e => (
+          <TouchableOpacity
+            key={e.id}
+            style={styles.favCard}
+            onPress={() => router.push('/ecopontos' as any)}
+          >
+            <View style={styles.favIconeWrap}>
+              <Text style={styles.favIcone}>♻</Text>
             </View>
-          ))
-        )}
-      </ScrollView>
-    </View>
+            <View style={styles.favInfo}>
+              <Text style={styles.favNome}>{e.nome}</Text>
+              <Text style={[styles.favEstado, { color: ESTADO_COR[e.estado] ?? '#aaa' }]}>
+                {ESTADO_LABEL[e.estado] ?? e.estado}
+              </Text>
+            </View>
+            <Text style={styles.favSeta}>›</Text>
+          </TouchableOpacity>
+        ))
+      )}
+
+      {/* Objetivo do mês */}
+      {objetivo && (
+        <>
+          <Text style={styles.secaoTituloObjetivo}>🎯  Objetivo do mês</Text>
+          <View style={styles.objetivoCard}>
+            <Text style={styles.objetivoTitulo}>
+              Reciclar {objetivo.metaKg}kg em {nomeMes}
+            </Text>
+            <View style={styles.objetivoProgressoRow}>
+              <View style={styles.barraFundo}>
+                <View style={[styles.barraProgresso, { width: `${percentagem}%` }]} />
+              </View>
+              <Text style={styles.objetivoKg}>{kgFeitos} / {objetivo.metaKg}kg</Text>
+            </View>
+            {progresso >= 1 ? (
+              <Text style={styles.objetivoSub}>✓ Objetivo concluído! Parabéns 🎉</Text>
+            ) : (
+              <Text style={styles.objetivoSub}>Faltam {kgEmFalta}kg para atingires o objetivo 💪</Text>
+            )}
+          </View>
+        </>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container:        { flex: 1, paddingHorizontal: 16, backgroundColor: '#fff' },
+  container:        { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  titulo:           { fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5, marginBottom: 16, paddingHorizontal: 4 },
+
+  avatarRow: {
+    alignItems: 'flex-end',
+    marginBottom: 4,
+  },
+  header: {
+    marginBottom: 20,
+  },
+  saudacaoLabel: { fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5 },
+  saudacaoNome:  { fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5 },
+  avatar: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: '#1B4332',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  avatarTexto: { fontSize: 15, fontWeight: '700', color: '#fff' },
 
   botaoLista: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#F0F7F0', borderRadius: 14, padding: 16, marginBottom: 24, marginHorizontal: 4,
+    backgroundColor: '#F0F7F0', borderRadius: 14, padding: 16, marginBottom: 16,
     borderWidth: 1, borderColor: '#D1EAD1',
   },
   botaoListaEsq:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  botaoListaIcone:  { fontSize: 28 },
+  botaoListaIconeWrap: {
+    width: 44, height: 44, borderRadius: 10,
+    backgroundColor: '#D1EAD1', justifyContent: 'center', alignItems: 'center',
+  },
+  botaoListaIcone:  { fontSize: 24 },
   botaoListaTitulo: { fontSize: 15, fontWeight: '700', color: '#1B4332' },
   botaoListaSub:    { fontSize: 12, color: '#639922', marginTop: 2 },
   botaoListaSeta:   { fontSize: 24, color: '#1B4332', fontWeight: '300' },
 
-  secaoTitulo: { fontSize: 13, fontWeight: '700', color: '#aaa', letterSpacing: 0.5, marginBottom: 12, paddingHorizontal: 4 },
+  impactoCard: {
+    backgroundColor: '#1B4332', borderRadius: 16, padding: 20, marginBottom: 24,
+  },
+  impactoLabel: {
+    fontSize: 11, fontWeight: '700', color: '#86EFAC', letterSpacing: 1, marginBottom: 16,
+  },
+  impactoRow:    { flexDirection: 'row', alignItems: 'center' },
+  impactoItem:   { flex: 1, alignItems: 'center' },
+  impactoValor:  { fontSize: 30, fontWeight: '800', color: '#fff' },
+  impactoSub:    { fontSize: 12, color: '#86EFAC', marginTop: 4 },
+  impactoDivider:{ width: 1, height: 40, backgroundColor: '#2D6A4F' },
 
-  favVazio:      { alignItems: 'center', paddingVertical: 40 },
-  favVazioEmoji: { fontSize: 40, marginBottom: 12 },
-  favVazioTexto: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 6 },
-  favVazioSub:   { fontSize: 13, color: '#aaa', textAlign: 'center', paddingHorizontal: 24 },
+  secaoHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12,
+  },
+  secaoTitulo:        { fontSize: 17, fontWeight: '700', color: '#1a1a1a' },
+  secaoTituloObjetivo:{ fontSize: 17, fontWeight: '700', color: '#1a1a1a', marginTop: 8, marginBottom: 12 },
+  verTodos:           { fontSize: 13, color: '#1B4332', fontWeight: '600' },
 
-  card: {
-    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10, marginHorizontal: 4,
+  favVazio:    { paddingVertical: 24, alignItems: 'center' },
+  favVazioTexto:{ fontSize: 15, color: '#555', fontWeight: '600', marginBottom: 6 },
+  favVazioSub: { fontSize: 13, color: '#aaa', textAlign: 'center' },
+
+  favCard: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10,
     borderWidth: 1, borderColor: '#efefef',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  cardTopo:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  cardTopoDireita:{ alignItems: 'flex-end', gap: 6 },
-  cardNome:       { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 2 },
-  cardMorada:     { fontSize: 12, color: '#aaa' },
-  starAtivo:      { fontSize: 20, color: '#F59E0B' },
+  favIconeWrap: {
+    width: 48, height: 48, borderRadius: 10,
+    backgroundColor: '#F0F7F0', justifyContent: 'center', alignItems: 'center', marginRight: 14,
+  },
+  favIcone: { fontSize: 24 },
+  favInfo:  { flex: 1 },
+  favNome:  { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 3 },
+  favEstado:{ fontSize: 12, fontWeight: '500' },
+  favSeta:  { fontSize: 22, color: '#ccc', fontWeight: '300' },
 
-  estadoBadge:    { backgroundColor: '#D1FAE5', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  estadoTexto:    { fontSize: 11, fontWeight: '600', color: '#1B4332' },
-
-  acoes:     { flexDirection: 'row', gap: 7 },
-  acao:      { flex: 1, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
-  acaoTexto: { color: '#fff', fontSize: 11, fontWeight: '600' },
+  objetivoCard: {
+    backgroundColor: '#F0F7F0', borderRadius: 16, padding: 18,
+    borderWidth: 1, borderColor: '#D1EAD1',
+  },
+  objetivoTitulo: { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 14 },
+  objetivoProgressoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
+  barraFundo: { flex: 1, height: 10, backgroundColor: '#D1EAD1', borderRadius: 5, overflow: 'hidden' },
+  barraProgresso: { height: 10, backgroundColor: '#1B4332', borderRadius: 5 },
+  objetivoKg: { fontSize: 13, fontWeight: '700', color: '#1B4332', minWidth: 70, textAlign: 'right' },
+  objetivoSub:{ fontSize: 13, color: '#639922' },
 });

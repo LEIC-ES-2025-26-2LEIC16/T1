@@ -227,6 +227,7 @@ export async function getHistoricoReciclagem() {
         type: data.material as string,
         amount: data.quantidade as string,
         impact: data.impactoCO2 as string,
+        pontos: (data.pontosAtribuidos as number) || 0,
         date,
       };
     })

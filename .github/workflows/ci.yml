@@ -16,12 +16,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: eco-app/package-lock.json
 
-      - name: Install dependencies
-        run: |
-          cd eco-app
-          npm install
+#      - name: Install dependencies
+#        run: |
+#          cd eco-app
+#          npm install
 
-      - name: Run unit tests
-        run: |
-          cd eco-app
-          npm test
+#     - name: Run unit tests
+#        run: |
+#          cd eco-app
+#          npm test

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { StyleSheet, ScrollView, View, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { getHistoricoReciclagem } from '@/services/firestore';
@@ -21,6 +22,7 @@ const groupByMonth = (data) => {
 };
 
 export default function HistoryScreen() {
+  const insets = useSafeAreaInsets();
   const [registos, setRegistos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +52,7 @@ export default function HistoryScreen() {
   );
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <ThemedText style={styles.subtitle}>histórico de reciclagem</ThemedText>
       <ThemedText type="title" style={styles.header}>My impact</ThemedText>
 
@@ -84,7 +86,7 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, paddingHorizontal: 20, paddingTop: 24 },
+  container:    { flex: 1, paddingHorizontal: 20 },
   subtitle:     { fontSize: 13, color: '#888', marginBottom: 2 },
   header:       { marginBottom: 16 },
   summaryRow:   { flexDirection: 'row', gap: 8, marginBottom: 20 },

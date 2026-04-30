@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { signOut } from 'firebase/auth';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { auth } from '@/services/firebase';
 import {
   getEstatisticasUtilizador,
@@ -24,6 +25,7 @@ const BANNER_HEIGHT = 130;
 const AVATAR_SIZE = 90;
 
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const user = auth.currentUser;
   const [stats, setStats] = useState<Estatisticas | null>(null);
   const [perfil, setPerfil] = useState<PerfilUtilizador>({ nome: '', username: '', bio: '' });
@@ -81,7 +83,7 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 
         {/* Banner */}
-        <View style={styles.banner} />
+        <View style={[styles.banner, { height: BANNER_HEIGHT + insets.top }]} />
 
         {/* Avatar + botão editar */}
         <View style={styles.avatarRow}>

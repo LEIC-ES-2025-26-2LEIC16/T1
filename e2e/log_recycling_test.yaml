@@ -3,26 +3,16 @@ appId: com.myimpact.app
 - launchApp:
     clearState: false
 
-- assertVisible: "Entra na tua conta"
+# a nossa app vai abrir já com o login feito, logo procuramos o mapa
+- extendedWaitUntil:
+    visible: "Ecopontos"
+    timeout: 10000
 
-- tapOn: "Email"
-- inputText: "up202406974@up.pt"
-
-- tapOn: "Password"
-- inputText: "123456"
-
-- hideKeyboard
-
-- tapOn: "Entrar"
-
-- assertVisible: "Ecopontos"
-
+# fluxo de reciclagem
 - tapOn: "Registar Reciclagem"
-- assertVisible: "1. O que vais reciclar?"
-
 - tapOn: "Ex: 2.5"
 - inputText: "2"
-
-- tapOn: "Pl.stico"
-
-- assertVisible: "Abrir Câmara"
+- tapOn: "Plástico"
+- hideKeyboard
+- tapOn: "Abrir Câmara"
+- tapOn: "Submeter (+10 pts)"

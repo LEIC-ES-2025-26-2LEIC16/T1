@@ -93,8 +93,13 @@ export default function ObjectivesScreen() {
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Eliminar', style: 'destructive', onPress: async () => {
-          await eliminarObjetivo(id);
-          setObjetivos(o => o.filter(x => x.id !== id));
+          try {
+            await eliminarObjetivo(id);
+            setObjetivos(o => o.filter(x => x.id !== id));
+          } catch (error) {
+            console.error("Erro ao eliminar objetivo:", error);
+            Alert.alert("Erro", "Não foi possível eliminar o objetivo. Tente novamente.");
+          }
         },
       },
     ]);

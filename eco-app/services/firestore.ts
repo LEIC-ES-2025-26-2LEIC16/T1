@@ -233,3 +233,21 @@ export async function getHistoricoReciclagem() {
     })
     .sort((a, b) => b.date.localeCompare(a.date));
 }
+
+export async function guardarReview(ecopontoId: string, rating: number, comment: string) {
+try {
+  // Tenta ir buscar o ID do utilizador logado. Se não houver, fica 'anonimo'
+  const userId = auth.currentUser?.uid || 'anonimo'; 
+
+  await addDoc(collection(db, 'reviews'), {
+    ecopontoId,
+    rating,
+    comment,
+    userId,
+    data: serverTimestamp() // Guarda a data e hora exatas do servidor
+  });
+} catch (error) {
+  console.error("Erro ao guardar review:", error);
+  throw error; // Lança o erro para o ecrã poder mostrar o modal de falha
+}
+}

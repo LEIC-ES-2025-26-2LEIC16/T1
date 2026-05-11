@@ -1,0 +1,23 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+
+# reinicia a app para garantir que a persistência de login está ativa
+- stopApp 
+- launchApp
+
+- extendedWaitUntil:
+    visible: ".*Ranking.*"
+    timeout: 10000
+
+# agora que sabemos que o separador existe, clicamos nele
+- tapOn: ".*Ranking.*"
+
+# esperamos pelo título do novo ecrã para confirmar a navegação
+- extendedWaitUntil:
+    visible: ".*Top Recicladores.*"
+    timeout: 10000
+
+# verificamos se algum item com "pts" está visível, confirmando que a lista carregou
+- assertVisible: ".*pts.*"

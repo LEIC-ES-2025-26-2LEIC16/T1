@@ -9,9 +9,11 @@ import {
   serverTimestamp,
   query,
   where,
+  orderBy,
   arrayUnion,
   arrayRemove,
   updateDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 
@@ -105,11 +107,29 @@ export type PerfilUtilizador = {
 
 export async function getPerfilUtilizador(): Promise<PerfilUtilizador> {
   const user = auth.currentUser;
-  if (!user) throw new Error('Utilizador não autenticado.');
-  const snap = await getDocs(query(collection(db, 'utilizadores'), where('uid', '==', user.uid)));
-  if (snap.empty) return { nome: user.displayName ?? '', username: '', bio: '' };
-  const data = snap.docs[0].data();
-  return { nome: data.nome ?? '', username: data.username ?? '', bio: data.bio ?? '' };
+
+  if (!user) {
+    console.log("Aguardando autenticação para carregar o perfil...");
+    return { nome: '', username: '', bio: '' };
+  }
+
+  try {
+    const docRef = doc(db, 'utilizadores', user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return {
+        nome: data.nome || '',
+        username: data.username || '',
+        bio: data.bio || '',
+      };
+    }
+    return { nome: user.displayName ?? '', username: '', bio: '' };
+  } catch (error) {
+    console.error("Erro ao obter perfil do utilizador:", error);
+    return { nome: '', username: '', bio: '' };
+  }
 }
 
 export async function guardarPerfilUtilizador(perfil: PerfilUtilizador) {
@@ -138,7 +158,11 @@ export async function toggleFavorito(ecopontoId: string, isFavorito: boolean): P
 
 export async function getEstatisticasUtilizador() {
   const user = auth.currentUser;
-  if (!user) throw new Error('Utilizador não autenticado.');
+  if (!user) {
+    // Retorna null para que o ecrã de perfil possa lidar com o estado de loading
+    // sem que a app crashe ou mostre um erro ao utilizador.
+    return null;
+  }
 
   const q = query(
     collection(db, 'registos_reciclagem'),
@@ -175,19 +199,28 @@ export type Objetivo = {
 
 export async function getObjetivos(): Promise<Objetivo[]> {
   const user = auth.currentUser;
-  if (!user) throw new Error('Utilizador não autenticado.');
-  const q = query(collection(db, 'objetivos'), where('userId', '==', user.uid));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => {
-    const data = d.data();
-    return {
-      id: d.id,
-      material: data.material,
-      metaKg: data.metaKg,
-      periodo: data.periodo,
-      criadoEm: data.criadoEm?.toDate?.()?.toISOString() ?? new Date().toISOString(),
-    };
-  });
+  if (!user) {
+    console.log("Aguardando autenticação para os objetivos...");
+    return [];
+  }
+
+  try {
+    const q = query(collection(db, 'objetivos'), where('userId', '==', user.uid));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        material: data.material,
+        metaKg: data.metaKg,
+        periodo: data.periodo,
+        criadoEm: data.criadoEm?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+      };
+    });
+  } catch (error) {
+    console.error("Erro ao procurar objetivos:", error);
+    return [];
+  }
 }
 
 export async function criarObjetivo(material: string, metaKg: number, periodo: 'semanal' | 'mensal') {
@@ -203,37 +236,43 @@ export async function criarObjetivo(material: string, metaKg: number, periodo: '
 }
 
 export async function eliminarObjetivo(id: string) {
-  await import('firebase/firestore').then(({ deleteDoc, doc: firestoreDoc }) =>
-    deleteDoc(firestoreDoc(db, 'objetivos', id))
-  );
-}
-
-export async function getHistoricoReciclagem() {
   const user = auth.currentUser;
   if (!user) throw new Error('Utilizador não autenticado.');
 
-  const q = query(
-    collection(db, 'registos_reciclagem'),
-    where('userId', '==', user.uid)
-  );
+  const objetivoRef = doc(db, 'objetivos', id);
+  const objetivoSnap = await getDoc(objetivoRef);
 
-  const snapshot = await getDocs(q);
-  return snapshot.docs
-    .map(d => {
-      const data = d.data();
-      const date = data.criadoEm?.toDate?.()?.toISOString().split('T')[0] ?? new Date().toISOString().split('T')[0];
-      return {
-        id: d.id,
-        type: data.material as string,
-        amount: data.quantidade as string,
-        impact: data.impactoCO2 as string,
-        pontos: (data.pontosAtribuidos as number) || 0,
-        date,
-      };
-    })
-    .sort((a, b) => b.date.localeCompare(a.date));
+  // Medida de segurança: garante que o objetivo pertence ao utilizador logado
+  if (!objetivoSnap.exists() || objetivoSnap.data().userId !== user.uid) {
+    console.error("Tentativa de eliminar objetivo que não pertence ao utilizador ou não existe.");
+    throw new Error("Operação não permitida.");
+  }
+
+  await deleteDoc(objetivoRef);
 }
 
+export const getHistoricoReciclagem = async () => {
+  const user = auth.currentUser;
+
+  // se o utilizador ainda não estiver carregado, não tentamos a query
+  if (!user) {
+    console.log("Aguardando autenticação...");
+    return []; // return da lista vazia em vez de crashar
+  }
+
+  try {
+    const q = query(
+      collection(db, "registos_reciclagem"),
+      where("userId", "==", user.uid),
+      orderBy("criadoEm", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Erro ao procurar histórico:", error);
+    return [];
+  }
+};
 export async function guardarReview(ecopontoId: string, rating: number, comment: string) {
 try {
   // Tenta ir buscar o ID do utilizador logado. Se não houver, fica 'anonimo'

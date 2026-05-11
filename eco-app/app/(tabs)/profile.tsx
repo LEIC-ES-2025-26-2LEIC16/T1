@@ -4,6 +4,7 @@ import {
   ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { auth } from '@/services/firebase';
@@ -179,12 +180,19 @@ export default function ProfileScreen() {
             <Text style={[styles.statLabel, { color: '#1B4332' }]}>CO2 poupado</Text>
           </View>
         </View>
+      <TouchableOpacity 
+        style={styles.botaoWrapped} 
+        onPress={() => router.push('/wrapped' as any)}
+      >
+        <Text style={styles.botaoWrappedTexto}>✨ Ver o meu Wrapped 2026</Text>
+      </TouchableOpacity>
 
         <TouchableOpacity style={styles.botaoSair} onPress={handleLogout}>
           <Text style={styles.botaoSairTexto}>Terminar sessão</Text>
         </TouchableOpacity>
 
-      </ScrollView>
+  
+    </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -262,6 +270,8 @@ const styles = StyleSheet.create({
   statValor:    { fontSize: 20, fontWeight: '700', color: '#1a1a1a', marginBottom: 3 },
   statLabel:    { fontSize: 11, color: '#888' },
 
-  botaoSair:      { marginHorizontal: 20, borderWidth: 1.5, borderColor: '#DC2626', borderRadius: 10, padding: 14, alignItems: 'center' },
+  botaoSair:      { marginHorizontal: 20, marginTop: 0.1, borderWidth: 1.5, borderColor: '#DC2626', borderRadius: 10, padding: 14, alignItems: 'center' },
   botaoSairTexto: { color: '#DC2626', fontWeight: '700', fontSize: 15 },
+  botaoWrapped: { marginHorizontal: 20, backgroundColor: '#1B4332', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 20, shadowColor: '#1B4332', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4},
+  botaoWrappedTexto: { color: '#fff', fontWeight: '700', fontSize: 16,},
 });

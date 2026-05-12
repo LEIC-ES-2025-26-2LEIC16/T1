@@ -48,6 +48,16 @@ function calculateObjectiveProgress(
     .reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
 
   return Math.min(totalAmount / objective.metaKg, 1);
+function calcularProgressoObjetivo(objetivo: Objetivo, registos: any[]): number {
+  const inicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const total = registos
+    .filter(r => {
+      const ts = r.criadoEm?.toDate?.() ?? (r.date ? new Date(r.date) : null);
+      const material = r.material ?? r.type;
+      return ts && ts >= inicio && (objetivo.material === 'Todos' || material === objetivo.material);
+    })
+    .reduce((s, r) => s + (parseFloat(r.quantidade ?? r.amount) || 0), 0);
+  return Math.min(total / objetivo.metaKg, 1);
 }
 
 // --- UI Components ---
@@ -188,6 +198,9 @@ export default function HomeScreen() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [registos, setRegistos] = useState<any[]>([]);
+  const [objetivo, setObjetivo] = useState<Objetivo | null>(null);
+  const [nome, setNome] = useState('');
 
   // Fetches all necessary data for the dashboard.
   const fetchData = useCallback(() => {
@@ -228,6 +241,25 @@ export default function HomeScreen() {
 
   // Fetch data when the screen comes into focus.
   useFocusEffect(fetchData);
+  useFocusEffect(useCallback(() => {
+    Promise.all([getFavoritos(), getHistoricoReciclagem(), getObjetivos(), getPerfilUtilizador()])
+      .then(([favs, reg, objs, perfil]) => {
+        setFavoritos(favs);
+        setRegistos(reg);
+        setObjetivo(objs.find(o => o.periodo === 'mensal') ?? objs[0] ?? null);
+        setNome(perfil.nome || perfil.username || 'Utilizador');
+      });
+  }, []));
+
+  const agora = new Date();
+  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+  const registosMes = registos.filter(r => {
+    const ts = r.criadoEm?.toDate?.() ?? (r.date ? new Date(r.date) : null);
+    return ts && ts >= inicioMes;
+  });
+  const visitas = registosMes.length;
+  const kgMes = registosMes.reduce((s: number, r: any) => s + (parseFloat(r.quantidade ?? r.amount) || 0), 0);
+  const pontosMes = registosMes.reduce((s: number, r: any) => s + ((r.pontosAtribuidos ?? r.pontos) || 0), 0);
 
   // Listen for auth changes to trigger a fetch as soon as the user is recognized
   useEffect(() => {

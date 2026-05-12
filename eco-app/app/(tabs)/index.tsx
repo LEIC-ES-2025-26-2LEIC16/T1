@@ -24,15 +24,15 @@ function getIniciais(nome: string): string {
   return nome.slice(0, 2).toUpperCase();
 }
 
-function calcularProgressoObjetivo(
-  objetivo: Objetivo,
-  registos: { date: string; amount: string; type: string }[]
-): number {
-  const hoje = new Date();
-  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+function calcularProgressoObjetivo(objetivo: Objetivo, registos: any[]): number {
+  const inicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const total = registos
-    .filter(r => new Date(r.date) >= inicio && (objetivo.material === 'Todos' || r.type === objetivo.material))
-    .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+    .filter(r => {
+      const ts = r.criadoEm?.toDate?.() ?? (r.date ? new Date(r.date) : null);
+      const material = r.material ?? r.type;
+      return ts && ts >= inicio && (objetivo.material === 'Todos' || material === objetivo.material);
+    })
+    .reduce((s, r) => s + (parseFloat(r.quantidade ?? r.amount) || 0), 0);
   return Math.min(total / objetivo.metaKg, 1);
 }
 
@@ -54,7 +54,7 @@ export default function HomeScreen() {
   const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [registos, setRegistos] = useState<{ date: string; amount: string; type: string; pontos: number }[]>([]);
+  const [registos, setRegistos] = useState<any[]>([]);
   const [objetivo, setObjetivo] = useState<Objetivo | null>(null);
   const [nome, setNome] = useState('');
 
@@ -80,11 +80,14 @@ export default function HomeScreen() {
   }, []));
 
   const agora = new Date();
-  const mesAtual = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
-  const registosMes = registos.filter(r => r.date.startsWith(mesAtual));
+  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+  const registosMes = registos.filter(r => {
+    const ts = r.criadoEm?.toDate?.() ?? (r.date ? new Date(r.date) : null);
+    return ts && ts >= inicioMes;
+  });
   const visitas = registosMes.length;
-  const kgMes = registosMes.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-  const pontosMes = registosMes.reduce((s, r) => s + r.pontos, 0);
+  const kgMes = registosMes.reduce((s: number, r: any) => s + (parseFloat(r.quantidade ?? r.amount) || 0), 0);
+  const pontosMes = registosMes.reduce((s: number, r: any) => s + ((r.pontosAtribuidos ?? r.pontos) || 0), 0);
 
   const ecopontosFav = ecopontos.filter(e => favoritos.includes(e.id));
 

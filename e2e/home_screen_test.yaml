@@ -1,0 +1,27 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+
+# espera pelo nome do utilizador
+- extendedWaitUntil:
+    visible: ".*tiago.*"
+    timeout: 30000
+
+# valida visibilidade dos elementos principais
+- assertVisible: ".*tiago.*"
+- assertVisible: ".*kg.*"
+- assertVisible: ".*Favoritos.*" # usa regex para flexibilidade
+
+# navega para a lista de ecopontos
+- tapOn: ".*Ver todos os ecopontos.*"
+
+# valida que o ecrã do mapa foi aberto
+- extendedWaitUntil:
+    visible: "Mapa"
+    timeout: 10000
+
+# retorna ao ecrã inicial
+- tapOn:
+    text: "Home"
+    index: 0

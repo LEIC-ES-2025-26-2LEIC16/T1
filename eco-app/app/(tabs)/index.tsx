@@ -309,6 +309,39 @@ export default function HomeScreen() {
       >
         <Text style={styles.mainNavButtonText}>Ver todos os ecopontos {'->'}</Text>
       </TouchableOpacity>
+      {/* Favoritos */}
+      <View style={styles.secaoHeader}>
+        <Text style={styles.secaoTitulo}>⭐  Favoritos</Text>
+        <TouchableOpacity onPress={() => router.push({ pathname: '/ecopontos', params: { apenasFavoritos: '1' } } as any)}>
+          <Text style={styles.verTodos}>ver todos</Text>
+        </TouchableOpacity>
+      </View>
+
+      {ecopontosFav.length === 0 ? (
+        <View style={styles.favVazio}>
+          <Text style={styles.favVazioTexto}>Ainda não tens favoritos</Text>
+          <Text style={styles.favVazioSub}>Vai à lista de ecopontos e carrega em ☆ para adicionar.</Text>
+        </View>
+      ) : (
+        ecopontosFav.map(e => (
+          <TouchableOpacity
+            key={e.id}
+            style={styles.favCard}
+            onPress={() => router.push({ pathname: '/ecoponto-detail', params: { ecopontoId: e.id, ecopontoNome: e.nome, ecopontoMorada: e.morada, ecopontoEstado: e.estado } } as any)}
+          >
+            <View style={styles.favIconeWrap}>
+              <Text style={styles.favIcone}>♻</Text>
+            </View>
+            <View style={styles.favInfo}>
+              <Text style={styles.favNome}>{e.nome}</Text>
+              <Text style={[styles.favEstado, { color: ESTADO_COR[e.estado] ?? '#aaa' }]}>
+                {ESTADO_LABEL[e.estado] ?? e.estado}
+              </Text>
+            </View>
+            <Text style={styles.favSeta}>›</Text>
+          </TouchableOpacity>
+        ))
+      )}
 
     </ScrollView>
   );

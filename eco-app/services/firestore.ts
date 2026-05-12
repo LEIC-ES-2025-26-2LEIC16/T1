@@ -237,7 +237,7 @@ export async function criarObjetivo(material: string, metaKg: number, periodo: '
 
 export async function eliminarObjetivo(id: string) {
   const user = auth.currentUser;
-  if (!user) throw new Error('Utilizador não autenticado.');
+  if (!user) return [];
 
   const objetivoRef = doc(db, 'objetivos', id);
   const objetivoSnap = await getDoc(objetivoRef);

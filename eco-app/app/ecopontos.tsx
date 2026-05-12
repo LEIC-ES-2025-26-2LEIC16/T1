@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ecoponto } from '@/constants/ecopontos';
 import { ouvirEcopontos, getFavoritos, toggleFavorito } from '@/services/firestore';
 import { useEffect } from 'react';
@@ -12,6 +12,7 @@ const ESTADO_STYLE: Record<string, object> = {
 
 export default function EcopontosScreen() {
   const router = useRouter();
+  const { apenasFavoritos } = useLocalSearchParams<{ apenasFavoritos?: string }>();
   const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [pesquisa, setPesquisa] = useState('');
@@ -31,7 +32,8 @@ export default function EcopontosScreen() {
     await toggleFavorito(id, isFav);
   };
 
-  const filtrados = ecopontos.filter(e =>
+  const base = apenasFavoritos === '1' ? ecopontos.filter(e => favoritos.includes(e.id)) : ecopontos;
+  const filtrados = base.filter(e =>
     e.nome.toLowerCase().includes(pesquisa.toLowerCase()) ||
     e.morada.toLowerCase().includes(pesquisa.toLowerCase())
   );
@@ -40,7 +42,7 @@ export default function EcopontosScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.titulo}>Ecopontos</Text>
+        <Text style={styles.titulo}>{apenasFavoritos === '1' ? 'Favoritos' : 'Ecopontos'}</Text>
         <TouchableOpacity style={styles.botaoAdicionar} onPress={() => router.push('/add-ecoponto' as any)}>
           <Text style={styles.botaoAdicionarTexto}>+ Adicionar</Text>
         </TouchableOpacity>
@@ -73,7 +75,12 @@ export default function EcopontosScreen() {
         renderItem={({ item: e }) => {
           const isFav = favoritos.includes(e.id);
           return (
-            <View style={styles.card} testID="recycling-bin-marker">
+            <TouchableOpacity
+              style={styles.card}
+              testID="recycling-bin-marker"
+              activeOpacity={0.7}
+              onPress={() => router.push({ pathname: '/ecoponto-detail', params: { ecopontoId: e.id, ecopontoNome: e.nome, ecopontoMorada: e.morada, ecopontoEstado: e.estado } } as any)}
+            >
               <View style={styles.cardTopo}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardNome}>{e.nome}</Text>
@@ -88,30 +95,8 @@ export default function EcopontosScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-
-              <View style={styles.acoes}>
-                <TouchableOpacity
-                  style={[styles.acao, { backgroundColor: '#1B4332' }]}
-                  onPress={() => router.push('/log-recycling' as any)}
-                >
-                  <Text style={styles.acaoTexto}>📸  Registar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.acao, { backgroundColor: '#4B5563' }]}
-                  testID="review-bin-button"
-                  onPress={() => router.push({ pathname: '/review-bin', params: { ecopontoId: e.id, ecopontoNome: e.nome } } as any)}
-                >
-                  <Text style={styles.acaoTexto}>⭐  Avaliar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.acao, { backgroundColor: '#B91C1C' }]}
-                  testID="report-problem-button"
-                  onPress={() => router.push({ pathname: '/report-problem', params: { ecopontoNome: e.nome, ecopontoMorada: e.morada } } as any)}
-                >
-                  <Text style={styles.acaoTexto}>⚠  Reportar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+              <Text style={styles.verDetalhe}>Ver detalhes e ações →</Text>
+            </TouchableOpacity>
           );
         }}
       />
@@ -136,7 +121,8 @@ const styles = StyleSheet.create({
   pesquisaInput: { flex: 1, fontSize: 15, color: '#1a1a1a' },
 
   vazio:      { alignItems: 'center', paddingTop: 60 },
-  vazioTexto: { fontSize: 15, color: '#aaa' },
+  vazioTexto:  { fontSize: 15, color: '#aaa' },
+  verDetalhe:  { fontSize: 12, color: '#1B4332', fontWeight: '600', marginTop: 8 },
 
   card: {
     backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10,

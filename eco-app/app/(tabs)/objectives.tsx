@@ -36,25 +36,22 @@ function inicioDoperiodo(periodo: 'semanal' | 'mensal'): Date {
   return new Date(hoje.getFullYear(), hoje.getMonth(), 1);
 }
 
-function calcularProgresso(
-  objetivo: Objetivo,
-  registos: { date: string; amount: string; type: string }[]
-): number {
+function calcularProgresso(objetivo: Objetivo, registos: any[]): number {
   const inicio = inicioDoperiodo(objetivo.periodo);
   const total = registos
     .filter(r => {
-      const dentro = new Date(r.date) >= inicio;
-      const mat = objetivo.material === 'Todos' || r.type === objetivo.material;
-      return dentro && mat;
+      const ts = r.criadoEm?.toDate?.() ?? (r.date ? new Date(r.date) : null);
+      const material = r.material ?? r.type;
+      return ts && ts >= inicio && (objetivo.material === 'Todos' || material === objetivo.material);
     })
-    .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+    .reduce((s, r) => s + (parseFloat(r.quantidade ?? r.amount) || 0), 0);
   return Math.min(total / objetivo.metaKg, 1);
 }
 
 export default function ObjectivesScreen() {
   const insets = useSafeAreaInsets();
   const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
-  const [registos, setRegistos] = useState<{ date: string; amount: string; type: string }[]>([]);
+  const [registos, setRegistos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [material, setMaterial] = useState('Todos');

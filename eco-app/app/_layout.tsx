@@ -44,14 +44,15 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthGuard user={user} />
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, headerBackTitle: '' }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        <Stack.Screen name="report-problem" options={{ title: 'Reportar Problema' }} />
-        <Stack.Screen name="review-bin" options={{ title: 'Avaliar Ecoponto' }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerBackTitle: 'Início' }} />
+        <Stack.Screen name="report-problem" options={{ title: 'Reportar Problema', headerBackTitle: 'Início' }} />
+        <Stack.Screen name="review-bin" options={{ title: 'Avaliar Ecoponto', headerBackTitle: 'Início' }} />
         <Stack.Screen name="report-success" options={{ headerShown: false }} />
-        <Stack.Screen name="add-ecoponto" options={{ title: 'Adicionar Ecoponto' }} />
-        <Stack.Screen name="ecopontos" options={{ title: 'Ecopontos' }} />
+        <Stack.Screen name="add-ecoponto" options={{ title: 'Adicionar Ecoponto', headerBackTitle: 'Início' }} />
+        <Stack.Screen name="ecopontos" options={{ title: 'Ecopontos', headerBackTitle: 'Início' }} />
+        <Stack.Screen name="ecoponto-detail" options={{ title: 'Ecoponto', headerBackTitle: 'Ecopontos' }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

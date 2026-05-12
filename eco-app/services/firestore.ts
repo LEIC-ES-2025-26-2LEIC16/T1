@@ -210,7 +210,7 @@ export async function eliminarObjetivo(id: string) {
 
 export async function getHistoricoReciclagem() {
   const user = auth.currentUser;
-  if (!user) throw new Error('Utilizador não autenticado.');
+  if (!user) return [];
 
   const q = query(
     collection(db, 'registos_reciclagem'),

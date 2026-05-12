@@ -6,49 +6,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { auth } from '@/services/firebase';
 import {
-  ouvirEcopontos,
-  getFavoritos,
-  getHistoricoReciclagem,
-  getObjetivos,
-  getPerfilUtilizador,
-  type Objetivo,
-  type PerfilUtilizador,
+  ouvirEcopontos, seedEcopontos, getFavoritos,
+  getHistoricoReciclagem, getObjetivos, getPerfilUtilizador,
+  type Objetivo, type PerfilUtilizador,
 } from '@/services/firestore';
 import { type Ecoponto } from '@/constants/ecopontos';
 
-// --- Helper Functions ---
-
-/**
- * Returns a greeting based on the current time of day.
- */
 function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Bom dia';
-  if (hour < 19) return 'Boa tarde';
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 19) return 'Boa tarde';
   return 'Boa noite';
 }
 
-/**
- * Calculates the progress of a monthly objective.
- */
-function calculateObjectiveProgress(
-  objective: Objetivo,
-  records: { date: string; amount: string; type: string }[]
-): number {
-  const today = new Date();
-  const periodStart = new Date(today.getFullYear(), today.getMonth(), 1);
+function getIniciais(nome: string): string {
+  const partes = nome.trim().split(' ').filter(Boolean);
+  if (partes.length >= 2) return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+  return nome.slice(0, 2).toUpperCase();
+}
 
-  const totalAmount = records
-    .filter(r => {
-      const recordDate = new Date(r.date);
-      const isWithinPeriod = recordDate >= periodStart;
-      const isCorrectMaterial = objective.material === 'Todos' || r.type === objective.material;
-      return isWithinPeriod && isCorrectMaterial;
-    })
-    .reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
-
-  return Math.min(totalAmount / objective.metaKg, 1);
-function calcularProgressoObjetivo(objetivo: Objetivo, registos: any[]): number {
+function calcularProgresso(objetivo: Objetivo, registos: any[]): number {
   const inicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const total = registos
     .filter(r => {
@@ -60,216 +37,77 @@ function calcularProgressoObjetivo(objetivo: Objetivo, registos: any[]): number 
   return Math.min(total / objetivo.metaKg, 1);
 }
 
-// --- UI Components ---
-
-const GreetingHeader = ({ profile }: { profile: PerfilUtilizador }) => {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const user = auth.currentUser;
-
-  const displayName = profile.nome || user?.displayName || 'Utilizador';
-  const initials = (
-    displayName.split(' ').map(n => n[0]).join('').slice(0, 2)
-    || user?.email?.[0]
-    || '?'
-  ).toUpperCase();
-
-  return (
-    <View style={[styles.headerContainer, { paddingTop: insets.top + 8 }]}>
-      <View>
-        <Text style={styles.greetingText}>{getGreeting()},</Text>
-        <Text style={styles.greetingName}>{displayName} 👋</Text>
-      </View>
-      <TouchableOpacity
-        style={styles.avatar}
-        onPress={() => router.push('/(tabs)/profile')}
-      >
-        <Text style={styles.avatarText}>{initials}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+const ESTADO_COR: Record<string, string> = {
+  Operacional: '#1B4332',
+  Cheio: '#B45309',
+  Danificado: '#B91C1C',
 };
 
-const MonthlyImpact = ({ records }: { records: { date: string; amount: string }[] }) => {
-  const router = useRouter();
-  const kgThisMonth = records.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
-
-  return (
-    <View style={styles.impactCard}>
-      <Text style={styles.sectionLabel}>O TEU IMPACTO ESTE MÊS</Text>
-      <View style={styles.impactContent}>
-        <Text style={styles.impactValue}>{kgThisMonth.toFixed(1)}</Text>
-        <Text style={styles.impactUnit}>kg</Text>
-      </View>
-      <Text style={styles.impactSubtext}>de material reciclado</Text>
-    </View>
-  );
+const ESTADO_LABEL: Record<string, string> = {
+  Operacional: 'Disponível',
+  Cheio: 'Cheio',
+  Danificado: 'Danificado',
 };
-
-const FavoriteEcopoints = ({ ecopontos }: { ecopontos: Ecoponto[] }) => {
-  const router = useRouter();
-  return (
-    <>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>⭐ Favoritos</Text>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/explore')}>
-          <Text style={styles.seeAllText}>ver todos</Text>
-        </TouchableOpacity>
-      </View>
-
-      {ecopontos.length === 0 ? (
-        <View style={styles.emptyStateContainer}>
-          <Text style={styles.emptyStateText}>Ainda não tens favoritos.</Text>
-          <Text style={styles.emptyStateSubtext}>Adiciona ecopontos no mapa para os veres aqui.</Text>
-        </View>
-      ) : (
-        ecopontos.map(e => (
-          <TouchableOpacity
-            key={e.id}
-            style={styles.favCard}
-            onPress={() => router.push({ pathname: '/(tabs)/explore', params: { ecopontoId: e.id } })}
-          >
-            <View style={styles.favIconWrapper}>
-              <Text style={styles.favIcon}>♻️</Text>
-            </View>
-            <View style={styles.favInfo}>
-              <Text style={styles.favName}>{e.nome}</Text>
-              <Text style={styles.favAddress}>{e.morada}</Text>
-            </View>
-            <Text style={styles.favArrow}>›</Text>
-          </TouchableOpacity>
-        ))
-      )}
-    </>
-  );
-};
-
-const MonthlyGoal = ({ objective, records }: { objective: Objetivo; records: any[] }) => {
-  if (!objective) return null;
-
-  const progress = calculateObjectiveProgress(objective, records);
-  const percentage = Math.round(progress * 100);
-  const currentKg = (progress * objective.metaKg).toFixed(1);
-  const remainingKg = Math.max(0, objective.metaKg - Number(currentKg)).toFixed(1);
-  const monthName = new Date().toLocaleString('pt-PT', { month: 'long' });
-
-  return (
-    <>
-      <Text style={styles.sectionTitle}>🎯 Objetivo do mês</Text>
-      <View style={styles.goalCard}>
-        <Text style={styles.goalTitle}>
-          Reciclar {objective.metaKg}kg de {objective.material} em {monthName}
-        </Text>
-        <View style={styles.goalProgressRow}>
-          <View style={styles.progressBarBackground}>
-            <View style={[styles.progressBar, { width: `${percentage}%` }]} />
-          </View>
-          <Text style={styles.goalKgText}>{currentKg} / {objective.metaKg}kg</Text>
-        </View>
-        {progress >= 1 ? (
-          <Text style={styles.goalSubtext}>✓ Objetivo concluído! Parabéns 🎉</Text>
-        ) : (
-          <Text style={styles.goalSubtext}>Faltam {remainingKg}kg para atingires o objetivo 💪</Text>
-        )}
-      </View>
-    </>
-  );
-};
-
-const ErrorState = ({ onRetry }: { onRetry: () => void }) => (
-  <View style={styles.loadingContainer}>
-    <Text style={styles.errorText}>Não foi possível carregar os teus dados.</Text>
-    <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-      <Text style={styles.retryButtonText}>Tenta novamente</Text>
-    </TouchableOpacity>
-  </View>
-);
-
-
-// --- Main Screen Component ---
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
+
   const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
   const [profile, setProfile] = useState<PerfilUtilizador | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [records, setRecords] = useState<{ date: string; amount: string; type: string }[]>([]);
+  const [records, setRecords] = useState<any[]>([]);
   const [objective, setObjective] = useState<Objetivo | null>(null);
-
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [registos, setRegistos] = useState<any[]>([]);
-  const [objetivo, setObjetivo] = useState<Objetivo | null>(null);
-  const [nome, setNome] = useState('');
+  const [error, setError] = useState(false);
 
-  // Fetches all necessary data for the dashboard.
   const fetchData = useCallback(() => {
-    // 1. Check if we actually have a user before doing anything
-    if (!auth.currentUser) {
-      console.log("Auth not ready yet, skipping fetch...");
-      return; 
-    }
-
+    if (!auth.currentUser) return;
     setLoading(true);
-    setError(null);
-    Promise.all([
-      getFavoritos(),
-      getHistoricoReciclagem(),
-      getObjetivos(),
-      getPerfilUtilizador(),
-    ]).then(([favs, recs, objs, prof]) => {
-      setFavorites(favs);
-      setRecords(recs);
-      setObjective(objs.find(o => o.periodo === 'mensal') ?? objs[0] ?? null);
-      setProfile(prof);
-    }).catch((err) => {
-      // If it's just a timing issue, we don't want to show the scary red screen
-      console.error("Failed to fetch dashboard data:", err);
-      setError("Não foi possível carregar os teus dados. Tenta novamente.");
-    }).finally(() => {
-      setLoading(false);
-    });
+    setError(false);
+    Promise.all([getFavoritos(), getHistoricoReciclagem(), getObjetivos(), getPerfilUtilizador()])
+      .then(([favs, recs, objs, prof]) => {
+        setFavorites(favs);
+        setRecords(recs);
+        setObjective(objs.find(o => o.periodo === 'mensal') ?? objs[0] ?? null);
+        setProfile(prof);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, []);
 
-  // Subscribe to real-time ecoponto updates.
   useEffect(() => {
-    const unsubscribe = ouvirEcopontos((dados) => {
-      setEcopontos(dados);
-    });
+    seedEcopontos();
+    const unsubscribe = ouvirEcopontos(setEcopontos);
     return unsubscribe;
   }, []);
 
-  // Fetch data when the screen comes into focus.
-  useFocusEffect(fetchData);
-  useFocusEffect(useCallback(() => {
-    Promise.all([getFavoritos(), getHistoricoReciclagem(), getObjetivos(), getPerfilUtilizador()])
-      .then(([favs, reg, objs, perfil]) => {
-        setFavoritos(favs);
-        setRegistos(reg);
-        setObjetivo(objs.find(o => o.periodo === 'mensal') ?? objs[0] ?? null);
-        setNome(perfil.nome || perfil.username || 'Utilizador');
-      });
-  }, []));
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user: import('firebase/auth').User | null) => { if (user) fetchData(); });
+    return unsubscribe;
+  }, [fetchData]);
 
-  const agora = new Date();
-  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
-  const registosMes = registos.filter(r => {
+  useFocusEffect(fetchData);
+
+  const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const registosMes = records.filter(r => {
     const ts = r.criadoEm?.toDate?.() ?? (r.date ? new Date(r.date) : null);
     return ts && ts >= inicioMes;
   });
   const visitas = registosMes.length;
-  const kgMes = registosMes.reduce((s: number, r: any) => s + (parseFloat(r.quantidade ?? r.amount) || 0), 0);
-  const pontosMes = registosMes.reduce((s: number, r: any) => s + ((r.pontosAtribuidos ?? r.pontos) || 0), 0);
+  const kgMes = registosMes.reduce((s, r) => s + (parseFloat(r.quantidade ?? r.amount) || 0), 0);
+  const pontosMes = registosMes.reduce((s, r) => s + ((r.pontosAtribuidos ?? r.pontos) || 0), 0);
 
-  // Listen for auth changes to trigger a fetch as soon as the user is recognized
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        fetchData();
-      }
-    });
-    return unsubscribe;
-  }, [fetchData]);
+  const ecopontosFav = ecopontos.filter(e => favorites.includes(e.id));
+
+  const nome = profile?.nome || profile?.username || '';
+  const iniciais = getIniciais(nome || 'U');
+
+  const progresso = objective ? calcularProgresso(objective, records) : 0;
+  const kgFeitos = objective ? (progresso * objective.metaKg).toFixed(1) : '0';
+  const percentagem = Math.round(progresso * 100);
+  const kgEmFalta = objective ? Math.max(0, objective.metaKg - Number(kgFeitos)).toFixed(1) : '0';
+  const nomeMes = new Date().toLocaleString('pt-PT', { month: 'long' });
 
   if (loading) {
     return (
@@ -279,14 +117,16 @@ export default function HomeScreen() {
     );
   }
 
-  if (error || !profile) {
-    return <ErrorState onRetry={fetchData} />;
+  if (error) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>Não foi possível carregar os dados.</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
+          <Text style={styles.retryButtonText}>Tentar novamente</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
-
-  const favoriteEcopontos = ecopontos.filter(e => favorites.includes(e.id)).slice(0, 2);
-  const now = new Date();
-  const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const monthlyRecords = records.filter(r => r.date.startsWith(currentMonthStr));
 
   return (
     <ScrollView
@@ -294,21 +134,54 @@ export default function HomeScreen() {
       contentContainerStyle={{ paddingBottom: 40 }}
       showsVerticalScrollIndicator={false}
     >
-      <GreetingHeader profile={profile} />
+      {/* Avatar topo direito */}
+      <View style={[styles.avatarRow, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/(tabs)/profile' as any)}>
+          <Text style={styles.avatarText}>{iniciais}</Text>
+        </TouchableOpacity>
+      </View>
 
-      <MonthlyImpact records={monthlyRecords} />
+      {/* Saudação */}
+      <View style={styles.header}>
+        <Text style={styles.greetingLabel}>{getGreeting()},</Text>
+        <Text style={styles.greetingName}>{nome} 👋</Text>
+      </View>
 
-      <FavoriteEcopoints ecopontos={favoriteEcopontos} />
-
-      {objective && <MonthlyGoal objective={objective} records={records} />}
-
-      {/* Main navigation button at the bottom of the screen */}
-      <TouchableOpacity 
-        style={styles.mainNavButton} 
-        onPress={() => router.push('/(tabs)/explore')}
-      >
-        <Text style={styles.mainNavButtonText}>Ver todos os ecopontos {'->'}</Text>
+      {/* Ver todos os ecopontos */}
+      <TouchableOpacity style={styles.botaoLista} onPress={() => router.push('/ecopontos' as any)}>
+        <View style={styles.botaoListaEsq}>
+          <View style={styles.botaoListaIconeWrap}>
+            <Text style={styles.botaoListaIcone}>♻</Text>
+          </View>
+          <View>
+            <Text style={styles.botaoListaTitulo}>Ver todos os ecopontos</Text>
+            <Text style={styles.botaoListaSub}>Pesquisar, adicionar e favoritar</Text>
+          </View>
+        </View>
+        <Text style={styles.botaoListaSeta}>›</Text>
       </TouchableOpacity>
+
+      {/* Impacto este mês */}
+      <View style={styles.impactoCard}>
+        <Text style={styles.impactoLabel}>O TEU IMPACTO ESTE MÊS</Text>
+        <View style={styles.impactoRow}>
+          <View style={styles.impactoItem}>
+            <Text style={styles.impactoValor}>{visitas}</Text>
+            <Text style={styles.impactoSub}>visitas</Text>
+          </View>
+          <View style={styles.impactoDivider} />
+          <View style={styles.impactoItem}>
+            <Text style={styles.impactoValor}>{kgMes.toFixed(0)}kg</Text>
+            <Text style={styles.impactoSub}>reciclado</Text>
+          </View>
+          <View style={styles.impactoDivider} />
+          <View style={styles.impactoItem}>
+            <Text style={styles.impactoValor}>{pontosMes}</Text>
+            <Text style={styles.impactoSub}>pontos</Text>
+          </View>
+        </View>
+      </View>
+
       {/* Favoritos */}
       <View style={styles.secaoHeader}>
         <Text style={styles.secaoTitulo}>⭐  Favoritos</Text>
@@ -327,6 +200,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             key={e.id}
             style={styles.favCard}
+            activeOpacity={0.7}
             onPress={() => router.push({ pathname: '/ecoponto-detail', params: { ecopontoId: e.id, ecopontoNome: e.nome, ecopontoMorada: e.morada, ecopontoEstado: e.estado } } as any)}
           >
             <View style={styles.favIconeWrap}>
@@ -343,260 +217,94 @@ export default function HomeScreen() {
         ))
       )}
 
+      {/* Objetivo do mês */}
+      {objective && (
+        <>
+          <Text style={styles.secaoTituloObjetivo}>🎯  Objetivo do mês</Text>
+          <View style={styles.objetivoCard}>
+            <Text style={styles.objetivoTitulo}>
+              Reciclar {objective.metaKg}kg em {nomeMes}
+            </Text>
+            <View style={styles.objetivoProgressoRow}>
+              <View style={styles.barraFundo}>
+                <View style={[styles.barraProgresso, { width: `${percentagem}%` }]} />
+              </View>
+              <Text style={styles.objetivoKg}>{kgFeitos} / {objective.metaKg}kg</Text>
+            </View>
+            {progresso >= 1 ? (
+              <Text style={styles.objetivoSub}>✓ Objetivo concluído! Parabéns 🎉</Text>
+            ) : (
+              <Text style={styles.objetivoSub}>Faltam {kgEmFalta}kg para atingires o objetivo 💪</Text>
+            )}
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }
 
-// --- Styles ---
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: '#1B4332',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  container:        { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  errorText:        { fontSize: 15, color: '#555', textAlign: 'center', marginBottom: 16 },
+  retryButton:      { backgroundColor: '#1B4332', borderRadius: 20, paddingHorizontal: 24, paddingVertical: 10 },
+  retryButtonText:  { color: '#fff', fontWeight: '600' },
 
-  // Header
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  greetingText: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1a1a1a',
-    letterSpacing: -0.5,
-  },
-  greetingName: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1a1a1a',
-    letterSpacing: -0.5,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#1B4332',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
+  avatarRow: { alignItems: 'flex-end', marginBottom: 4 },
+  avatar:    { width: 44, height: 44, borderRadius: 22, backgroundColor: '#1B4332', justifyContent: 'center', alignItems: 'center' },
+  avatarText:{ fontSize: 15, fontWeight: '700', color: '#fff' },
 
-  // Section
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1a1a1a',
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#86EFAC',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: '#1B4332',
-    fontWeight: '600',
-  },
+  header:       { marginBottom: 20 },
+  greetingLabel:{ fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5 },
+  greetingName: { fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5 },
 
-  // Impact Card
-  impactCard: {
-    backgroundColor: '#1B4332',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+  botaoLista: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#F0F7F0', borderRadius: 14, padding: 16, marginBottom: 16,
+    borderWidth: 1, borderColor: '#D1EAD1',
   },
-  impactContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  impactValue: {
-    fontSize: 48,
-    fontWeight: '800',
-    color: '#fff',
-    lineHeight: 50,
-  },
-  impactUnit: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#86EFAC',
-    paddingBottom: 4,
-  },
-  impactSubtext: {
-    fontSize: 14,
-    color: '#86EFAC',
-    marginTop: 4,
-  },
+  botaoListaEsq:      { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  botaoListaIconeWrap:{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#D1EAD1', justifyContent: 'center', alignItems: 'center' },
+  botaoListaIcone:    { fontSize: 24 },
+  botaoListaTitulo:   { fontSize: 15, fontWeight: '700', color: '#1B4332' },
+  botaoListaSub:      { fontSize: 12, color: '#639922', marginTop: 2 },
+  botaoListaSeta:     { fontSize: 24, color: '#1B4332', fontWeight: '300' },
 
-  // Favorites
-  emptyStateContainer: {
-    paddingVertical: 24,
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-    borderRadius: 12,
-  },
-  emptyStateText: {
-    fontSize: 15,
-    color: '#555',
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  emptyStateSubtext: {
-    fontSize: 13,
-    color: '#aaa',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  favoritesRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  favCardGrid: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#efefef',
-  },
+  impactoCard:   { backgroundColor: '#1B4332', borderRadius: 16, padding: 20, marginBottom: 24 },
+  impactoLabel:  { fontSize: 11, fontWeight: '700', color: '#86EFAC', letterSpacing: 1, marginBottom: 16 },
+  impactoRow:    { flexDirection: 'row', alignItems: 'center' },
+  impactoItem:   { flex: 1, alignItems: 'center' },
+  impactoValor:  { fontSize: 30, fontWeight: '800', color: '#fff' },
+  impactoSub:    { fontSize: 12, color: '#86EFAC', marginTop: 4 },
+  impactoDivider:{ width: 1, height: 40, backgroundColor: '#2D6A4F' },
+
+  secaoHeader:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  secaoTitulo:        { fontSize: 17, fontWeight: '700', color: '#1a1a1a' },
+  secaoTituloObjetivo:{ fontSize: 17, fontWeight: '700', color: '#1a1a1a', marginTop: 8, marginBottom: 12 },
+  verTodos:           { fontSize: 13, color: '#1B4332', fontWeight: '600' },
+
+  favVazio:     { paddingVertical: 24, alignItems: 'center' },
+  favVazioTexto:{ fontSize: 15, color: '#555', fontWeight: '600', marginBottom: 6 },
+  favVazioSub:  { fontSize: 13, color: '#aaa', textAlign: 'center' },
+
   favCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#efefef',
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10,
+    borderWidth: 1, borderColor: '#efefef',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  favIconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 10,
-    backgroundColor: '#F0F7F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  favIcon: {
-    fontSize: 24,
-  },
-  favInfo: {
-    flex: 1,
-  },
-  favName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 3,
-  },
-  favAddress: {
-    fontSize: 12,
-    color: '#999',
-  },
-  favArrow: {
-    fontSize: 22,
-    color: '#ccc',
-    fontWeight: '300',
-  },
+  favIconeWrap:{ width: 48, height: 48, borderRadius: 10, backgroundColor: '#F0F7F0', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  favIcone:    { fontSize: 24 },
+  favInfo:     { flex: 1 },
+  favNome:     { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 3 },
+  favEstado:   { fontSize: 12, fontWeight: '500' },
+  favSeta:     { fontSize: 22, color: '#ccc', fontWeight: '300' },
 
-  // Goal
-  goalCard: {
-    backgroundColor: '#F0F7F0',
-    borderRadius: 16,
-    padding: 18,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#D1EAD1',
-  },
-  goalTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 14,
-  },
-  goalProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 10,
-  },
-  progressBarBackground: {
-    flex: 1,
-    height: 10,
-    backgroundColor: '#D1EAD1',
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: 10,
-    backgroundColor: '#1B4332',
-    borderRadius: 5,
-  },
-  goalKgText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1B4332',
-    minWidth: 70,
-    textAlign: 'right',
-  },
-  goalSubtext: {
-    fontSize: 13,
-    color: '#639922',
-  },
-  mainNavButton: {
-    backgroundColor: '#F5F7F5', // light color from the mockup
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 24,
-    borderWidth: 1,
-    borderColor: '#E8EFE9',
-  },
-  mainNavButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
+  objetivoCard:        { backgroundColor: '#F0F7F0', borderRadius: 16, padding: 18, borderWidth: 1, borderColor: '#D1EAD1' },
+  objetivoTitulo:      { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 14 },
+  objetivoProgressoRow:{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
+  barraFundo:          { flex: 1, height: 10, backgroundColor: '#D1EAD1', borderRadius: 5, overflow: 'hidden' },
+  barraProgresso:      { height: 10, backgroundColor: '#1B4332', borderRadius: 5 },
+  objetivoKg:          { fontSize: 13, fontWeight: '700', color: '#1B4332', minWidth: 70, textAlign: 'right' },
+  objetivoSub:         { fontSize: 13, color: '#639922' },
 });

@@ -54,7 +54,7 @@ function calcularProgresso(
 export default function ObjectivesScreen() {
   const insets = useSafeAreaInsets();
   const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
-  const [registos, setRegistos] = useState<{ date: string; amount: string; type: string }[]>([]);
+  const [registos, setRegistos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [material, setMaterial] = useState('Todos');

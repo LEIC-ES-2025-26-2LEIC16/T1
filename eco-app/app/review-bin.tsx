@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import NetInfo from '@react-native-community/netinfo';
+import { guardarReview } from '@/services/firestore';
 
 export default function ReviewBinScreen() {
   const router = useRouter();
@@ -24,23 +25,20 @@ export default function ReviewBinScreen() {
       setShowErrorModal(false);
 
       try {
-        // 2. VERIFICAÇÃO REAL DE REDE: Pergunta ao telemóvel se tem internet
+        // 1. VERIFICAÇÃO REAL DE REDE: Pergunta ao telemóvel se tem internet
         const networkState = await NetInfo.fetch();
         
         if (!networkState.isConnected) {
-          // Sem internet! Mostra o modal e cancela o envio
           setIsSubmitting(false);
           setShowErrorModal(true);
           return; 
         }
 
-        // 3. AQUI FICA O ENVIO REAL PARA A BASE DE DADOS
-        // Exemplo: await guardarReview({ ecopontoId, rating, comment });
-        
-        // Simulação do tempo de resposta do servidor (podes remover quando ligares ao Firebase)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // 2. ENVIO REAL PARA A BASE DE DADOS FIREBASE
+        // Convertemos o ecopontoId para String para evitar erros do TypeScript
+        await guardarReview(String(ecopontoId), rating, comment);
 
-        // Cenário 1: Normal - Sucesso.
+        // 3. SUCESSO
         Alert.alert(
           'Sucesso',
           'Thank you for your feedback!',
@@ -48,13 +46,12 @@ export default function ReviewBinScreen() {
         );
 
       } catch (error) {
-        // Se a internet cair a meio do envio ou o servidor falhar, também apanhamos o erro aqui
+        // Se a internet cair a meio do envio ou o Firebase falhar, apanhamos o erro aqui
         setShowErrorModal(true);
       } finally {
         setIsSubmitting(false);
       }
     };
-
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">

@@ -69,6 +69,10 @@ export default function LoginScreen() {
         )}
       </TouchableOpacity>
 
+      <TouchableOpacity onPress={() => router.push('/auth/password-recovery' as any)}>
+        <Text style={styles.linkEsqueci}>Esqueceu-se da password?</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity onPress={() => router.push('/auth/register' as any)}>
         <Text style={styles.linkRegisto}>Não tens conta? <Text style={styles.linkRegisotDestaque}>Cria uma aqui</Text></Text>
       </TouchableOpacity>
@@ -97,7 +101,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  botaoTexto: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  linkRegisto: { textAlign: 'center', color: '#666', fontSize: 14 },
+  botaoTexto: { color: '#fff', fontWeight: 'bold', fontSize: 16, },
+  linkEsqueci: { textAlign: 'center', color: '#4a4a4a', fontSize: 14, marginBottom: 16, textDecorationLine: 'underline' },
+  linkRegisto: { textAlign: 'center', color: '#666', fontSize: 14, },
   linkRegisotDestaque: { color: '#1B4332', fontWeight: '700' },
 });

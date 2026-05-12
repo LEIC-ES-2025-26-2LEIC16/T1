@@ -5,6 +5,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// manter as chaves originais
 const firebaseConfig = {
   apiKey: 'AIzaSyD3Eg3SJZsRyv-hWd2M_bdJppxvE2v_94A',
   authDomain: 'eco-app-658f8.firebaseapp.com',

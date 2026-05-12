@@ -166,7 +166,7 @@ export default function HomeScreen() {
       {/* Favoritos */}
       <View style={styles.secaoHeader}>
         <Text style={styles.secaoTitulo}>⭐  Favoritos</Text>
-        <TouchableOpacity onPress={() => router.push('/ecopontos' as any)}>
+        <TouchableOpacity onPress={() => router.push({ pathname: '/ecopontos', params: { apenasFavoritos: '1' } } as any)}>
           <Text style={styles.verTodos}>ver todos</Text>
         </TouchableOpacity>
       </View>
@@ -181,7 +181,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             key={e.id}
             style={styles.favCard}
-            onPress={() => router.push('/ecopontos' as any)}
+            onPress={() => router.push({ pathname: '/ecoponto-detail', params: { ecopontoId: e.id, ecopontoNome: e.nome, ecopontoMorada: e.morada, ecopontoEstado: e.estado } } as any)}
           >
             <View style={styles.favIconeWrap}>
               <Text style={styles.favIcone}>♻</Text>

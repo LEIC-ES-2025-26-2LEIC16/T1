@@ -1,0 +1,28 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+
+# give the app time to bypass the splash screen and handle auth persistence
+- extendedWaitUntil:
+    visible: ".*Utilizador.*"
+    timeout: 10000
+
+# SCENARIO 1: successful home screen load (with mock/initial data)
+- assertVisible: ".*Utilizador.*" # Checks for the greeting
+- assertVisible: ".*kg.*"        # Checks if the impact card is rendered
+- assertVisible: ".*Favoritos.*" # Checks the favorites section title
+
+# Check if the navigation button to the map exists
+- assertVisible: ".*Ver todos os ecopontos.*"
+
+# SCENARIO: Navigation Check
+- tapOn: ".*Ver todos os ecopontos.*"
+- extendedWaitUntil:
+    visible: ".*Pesquisar.*" # Verifies we reached the Explore/Map screen
+    timeout: 5000
+
+# Go back home to finish the test
+- tapOn:
+    text: "Home"
+    index: 0

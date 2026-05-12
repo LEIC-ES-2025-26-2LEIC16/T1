@@ -6,8 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ecoapp",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "automatic", 
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.myimpact.app"
@@ -40,6 +40,13 @@
         "expo-camera",
         {
           "cameraPermission": "Allow MyImpact to access your camera to log recycling."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow MyImpact to access your camera to log recycling.",
+          "photosPermission": "Allow MyImpact to access your photos."
         }
       ],
       [

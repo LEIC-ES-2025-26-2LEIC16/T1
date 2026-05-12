@@ -4,10 +4,16 @@ import { useRouter } from 'expo-router';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import { type Ecoponto } from '@/constants/ecopontos';
 import { ouvirEcopontos } from '@/services/firestore';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-MapLibreGL.setAccessToken(null);
+// checking if we are using expo go or the real dev client
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
-// Estilo raster com OpenStreetMap — gratuito, sem API key
+if (!isExpoGo) {
+  MapLibreGL.setAccessToken(null);
+}
+
+// openstreetmap style
 const MAPA_ESTILO = {
   version: 8,
   sources: {
@@ -22,15 +28,15 @@ const MAPA_ESTILO = {
   layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
 };
 
-const CENTRO_PORTO = [
-  -8.6291, // longitude
-  41.1579, // latitude
-];
+const CENTRO_PORTO = [-8.6291, 41.1579];
 
 export default function MapaScreen() {
   const router = useRouter();
   const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
   const [ecopontoSelecionado, setEcopontoSelecionado] = useState<Ecoponto | null>(null);
+  
+  // new state to prevent crashing before map is loaded
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
     const unsubscribe = ouvirEcopontos(setEcopontos);
@@ -39,35 +45,52 @@ export default function MapaScreen() {
 
   return (
     <View style={styles.container}>
-       <MapLibreGL.MapView style={styles.mapa} mapStyle={MAPA_ESTILO}>
-        <MapLibreGL.Camera
-          zoomLevel={13}
-          centerCoordinate={CENTRO_PORTO}
-          animationDuration={0}
-        />
+      {isExpoGo ? (
+        <View style={[styles.mapa, { backgroundColor: '#f0fdf4', justifyContent: 'center', alignItems: 'center' }]}>
+          <Text style={{ fontSize: 40, marginBottom: 10 }}>📍</Text>
+          <Text style={{ color: '#1B4332', fontWeight: '700', fontSize: 16 }}>Modo: Expo Go</Text>
+          <Text style={{ textAlign: 'center', padding: 20 }}>O mapa real só carrega no Dev Client!</Text>
+        </View>
+      ) : (
+        <MapLibreGL.MapView
+          style={styles.mapa}
+          mapStyle={MAPA_ESTILO}
+          onDidFinishLoadingMap={() => setIsMapReady(true)} // sets map as ready
+        >
+          <MapLibreGL.Camera
+            zoomLevel={13}
+            centerCoordinate={CENTRO_PORTO}
+            animationDuration={0}
+          />
 
-        {ecopontos.map((ecoponto) => (
-          <MapLibreGL.PointAnnotation
-            key={ecoponto.id}
-            id={ecoponto.id}
-            coordinate={[ecoponto.coordenadas.longitude, ecoponto.coordenadas.latitude]}
-            onSelected={() => setEcopontoSelecionado(ecoponto)}
-          >
-            <View style={[
-              styles.marcador,
-              ecoponto.estado === 'Cheio' && styles.marcadorCheio,
-              ecoponto.estado === 'Danificado' && styles.marcadorDanificado,
-            ]}>
-              <Text style={styles.marcadorTexto}>♻</Text>
-            </View>
-          </MapLibreGL.PointAnnotation>
-        ))}
-      </MapLibreGL.MapView>
-      
-      {/* Card com info do ecoponto selecionado */}
+          {/* only renders markers when map is fully ready to avoid index errors */}
+          {isMapReady && ecopontos.map((ecoponto) => (
+            <MapLibreGL.PointAnnotation
+              key={ecoponto.id}
+              id={ecoponto.id}
+              coordinate={[ecoponto.coordenadas.longitude, ecoponto.coordenadas.latitude]}
+              onSelected={() => setEcopontoSelecionado(ecoponto)}
+            >
+              <View style={[
+                styles.marcador,
+                ecoponto.estado === 'Cheio' && styles.marcadorCheio,
+                ecoponto.estado === 'Danificado' && styles.marcadorDanificado,
+                ecopontoSelecionado?.id === ecoponto.id && styles.marcadorSelecionado,
+              ]}>
+                <Text style={[
+                  styles.marcadorTexto,
+                  ecopontoSelecionado?.id === ecoponto.id && styles.marcadorTextoSelecionado,
+                ]}>♻</Text>
+              </View>
+            </MapLibreGL.PointAnnotation>
+          ))}
+        </MapLibreGL.MapView>
+      )}
+
+      {/* info card for selected bins */}
       {ecopontoSelecionado && (
         <View style={styles.card}>
-<View style={styles.cardHeader}>
+          <View style={styles.cardHeader}>
             <View>
               <Text style={styles.cardNome}>{ecopontoSelecionado.nome}</Text>
               <Text style={styles.cardMorada}>{ecopontoSelecionado.morada}</Text>
@@ -81,7 +104,6 @@ export default function MapaScreen() {
             </View>
           </View>
           
-          {/* NOVOS BOTÕES (LADO A LADO) */}
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity
               style={[styles.botao, { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#1B4332' }]}
@@ -95,7 +117,7 @@ export default function MapaScreen() {
                 } as any)
               }
             >
-              <Text style={[styles.botaoTexto, { color: '#1B4332' }]}>⭐ Avaliar</Text>
+              <Text style={[styles.botaoTexto, { color: '#1B4332' }]}>⭐ avaliar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -110,7 +132,7 @@ export default function MapaScreen() {
                 } as any)
               }
             >
-              <Text style={styles.botaoTexto}>Reportar</Text>
+              <Text style={styles.botaoTexto}>reportar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -122,26 +144,34 @@ export default function MapaScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   mapa: { flex: 1 },
-marcador: {
-    width: 44, // Duplicámos a largura (antes era 22)
-    height: 44, // Duplicámos a altura (antes era 22)
-    borderRadius: 22, // Tem de ser sempre metade da largura/altura para fazer um círculo perfeito
+  marcador: {
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
     backgroundColor: '#279840',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2, // Aumentámos ligeiramente a margem branca
+    borderWidth: 2, 
     borderColor: '#fff',
-    elevation: 4, // Adicionamos uma pequena sombra no Android para destacar do mapa
-    shadowColor: '#000', // Sombra para iOS
+    elevation: 4, 
+    shadowColor: '#000', 
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
   },
   marcadorCheio: { backgroundColor: '#D97706' },
   marcadorDanificado: { backgroundColor: '#DC2626' },
-  marcadorTexto: { 
-    fontSize: 22, // Duplicámos o tamanho do emoji de reciclagem
+  marcadorSelecionado: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 3,
+    borderColor: '#1B4332',
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
   },
+  marcadorTextoSelecionado: { fontSize: 28 },
+  marcadorTexto: { fontSize: 22 },
   card: {
     position: 'absolute',
     bottom: 24,

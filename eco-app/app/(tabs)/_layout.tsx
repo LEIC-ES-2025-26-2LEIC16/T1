@@ -31,13 +31,30 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: 'Ranking',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="trophy.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="history"
         options={{
           title: 'Histórico',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} />,
         }}
       />
-      
+      <Tabs.Screen
+        name="objectives"
+        options={{
+          title: 'Objetivos',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="target" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{ href: null }}
+      />
     </Tabs>
   );
 } 

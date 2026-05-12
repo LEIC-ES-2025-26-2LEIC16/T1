@@ -4,8 +4,16 @@ import {
   addDoc,
   doc,
   setDoc,
+  getDoc,
   onSnapshot,
   serverTimestamp,
+  query,
+  where,
+  orderBy,
+  arrayUnion,
+  arrayRemove,
+  updateDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 
@@ -89,4 +97,196 @@ export async function guardarRegistoReciclagem(imageUri: string, material: strin
     impactoCO2: co2,
     criadoEm: serverTimestamp(),
   });
+}
+
+export type PerfilUtilizador = {
+  nome: string;
+  username: string;
+  bio: string;
+};
+
+export async function getPerfilUtilizador(): Promise<PerfilUtilizador> {
+  const user = auth.currentUser;
+
+  if (!user) {
+    console.log("Aguardando autenticação para carregar o perfil...");
+    return { nome: '', username: '', bio: '' };
+  }
+
+  try {
+    const docRef = doc(db, 'utilizadores', user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return {
+        nome: data.nome || '',
+        username: data.username || '',
+        bio: data.bio || '',
+      };
+    }
+    return { nome: user.displayName ?? '', username: '', bio: '' };
+  } catch (error) {
+    console.error("Erro ao obter perfil do utilizador:", error);
+    return { nome: '', username: '', bio: '' };
+  }
+}
+
+export async function guardarPerfilUtilizador(perfil: PerfilUtilizador) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+  await setDoc(doc(db, 'utilizadores', user.uid), { uid: user.uid, ...perfil }, { merge: true });
+}
+
+export async function getFavoritos(): Promise<string[]> {
+  const user = auth.currentUser;
+  if (!user) return [];
+  const snap = await getDoc(doc(db, 'utilizadores', user.uid));
+  return (snap.data()?.favoritos as string[]) ?? [];
+}
+
+export async function toggleFavorito(ecopontoId: string, isFavorito: boolean): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+  const ref = doc(db, 'utilizadores', user.uid);
+  await updateDoc(ref, {
+    favoritos: isFavorito ? arrayRemove(ecopontoId) : arrayUnion(ecopontoId),
+  }).catch(() =>
+    setDoc(ref, { uid: user.uid, favoritos: [ecopontoId] }, { merge: true })
+  );
+}
+
+export async function getEstatisticasUtilizador() {
+  const user = auth.currentUser;
+  if (!user) {
+    // Retorna null para que o ecrã de perfil possa lidar com o estado de loading
+    // sem que a app crashe ou mostre um erro ao utilizador.
+    return null;
+  }
+
+  const q = query(
+    collection(db, 'registos_reciclagem'),
+    where('userId', '==', user.uid)
+  );
+
+  const snapshot = await getDocs(q);
+  let totalKg = 0;
+  let totalCO2 = 0;
+  let totalPontos = 0;
+
+  snapshot.docs.forEach(d => {
+    const data = d.data();
+    totalKg += parseFloat(data.quantidade) || 0;
+    totalCO2 += parseFloat(data.impactoCO2) || 0;
+    totalPontos += (data.pontosAtribuidos as number) || 0;
+  });
+
+  return {
+    totalReciclagens: snapshot.size,
+    totalKg: totalKg.toFixed(1),
+    totalCO2: totalCO2.toFixed(1),
+    totalPontos,
+  };
+}
+
+export type Objetivo = {
+  id: string;
+  material: string;
+  metaKg: number;
+  periodo: 'semanal' | 'mensal';
+  criadoEm: string;
+};
+
+export async function getObjetivos(): Promise<Objetivo[]> {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log("Aguardando autenticação para os objetivos...");
+    return [];
+  }
+
+  try {
+    const q = query(collection(db, 'objetivos'), where('userId', '==', user.uid));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        material: data.material,
+        metaKg: data.metaKg,
+        periodo: data.periodo,
+        criadoEm: data.criadoEm?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+      };
+    });
+  } catch (error) {
+    console.error("Erro ao procurar objetivos:", error);
+    return [];
+  }
+}
+
+export async function criarObjetivo(material: string, metaKg: number, periodo: 'semanal' | 'mensal') {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+  await addDoc(collection(db, 'objetivos'), {
+    userId: user.uid,
+    material,
+    metaKg,
+    periodo,
+    criadoEm: serverTimestamp(),
+  });
+}
+
+export async function eliminarObjetivo(id: string) {
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  const objetivoRef = doc(db, 'objetivos', id);
+  const objetivoSnap = await getDoc(objetivoRef);
+
+  // Medida de segurança: garante que o objetivo pertence ao utilizador logado
+  if (!objetivoSnap.exists() || objetivoSnap.data().userId !== user.uid) {
+    console.error("Tentativa de eliminar objetivo que não pertence ao utilizador ou não existe.");
+    throw new Error("Operação não permitida.");
+  }
+
+  await deleteDoc(objetivoRef);
+}
+
+export const getHistoricoReciclagem = async () => {
+  const user = auth.currentUser;
+
+  // se o utilizador ainda não estiver carregado, não tentamos a query
+  if (!user) {
+    console.log("Aguardando autenticação...");
+    return []; // return da lista vazia em vez de crashar
+  }
+
+  try {
+    const q = query(
+      collection(db, "registos_reciclagem"),
+      where("userId", "==", user.uid),
+      orderBy("criadoEm", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Erro ao procurar histórico:", error);
+    return [];
+  }
+};
+export async function guardarReview(ecopontoId: string, rating: number, comment: string) {
+try {
+  // Tenta ir buscar o ID do utilizador logado. Se não houver, fica 'anonimo'
+  const userId = auth.currentUser?.uid || 'anonimo'; 
+
+  await addDoc(collection(db, 'reviews'), {
+    ecopontoId,
+    rating,
+    comment,
+    userId,
+    data: serverTimestamp() // Guarda a data e hora exatas do servidor
+  });
+} catch (error) {
+  console.error("Erro ao guardar review:", error);
+  throw error; // Lança o erro para o ecrã poder mostrar o modal de falha
+}
 }

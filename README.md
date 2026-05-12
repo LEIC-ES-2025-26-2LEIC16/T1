@@ -219,6 +219,7 @@ During Sprint 0, the team established the project foundation and a shared vision
 ### Sprint 1
 
 ![screenshot](images/Screenshot1.png)
+![screenshot](images/Screenshot2.png)
 
 ### Retrospective
 
@@ -238,6 +239,8 @@ During Sprint 0, the team established the project foundation and a shared vision
 * Ensure testing tools (Maestro, Jest) are properly configured and running on everyone's local machines on day one of the Sprint.
 
 ### Sprint 2
+
+![screenshot](images/Screenshot2.png)
 
 ### Sprint 3
 

@@ -1,11 +1,22 @@
 appId: com.myimpact.app
 ---
 - launchApp:
-    clearState: false
+    clearState: true
+
+# login
+- extendedWaitUntil:
+    visible: "Entra na tua conta"
+    timeout: 15000
+- tapOn: "Email"
+- inputText: "up202406974@up.pt"
+- tapOn: "Password"
+- inputText: "123456"
+- hideKeyboard
+- tapOn: "Entrar"
 
 # wait for home screen to load
 - extendedWaitUntil:
-    visible: ".*Bom.*"
+    visible: "Home"
     timeout: 15000
 
 # navigate to profile via avatar button

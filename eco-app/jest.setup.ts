@@ -42,6 +42,10 @@ const mockAuthState = {
   get currentUser() { return _mockCurrentUser; },
   set currentUser(v) { _mockCurrentUser = v; },
 };
+jest.mock('@firebase/auth', () => ({
+  getReactNativePersistence: jest.fn(() => ({})),
+}));
+
 jest.mock('firebase/auth', () => ({
   initializeAuth: jest.fn(() => ({})),
   getReactNativePersistence: jest.fn(() => ({})),

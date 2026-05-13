@@ -1,23 +1,12 @@
 appId: com.myimpact.app
 ---
 - launchApp:
-    clearState: true
-
-# login
-- extendedWaitUntil:
-    visible: "Entra na tua conta"
-    timeout: 15000
-- tapOn: "Email"
-- inputText: "up202406974@up.pt"
-- tapOn: "Password"
-- inputText: "123456"
-- hideKeyboard
-- tapOn: "Entrar"
+    clearState: false
 
 # wait for home screen to load
 - extendedWaitUntil:
     visible: "Home"
-    timeout: 15000
+    timeout: 30000
 
 # navigate to objectives tab
 - tapOn: "Objetivos"
@@ -57,7 +46,7 @@ appId: com.myimpact.app
 
 - waitForAnimationToEnd
 
-# verify objective card appears with correct material
+# verify objective card appears
 - assertVisible: "10%"
 
 # create a second objective

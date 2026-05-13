@@ -114,6 +114,7 @@ export default function ObjectivesScreen() {
         <TouchableOpacity
           style={[styles.botaoNovo, mostrarForm && styles.botaoNovoAtivo]}
           onPress={() => setMostrarForm(v => !v)}
+          testID="objectives-add-button"
         >
           <Text style={styles.botaoNovoTexto}>{mostrarForm ? '✕' : '+'}</Text>
         </TouchableOpacity>
@@ -134,6 +135,7 @@ export default function ObjectivesScreen() {
                   key={m}
                   style={[styles.chip, sel && { backgroundColor: meta.cor, borderColor: meta.cor }]}
                   onPress={() => setMaterial(m)}
+                  testID={`chip-material-${m}`}
                 >
                   <Text style={{ fontSize: 14 }}>{meta.emoji}</Text>
                   <Text style={[styles.chipTexto, sel && styles.chipTextoSelecionado]}>{m}</Text>
@@ -159,6 +161,7 @@ export default function ObjectivesScreen() {
                 key={p.value}
                 style={[styles.chip, styles.chipPeriodo, periodo === p.value && styles.chipSelecionado]}
                 onPress={() => setPeriodo(p.value)}
+                testID={`chip-periodo-${p.value}`}
               >
                 <Text style={[styles.chipTexto, periodo === p.value && styles.chipTextoSelecionado]}>
                   {p.label}
@@ -167,7 +170,7 @@ export default function ObjectivesScreen() {
             ))}
           </View>
 
-          <TouchableOpacity style={styles.botaoGuardar} onPress={guardar} disabled={guardando}>
+          <TouchableOpacity style={styles.botaoGuardar} onPress={guardar} disabled={guardando} testID="objectives-create-button">
             {guardando
               ? <ActivityIndicator color="#fff" />
               : <Text style={styles.botaoGuardarTexto}>Criar objetivo</Text>}
@@ -179,7 +182,7 @@ export default function ObjectivesScreen() {
       {loading ? (
         <ActivityIndicator color="#1B4332" style={{ marginTop: 48 }} />
       ) : objetivos.length === 0 ? (
-        <View style={styles.vazio}>
+        <View style={styles.vazio} testID="objectives-empty-state">
           <Text style={styles.vazioEmoji}>🎯</Text>
           <Text style={styles.vazioTexto}>Sem objetivos ainda</Text>
           <Text style={styles.vazioSub}>Carrega em + para criar o teu primeiro objetivo de reciclagem.</Text>
@@ -212,7 +215,7 @@ export default function ObjectivesScreen() {
                   <Text style={[styles.percentagem, { color: concluido ? '#1B4332' : meta.cor }]}>
                     {percentagem}%
                   </Text>
-                  <TouchableOpacity onPress={() => eliminar(obj.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <TouchableOpacity onPress={() => eliminar(obj.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} testID={`objectives-delete-${obj.id}`}>
                     <Text style={styles.botaoEliminarTexto}>✕</Text>
                   </TouchableOpacity>
                 </View>

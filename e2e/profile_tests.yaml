@@ -1,0 +1,49 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+
+- extendedWaitUntil:
+    visible: "Ver todos os ecopontos"
+    timeout: 30000
+
+- tapOn:
+    id: "profile-avatar-button"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "profile-edit-button"
+
+- tapOn: "O teu nome"
+- eraseText
+- inputText: "Joao Silva"
+
+- tapOn: "@username"
+- eraseText
+- inputText: "joaosilva2026"
+
+- tapOn: "Conta um pouco sobre ti"
+- eraseText
+- inputText: "Bio de teste"
+
+- tapOn:
+    id: "profile-cancel-button"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "profile-edit-button"
+
+- tapOn: "O teu nome"
+- eraseText
+- inputText: "Maria Updated"
+
+- tapOn:
+    id: "profile-save-button"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Maria Updated"
+    timeout: 10000

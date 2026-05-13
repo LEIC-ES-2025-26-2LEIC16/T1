@@ -1,0 +1,27 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+
+- extendedWaitUntil:
+    visible: "Ver todos os ecopontos"
+    timeout: 30000
+
+- tapOn:
+    id: "profile-avatar-button"
+
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "profile-wrapped-button"
+    direction: DOWN
+
+- tapOn:
+    id: "profile-wrapped-button"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Ainda sem dados|WRAPPED 2026"
+    timeout: 15000

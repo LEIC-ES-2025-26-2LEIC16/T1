@@ -1,0 +1,53 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+
+- extendedWaitUntil:
+    visible: "Ver todos os ecopontos"
+    timeout: 30000
+
+- tapOn: "Objetivos"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "objectives-add-button"
+
+- tapOn:
+    id: "chip-material-Plástico"
+
+- tapOn: "Ex: 10"
+- inputText: "10"
+
+- tapOn:
+    id: "chip-periodo-mensal"
+
+- hideKeyboard
+
+- tapOn:
+    id: "objectives-create-button"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "objectives-add-button"
+
+- tapOn:
+    id: "chip-material-Vidro"
+
+- tapOn: "Ex: 10"
+- inputText: "20"
+
+- tapOn:
+    id: "chip-periodo-semanal"
+
+- hideKeyboard
+
+- tapOn:
+    id: "objectives-create-button"
+
+- waitForAnimationToEnd
+
+- assertVisible: ".*Vidro.*"
+- assertVisible: ".*Plástico.*"

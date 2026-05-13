@@ -1,29 +1,61 @@
 appId: com.myimpact.app
 ---
-- launchApp
+- launchApp:
+    clearState: false
 
+# wait for home screen to load
+- extendedWaitUntil:
+    visible: ".*Bom.*"
+    timeout: 15000
+
+# navigate to profile via avatar button
 - tapOn:
-    point: "91%,6%"
-
-- tapOn:
-    point: "50%,29%"
-
-
-- eraseText    
-- inputText: "Joao Silva"
-
-- tapOn:
-    point: "50%,38%"
-
-
-- eraseText    
-- inputText: "joaosilva2026"
-
-- tapOn:
-    point: "73%,58%"
+    id: "profile-avatar-button"
 
 - waitForAnimationToEnd
 
+# tap "Editar perfil" button
+- tapOn:
+    id: "profile-edit-button"
+
+# edit name field
+- tapOn: "O teu nome"
+- eraseText
+- inputText: "Joao Silva"
+
+# edit username field
+- tapOn: "@username"
+- eraseText
+- inputText: "joaosilva2026"
+
+# edit bio field
+- tapOn: "Conta um pouco sobre ti"
+- eraseText
+- inputText: "Test bio"
+
+# cancel editing
+- tapOn:
+    id: "profile-cancel-button"
+
+- waitForAnimationToEnd
+
+# verify original name still visible
+- assertVisible: "Joao Silva"
+
+# tap edit again to confirm save flow
+- tapOn:
+    id: "profile-edit-button"
+
+- tapOn: "O teu nome"
+- eraseText
+- inputText: "Maria Updated"
+
+- tapOn:
+    id: "profile-save-button"
+
+- waitForAnimationToEnd
+
+# verify updated name is displayed
 - extendedWaitUntil:
-    visible: "Joao Silva"
-    timeout: 5000
+    visible: "Maria Updated"
+    timeout: 10000

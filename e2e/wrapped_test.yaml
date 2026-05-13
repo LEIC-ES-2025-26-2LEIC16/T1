@@ -1,0 +1,34 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+
+# wait for home screen to load
+- extendedWaitUntil:
+    visible: ".*Bom.*"
+    timeout: 15000
+
+# navigate to profile via avatar button
+- tapOn:
+    id: "profile-avatar-button"
+
+- waitForAnimationToEnd
+
+# scroll down to wrapped button and tap it
+- scrollUntilVisible:
+    element:
+      id: "profile-wrapped-button"
+    direction: DOWN
+
+- tapOn:
+    id: "profile-wrapped-button"
+
+- waitForAnimationToEnd
+
+# verify wrapped empty state is shown (no recycling data yet)
+- extendedWaitUntil:
+    visible: "Ainda sem dados"
+    timeout: 15000
+
+- assertVisible:
+    id: "wrapped-empty-state"

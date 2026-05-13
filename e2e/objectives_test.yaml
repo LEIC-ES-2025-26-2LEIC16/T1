@@ -1,20 +1,70 @@
 appId: com.myimpact.app
 ---
-- launchApp
+- launchApp:
+    clearState: false
 
-# abrir formulário
-- tapOn: "+"
+# navigate to objectives tab
+- tapOn: "Objetivos"
 
-# escolher material
-- tapOn: "🧴 Plástico"
+- waitForAnimationToEnd
 
-# escrever meta
+# verify empty state (sees "Sem objetivos ainda" text)
+- extendedWaitUntil:
+    visible: "Sem objetivos ainda"
+    timeout: 10000
+
+- assertVisible:
+    id: "objectives-empty-state"
+
+# open create form
+- tapOn:
+    id: "objectives-add-button"
+
+# select material "Plástico"
+- tapOn:
+    id: "chip-material-Plástico"
+
+# enter goal weight
 - tapOn: "Ex: 10"
-
 - inputText: "10"
 
-# escolher período
-- tapOn: "🗓  Mensal"
+# select period "Mensal"
+- tapOn:
+    id: "chip-periodo-mensal"
 
-# guardar
-- tapOn: "Criar objetivo"
+# hide keyboard
+- hideKeyboard
+
+# create objective
+- tapOn:
+    id: "objectives-create-button"
+
+- waitForAnimationToEnd
+
+# verify objective card appears with correct material
+- assertVisible: "🧴  Plástico"
+- assertVisible: "10%"
+
+# create a second objective
+- tapOn:
+    id: "objectives-add-button"
+
+- tapOn:
+    id: "chip-material-Vidro"
+
+- tapOn: "Ex: 10"
+- inputText: "20"
+
+- tapOn:
+    id: "chip-periodo-semanal"
+
+- hideKeyboard
+
+- tapOn:
+    id: "objectives-create-button"
+
+- waitForAnimationToEnd
+
+# verify both objectives exist
+- assertVisible: "🫙  Vidro"
+- assertVisible: "🧴  Plástico"

@@ -139,10 +139,10 @@ export default function ProfileScreen() {
               />
 
               <View style={styles.botoesEdicao}>
-                <TouchableOpacity style={styles.botaoCancelar} onPress={() => setEditando(false)}>
+                <TouchableOpacity style={styles.botaoCancelar} onPress={() => setEditando(false)} testID="profile-cancel-button">
                   <Text style={styles.botaoCancelarTexto}>Cancelar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.botaoGuardar} onPress={guardar} disabled={guardando}>
+                <TouchableOpacity style={styles.botaoGuardar} onPress={guardar} disabled={guardando} testID="profile-save-button">
                   {guardando
                     ? <ActivityIndicator color="#fff" />
                     : <Text style={styles.botaoGuardarTexto}>Guardar</Text>}
@@ -189,6 +189,7 @@ export default function ProfileScreen() {
       <TouchableOpacity 
         style={styles.botaoWrapped} 
         onPress={() => router.push('/wrapped' as any)}
+        testID="profile-wrapped-button"
       >
         <Text style={styles.botaoWrappedTexto}>✨ Ver o meu Wrapped 2026</Text>
       </TouchableOpacity>

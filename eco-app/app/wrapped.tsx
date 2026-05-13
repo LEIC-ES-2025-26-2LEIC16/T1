@@ -134,7 +134,7 @@ export default function WrappedScreen() {
   // Se o utilizador criou a conta agora e não tem dados
   if (!wrappedData) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={styles.loadingContainer} testID="wrapped-empty-state">
         <Text style={styles.lockIcon}>🌱</Text>
         <Text style={styles.incompleteTitle}>Ainda sem dados</Text>
         <Text style={styles.incompleteDescription}>
@@ -175,7 +175,7 @@ export default function WrappedScreen() {
 
   // Scenario 1: Successful or Partial Wrapped
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} testID="wrapped-content">
       <Text style={styles.badge}>WRAPPED 2026</Text>
       <Text style={styles.headerTitle}>O teu ano em reciclagem</Text>
       <Text style={styles.headerSubtitle}>Aqui está tudo o que fizeste pelo planeta este ano ✨</Text>

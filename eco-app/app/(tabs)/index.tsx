@@ -136,7 +136,7 @@ export default function HomeScreen() {
     >
       {/* Avatar topo direito */}
       <View style={[styles.avatarRow, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/(tabs)/profile' as any)}>
+        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/(tabs)/profile' as any)} testID="profile-avatar-button">
           <Text style={styles.avatarText}>{iniciais}</Text>
         </TouchableOpacity>
       </View>

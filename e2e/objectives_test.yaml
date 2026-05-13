@@ -1,0 +1,20 @@
+appId: com.myimpact.app
+---
+- launchApp
+
+# abrir formulário
+- tapOn: "+"
+
+# escolher material
+- tapOn: "🧴 Plástico"
+
+# escrever meta
+- tapOn: "Ex: 10"
+
+- inputText: "10"
+
+# escolher período
+- tapOn: "🗓  Mensal"
+
+# guardar
+- tapOn: "Criar objetivo"

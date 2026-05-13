@@ -92,7 +92,13 @@ export default function ProfileScreen() {
             <Text style={styles.avatarTexto}>{iniciais}</Text>
           </View>
           {!editando && (
-            <TouchableOpacity style={styles.botaoEditar} onPress={abrirEdicao}>
+            <TouchableOpacity
+             accessible={true}
+             testID="profile-edit-button"
+             accessibilityLabel="profile-edit-button"
+             style={styles.botaoEditar}
+             onPress={abrirEdicao}
+>          
               <Text style={styles.botaoEditarTexto}>Editar perfil</Text>
             </TouchableOpacity>
           )}

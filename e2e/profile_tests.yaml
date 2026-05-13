@@ -1,0 +1,29 @@
+appId: com.myimpact.app
+---
+- launchApp
+
+- tapOn:
+    point: "91%,6%"
+
+- tapOn:
+    point: "50%,29%"
+
+
+- eraseText    
+- inputText: "Joao Silva"
+
+- tapOn:
+    point: "50%,38%"
+
+
+- eraseText    
+- inputText: "joaosilva2026"
+
+- tapOn:
+    point: "73%,58%"
+
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "Joao Silva"
+    timeout: 5000

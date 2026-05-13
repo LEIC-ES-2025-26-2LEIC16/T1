@@ -1,0 +1,9 @@
+15:44:42.625 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /home/madalena/esof/project/e2e/debug/.maestro/tests/2026-05-13_154442
+15:44:42.628 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+15:44:42.628 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.3.0
+15:44:42.629 [ INFO] MAESTRO.logSystemInfo: CI: Undefined
+15:44:42.629 [ INFO] MAESTRO.logSystemInfo: OS Name: Linux
+15:44:42.629 [ INFO] MAESTRO.logSystemInfo: OS Version: 6.17.0-20-generic
+15:44:42.629 [ INFO] MAESTRO.logSystemInfo: Architecture: amd64
+15:44:42.630 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+15:44:42.633 [ INFO] MAESTRO.logSystemInfo: Xcode Version: null

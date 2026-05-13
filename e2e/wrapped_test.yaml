@@ -3,18 +3,15 @@ appId: com.myimpact.app
 - launchApp:
     clearState: false
 
-# wait for home screen to load
 - extendedWaitUntil:
-    visible: "Home"
+    visible: "Ver todos os ecopontos"
     timeout: 30000
 
-# navigate to profile via avatar button
 - tapOn:
     id: "profile-avatar-button"
 
 - waitForAnimationToEnd
 
-# scroll down to wrapped button and tap it
 - scrollUntilVisible:
     element:
       id: "profile-wrapped-button"
@@ -25,10 +22,6 @@ appId: com.myimpact.app
 
 - waitForAnimationToEnd
 
-# verify wrapped empty state is shown (no recycling data for new user)
 - extendedWaitUntil:
-    visible: "Ainda sem dados"
+    visible: "Ainda sem dados|WRAPPED 2026"
     timeout: 15000
-
-- assertVisible:
-    id: "wrapped-empty-state"

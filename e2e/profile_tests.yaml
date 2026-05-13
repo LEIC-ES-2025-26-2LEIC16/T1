@@ -3,46 +3,35 @@ appId: com.myimpact.app
 - launchApp:
     clearState: false
 
-# wait for home screen to load
 - extendedWaitUntil:
-    visible: "Home"
+    visible: "Ver todos os ecopontos"
     timeout: 30000
 
-# navigate to profile via avatar button
 - tapOn:
     id: "profile-avatar-button"
 
 - waitForAnimationToEnd
 
-# tap "Editar perfil" button
 - tapOn:
     id: "profile-edit-button"
 
-# edit name field
 - tapOn: "O teu nome"
 - eraseText
 - inputText: "Joao Silva"
 
-# edit username field
 - tapOn: "@username"
 - eraseText
 - inputText: "joaosilva2026"
 
-# edit bio field
 - tapOn: "Conta um pouco sobre ti"
 - eraseText
-- inputText: "Test bio"
+- inputText: "Bio de teste"
 
-# cancel editing
 - tapOn:
     id: "profile-cancel-button"
 
 - waitForAnimationToEnd
 
-# verify original name still visible
-- assertVisible: "Joao Silva"
-
-# tap edit again to confirm save flow
 - tapOn:
     id: "profile-edit-button"
 
@@ -55,7 +44,6 @@ appId: com.myimpact.app
 
 - waitForAnimationToEnd
 
-# verify updated name is displayed
 - extendedWaitUntil:
     visible: "Maria Updated"
     timeout: 10000

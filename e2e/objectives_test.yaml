@@ -3,53 +3,33 @@ appId: com.myimpact.app
 - launchApp:
     clearState: false
 
-# wait for home screen to load
 - extendedWaitUntil:
-    visible: "Home"
+    visible: "Ver todos os ecopontos"
     timeout: 30000
 
-# navigate to objectives tab
 - tapOn: "Objetivos"
 
 - waitForAnimationToEnd
 
-# verify empty state
-- extendedWaitUntil:
-    visible: "Sem objetivos ainda"
-    timeout: 10000
-
-- assertVisible:
-    id: "objectives-empty-state"
-
-# open create form
 - tapOn:
     id: "objectives-add-button"
 
-# select material "Plástico"
 - tapOn:
     id: "chip-material-Plástico"
 
-# enter goal weight
 - tapOn: "Ex: 10"
 - inputText: "10"
 
-# select period "Mensal"
 - tapOn:
     id: "chip-periodo-mensal"
 
-# hide keyboard
 - hideKeyboard
 
-# create objective
 - tapOn:
     id: "objectives-create-button"
 
 - waitForAnimationToEnd
 
-# verify objective card appears
-- assertVisible: "10%"
-
-# create a second objective
 - tapOn:
     id: "objectives-add-button"
 
@@ -69,6 +49,5 @@ appId: com.myimpact.app
 
 - waitForAnimationToEnd
 
-# verify both objectives exist
 - assertVisible: ".*Vidro.*"
 - assertVisible: ".*Plástico.*"

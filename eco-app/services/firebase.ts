@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-// @ts-ignore ignores the missing type definition for React Native persistence
-import { initializeAuth, getReactNativePersistence, getAuth, type Auth } from 'firebase/auth';
+import { initializeAuth, getAuth, type Auth } from 'firebase/auth';
+// @ts-expect-error — @firebase/auth só exporta getReactNativePersistence na condição 'react-native' (resolvida pelo Metro)
+import { getReactNativePersistence } from '@firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';

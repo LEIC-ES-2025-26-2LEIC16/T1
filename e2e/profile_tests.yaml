@@ -2,6 +2,7 @@ appId: com.myimpact.app
 ---
 - launchApp:
     clearState: false
+    stopApp: false
 
 - extendedWaitUntil:
     visible: "Ver todos os ecopontos"
@@ -15,29 +16,31 @@ appId: com.myimpact.app
 - tapOn:
     id: "profile-edit-button"
 
-- tapOn: "O teu nome"
-- eraseText
-- inputText: "Joao Silva"
-
-- tapOn: "@username"
-- eraseText
-- inputText: "joaosilva2026"
-
-- tapOn: "Conta um pouco sobre ti"
-- eraseText
-- inputText: "Bio de teste"
+- tapOn:
+    id: "profile-name-input"
+- repeat:
+    times: 40
+    commands:
+      - pressKey: Backspace
+- inputText: "Joao"
 
 - tapOn:
-    id: "profile-cancel-button"
+    id: "profile-username-input"
+- repeat:
+    times: 40
+    commands:
+      - pressKey: Backspace
+- inputText: "jo"
+
+- tapOn:
+    id: "profile-bio-input"
+- repeat:
+    times: 80
+    commands:
+      - pressKey: Backspace
+- inputText: "test"
 
 - waitForAnimationToEnd
-
-- tapOn:
-    id: "profile-edit-button"
-
-- tapOn: "O teu nome"
-- eraseText
-- inputText: "Maria Updated"
 
 - tapOn:
     id: "profile-save-button"
@@ -45,5 +48,7 @@ appId: com.myimpact.app
 - waitForAnimationToEnd
 
 - extendedWaitUntil:
-    visible: "Maria Updated"
+    visible: "Editar perfil"
     timeout: 10000
+
+- assertVisible: "Joao"

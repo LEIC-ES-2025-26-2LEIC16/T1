@@ -11,11 +11,14 @@ const ESTADO: Record<string, { cor: string; fundo: string; heroCor: string; labe
 
 export default function EcopontoDetailScreen() {
   const router = useRouter();
-  const { ecopontoId, ecopontoNome, ecopontoMorada, ecopontoEstado } = useLocalSearchParams<{
+  // Grab the params passed from the previous screen
+  const { ecopontoId, ecopontoNome, ecopontoMorada, ecopontoEstado, ultimaRecolha, proximaRecolha } = useLocalSearchParams<{
     ecopontoId: string;
     ecopontoNome: string;
     ecopontoMorada: string;
     ecopontoEstado: string;
+    ultimaRecolha?: string; // Optional: last collection date
+    proximaRecolha?: string; // Optional: next collection date
   }>();
 
   const [isFav, setIsFav] = useState(false);
@@ -34,7 +37,7 @@ export default function EcopontoDetailScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
 
-      {/* Hero */}
+      {/* Hero section with the big icon and favorite button */}
       <View style={[styles.hero, { backgroundColor: estadoInfo.heroCor }]}>
         <View style={styles.heroIconeWrap}>
           <Text style={styles.heroIcone}>♻</Text>
@@ -48,7 +51,7 @@ export default function EcopontoDetailScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Info */}
+      {/* Basic info about the recycling bin */}
       <View style={styles.infoSection}>
         <View style={styles.infoTopo}>
           <Text style={styles.nome}>{ecopontoNome}</Text>
@@ -62,10 +65,32 @@ export default function EcopontoDetailScreen() {
         </View>
       </View>
 
-      {/* Divisor */}
+      {/* Maintenance History Section */}
+      <View style={styles.manutencaoSection}>
+        {(ultimaRecolha && proximaRecolha) ? (
+          // Happy path: We have collection dates
+          <View style={styles.manutencaoBox}>
+            <View style={styles.manutencaoRow}>
+              <Text style={styles.manutencaoLabel}>Última Recolha:</Text>
+              <Text style={styles.manutencaoValor}>{ultimaRecolha}</Text>
+            </View>
+            <View style={styles.manutencaoRow}>
+              <Text style={styles.manutencaoLabel}>Próxima Recolha:</Text>
+              <Text style={styles.manutencaoValor}>{proximaRecolha}</Text>
+            </View>
+          </View>
+        ) : (
+          // Exception: No collection dates available
+          <View style={[styles.manutencaoBox, styles.manutencaoIndisponivel]}>
+            <Text style={styles.manutencaoIndisponivelTexto}>
+              Collection schedule currently unavailable for this location.
+            </Text>
+          </View>
+        )}
+      </View>
+
       <View style={styles.divisor} />
 
-      {/* Ações */}
       <Text style={styles.secaoLabel}>O QUE QUERES FAZER?</Text>
 
       <TouchableOpacity
@@ -153,7 +178,28 @@ const styles = StyleSheet.create({
   moradaIcone: { fontSize: 14 },
   morada:      { fontSize: 14, color: '#888', flex: 1 },
 
-  divisor: { height: 1, backgroundColor: '#f0f0f0', marginHorizontal: 20, marginBottom: 20 },
+  // Maintenance section styles
+  manutencaoSection: {
+    paddingHorizontal: 20,
+    marginTop: 4,
+  },
+  manutencaoBox: {
+    backgroundColor: '#fcfcfc',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    gap: 12,
+  },
+  manutencaoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  manutencaoLabel: { fontSize: 14, color: '#888' },
+  manutencaoValor: { fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
+  manutencaoIndisponivel: { backgroundColor: '#f5f5f5', alignItems: 'center' },
+  manutencaoIndisponivelTexto: { fontSize: 13, color: '#999', textAlign: 'center', lineHeight: 18 },
+
+  divisor: {
+    height: 1, backgroundColor: '#f0f0f0', marginHorizontal: 20, marginTop: 24, marginBottom: 20,
+  },
 
   secaoLabel: {
     fontSize: 11, fontWeight: '700', color: '#bbb',

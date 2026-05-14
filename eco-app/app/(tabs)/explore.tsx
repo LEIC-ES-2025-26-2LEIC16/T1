@@ -90,19 +90,36 @@ export default function MapaScreen() {
       {/* info card for selected bins */}
       {ecopontoSelecionado && (
         <View style={styles.card}>
-          <View style={styles.cardHeader}>
+          <TouchableOpacity
+            style={styles.cardHeader}
+            activeOpacity={0.7}
+            onPress={() =>
+              router.push({
+                pathname: '/ecoponto-detail',
+                params: {
+                  ecopontoId: ecopontoSelecionado.id,
+                  ecopontoNome: ecopontoSelecionado.nome,
+                  ecopontoMorada: ecopontoSelecionado.morada,
+                  ecopontoEstado: ecopontoSelecionado.estado,
+                  // TEMPORARY MOCK DATA for US #41
+                  ultimaRecolha: '14 Maio 2026, 08:30',
+                  proximaRecolha: '16 Maio 2026, 09:00',
+                },
+              } as any)
+            }
+          >
             <View>
               <Text style={styles.cardNome}>{ecopontoSelecionado.nome}</Text>
               <Text style={styles.cardMorada}>{ecopontoSelecionado.morada}</Text>
             </View>
             <View style={[
-              styles.estadoBadge,
-              ecopontoSelecionado.estado === 'Cheio' && styles.estadoCheio,
-              ecopontoSelecionado.estado === 'Danificado' && styles.estadoDanificado,
-            ]}>
+                styles.estadoBadge,
+                ecopontoSelecionado.estado === 'Cheio' && styles.estadoCheio,
+                ecopontoSelecionado.estado === 'Danificado' && styles.estadoDanificado,
+              ]}>
               <Text style={styles.estadoTexto}>{ecopontoSelecionado.estado}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
           
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity

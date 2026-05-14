@@ -240,7 +240,95 @@ During Sprint 0, the team established the project foundation and a shared vision
 
 ### Sprint 2
 
+### Sprint Review🚀
+
+**1. Sprint Planning Summary**
+
+In the Sprint 3 planning session, the team decided to increase the scope of planned features, as we felt the app was too basic and not advanced enough to meet our vision. The new features planned for this sprint were:
+
+*Profile Editing
+*Weekly Friends Leaderboard
+*User Profile & Recycling Activity
+*Recycling Objectives & Goals
+*MyImpact Wrapped / Recycling Summary
+*Password Recovery
+*Personalized Home Screen
+
+**2. Product Increment Status (Definition of Done)**
+
+We successfully delivered:
+
+✅ Profile Editing: Users can now edit their profile information, including personal details, allowing them to customize and keep their account up to date.
+
+✅ Weekly Friends Leaderboard: Added a weekly leaderboard where users can compare recycling points with friends, encouraging motivation and friendly competition.
+
+✅ User Profile & Recycling Activity: Users can access a dedicated profile screen to view personal information and track their recycling activity within the app.
+
+✅ Recycling Objectives & Goals: Users can create personalized recycling objectives to stay motivated and monitor their environmental progress over time.
+
+✅ MyImpact Wrapped / Recycling Summary: Added a recycling activity summary feature that highlights users' eco-friendly habits and achievements, making it easy to review and share progress with friends.
+
+✅ Password Recovery: Users can now recover their password securely in case they forget their account credentials, ensuring continuous access to the app.
+
+✅ Personalized Home Screen: Introduced a redesigned home screen that greets users and displays monthly recycling impact, favourite ecopoints, and a highlighted monthly goal, allowing quick access to personal sustainability insights and recycling locations.
+
+**3. Flow Management and Velocity**
+
+### Work in Progress (WiP):
+Strong control over workflow was maintained, ensuring no more than 3 Pull Requests (PRs) were open simultaneously, in line with the policy of avoiding paused or scattered work.
+
+### Velocity vs. Delivery:
+With an ambitious plan of 30 story points, the team rose to the challenge despite the increased scope. The sprint required a strong collective effort to deliver all planned features, but the team managed to complete everything within the sprint window. A few tasks required extra attention and iteration, but no feature was left behind — all 30 points were successfully delivered, reflecting a solid and committed performance from the whole team.
+
+**4. Sprint Retrospective (Critical Reflection)**
+
+### Problem Identification:
+The team recognized that we needed to implement significantly more features this sprint to bring the app up to the desired level of quality and completeness. As a result, this sprint was noticeably more stressful and eventful than the previous one — but nothing we couldn't manage as a team.
+
+### Analysis:
+WiP was well controlled, as was the availability of team members during this sprint.
+
+### Improvement Point:
+Hold more in-person team meetings outside class, as that is when the team is most productive.
+
+**5. Metrics Status (Dashboard)**
+
+Estimates: Completed — 30 total story points defined during Planning.
+
+WiP Control: ✅ Excellent — Maximum of 3 active PRs for 5 team members.
+
+Stakeholder Review: ✅ Completed — Demonstration of profile editing, leaderboard, and personalized home screen.
+
+Product Increment: ✅ Completed — All features planned for this sprint were successfully implemented and delivered.
+
+**6. 🐞 Bug Report & Technical Impediments**
+
+1. Profile Statistics Not Updating After New Recycling Entry {(State Sync Issue)}
+After a user logged a new recycling activity, the profile statistics screen was not reflecting the updated values in real time, continuing to display outdated data until a full app restart.
+
+### Impact:
+Users had no immediate visual confirmation that their recycling action had been registered, leading to confusion and a lack of trust in the app's data accuracy.
+
+### Proposed Solution:
+The fix involved implementing a reactive state listener on the profile statistics component, ensuring it subscribes to recycling data updates and triggers a UI re-render automatically upon any new entry being saved. This guarantees that all metrics shown on the profile are always up to date without requiring a manual refresh or restart.
+
+2. Flaky and Inconsistent Maestro UI Tests {(Test Reliability Issue)}
+
+During the testing phase, several Maestro end-to-end tests were producing inconsistent results — passing on some runs and failing on others without any changes to the underlying code, making it difficult to trust the test suite and validate feature behaviour reliably.
+
+### Impact:
+The unpredictability of the test results slowed down the validation process and created uncertainty around whether failures were genuine bugs or test instability, undermining confidence in the CI pipeline.
+
+### Proposed Solution:
+The team adopted Maestro Studio to debug and fine-tune the flaky tests. Using Maestro Studio's interactive interface, we were able to identify timing issues and fragile selectors that were causing the inconsistencies. After adjusting the test flows accordingly, the suite became stable and reliable across consecutive runs.
+
+
+**Beggining of the Sprint**
 ![screenshot](images/Screenshot2.png)
+
+**Ending of the Sprint**
+![screenshot](images/Screenshot4.png)
+
 
 ### Sprint 3
 

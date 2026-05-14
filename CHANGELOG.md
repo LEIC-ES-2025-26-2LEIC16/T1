@@ -55,6 +55,8 @@
 
 🐛 Known Issues / Bugs (Fixed/Known Issues)
 
+    Profile Statistics Not Updating in Real Time :Profile statistics were not updating in real time after a new recycling entry, showing outdated values until an app restart. This reduced user trust as changes were not immediately reflected. The issue was fixed by adding a reactive state listener to ensure the UI updates automatically whenever new data is saved.
+
     End-to-End Test Instability : Some Maestro end-to-end tests are currently failing or unstable due to UI timing issues and reliance on coordinate-based interactions. Certain flows do not consistently reflect the real application state, causing assertions to fail even when the feature works correctly manually. This indicates a need for more stable selectors (e.g., testIDs) and improved synchronization in the test flows.
 
 📦 Documentation

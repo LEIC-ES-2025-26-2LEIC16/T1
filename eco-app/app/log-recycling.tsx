@@ -51,7 +51,8 @@ export default function LogRecyclingScreen() {
       Alert.alert("Informação em falta", "Por favor, seleciona o tipo de material primeiro.");
       return;
     }
-    if (!amount || isNaN(Number(amount))) {
+    const formattedAmount = amount.replace(',', '.');
+    if (!amount || isNaN(Number(formattedAmount))) {
       Alert.alert("Informação em falta", "Por favor, introduz um peso válido em kg.");
       return;
     }

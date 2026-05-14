@@ -81,7 +81,7 @@ export default function ProfileScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* Banner */}
         <View style={[styles.banner, { height: BANNER_HEIGHT + insets.top }]} />
@@ -110,6 +110,7 @@ export default function ProfileScreen() {
             <>
               <Text style={styles.fieldLabel}>Nome</Text>
               <TextInput
+                testID="profile-name-input"
                 style={styles.input}
                 value={rascunho.nome}
                 onChangeText={v => setRascunho(r => ({ ...r, nome: v }))}
@@ -119,6 +120,7 @@ export default function ProfileScreen() {
 
               <Text style={styles.fieldLabel}>Nome de utilizador</Text>
               <TextInput
+                testID="profile-username-input"
                 style={styles.input}
                 value={rascunho.username}
                 onChangeText={v => setRascunho(r => ({ ...r, username: v.replace(/\s/g, '') }))}
@@ -129,6 +131,7 @@ export default function ProfileScreen() {
 
               <Text style={styles.fieldLabel}>Bio</Text>
               <TextInput
+                testID="profile-bio-input"
                 style={[styles.input, styles.inputBio]}
                 value={rascunho.bio}
                 onChangeText={v => setRascunho(r => ({ ...r, bio: v }))}

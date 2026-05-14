@@ -323,11 +323,11 @@ The unpredictability of the test results slowed down the validation process and 
 The team adopted Maestro Studio to debug and fine-tune the flaky tests. Using Maestro Studio's interactive interface, we were able to identify timing issues and fragile selectors that were causing the inconsistencies. After adjusting the test flows accordingly, the suite became stable and reliable across consecutive runs.
 
 
-**Beggining of the Sprint**
-![screenshot](images/Screenshot2.png)
+**Beggining of the Sprint 2**
+![screenshot](images/Screenshot5.png)
 
-**Ending of the Sprint**
-![screenshot](images/Screenshot4.png)
+**Ending of the Sprint 2**
+![screenshot](images/Screenshot6.png)
 
 
 ### Sprint 3

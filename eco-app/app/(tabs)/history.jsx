@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, View, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { getHistoricoReciclagem } from '@/services/firestore';
@@ -20,8 +20,34 @@ const groupByMonth = (data) => {
   return Object.entries(groups).map(([month, items]) => ({ month, items }));
 };
 
+const CORES = {
+  plastico: '#2563EB',
+  papel: '#D97706',
+  vidro: '#0891B2',
+  metal: '#7C3AED',
+  verde: '#1B4332',
+  verdeClaro: '#639922',
+};
+
+const materialColor = (type) => {
+  const t = (type || '').toLowerCase();
+  if (t.includes('plastico') || t.includes('plástico')) return CORES.plastico;
+  if (t.includes('papel')) return CORES.papel;
+  if (t.includes('vidro')) return CORES.vidro;
+  if (t.includes('metal')) return CORES.metal;
+  return CORES.verde;
+};
+
+const materialLabel = (type) => {
+  const t = (type || '').toLowerCase();
+  if (t.includes('plastico') || t.includes('plástico')) return 'PL';
+  if (t.includes('papel')) return 'PA';
+  if (t.includes('vidro')) return 'VD';
+  if (t.includes('metal')) return 'MT';
+  return 'TD';
+};
+
 export default function HistoryScreen() {
-  const insets = useSafeAreaInsets();
   const [registos, setRegistos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,83 +62,115 @@ export default function HistoryScreen() {
 
   const renderCard = (item) => (
     <View key={item.id} style={styles.card}>
-      <View style={styles.left}>
-        <View style={styles.titleRow}>
-          <ThemedText style={styles.type}>{item.type}</ThemedText>
-          <View style={styles.badge}>
-            <ThemedText style={styles.badgeText}>{item.amount}</ThemedText>
+      <View style={[styles.cardIndicator, { backgroundColor: materialColor(item.type) }]} />
+      <View style={styles.cardBody}>
+        <View style={styles.cardRow}>
+          <View style={[styles.materialBadge, { backgroundColor: materialColor(item.type) + '15' }]}>
+            <ThemedText style={[styles.materialBadgeText, { color: materialColor(item.type) }]}>
+              {materialLabel(item.type)}
+            </ThemedText>
           </View>
+          <ThemedText style={styles.cardAmount}>{item.amount}</ThemedText>
         </View>
-        <ThemedText style={styles.date}>{formatDate(item.date)}</ThemedText>
+        <View style={styles.cardRow}>
+          <ThemedText style={styles.cardDate}>{formatDate(item.date)}</ThemedText>
+          <ThemedText style={styles.cardImpact}>-{item.impact}</ThemedText>
+        </View>
       </View>
-      <ThemedText style={styles.impact}>−{item.impact}</ThemedText>
     </View>
   );
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: insets.top + 16 }]}>
-      <ThemedText style={styles.subtitle}>histórico de reciclagem</ThemedText>
-      <ThemedText type="title" style={styles.header}>My impact</ThemedText>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
+    <ThemedView style={styles.container}>
+      <View style={styles.headerRow}>
+        <ThemedText style={styles.titulo}>Histórico</ThemedText>
+        <ThemedText style={styles.totalRegistos}>{registos.length} registos</ThemedText>
+      </View>
 
       <View style={styles.summaryRow}>
-        <View style={styles.summaryCard}>
-          <ThemedText style={styles.summaryLabel}>total recycled</ThemedText>
-          <ThemedText style={styles.summaryValue}>{totalKg} kg</ThemedText>
+        <View style={[styles.summaryCard, { borderLeftColor: CORES.verde }]}>
+          <ThemedText style={styles.summaryValue}>{totalKg}</ThemedText>
+          <ThemedText style={styles.summaryUnit}>kg</ThemedText>
+          <ThemedText style={styles.summaryLabel}>reciclados</ThemedText>
         </View>
-        <View style={styles.summaryCard}>
-          <ThemedText style={styles.summaryLabel}>CO2 saved</ThemedText>
-          <ThemedText style={[styles.summaryValue, { color: '#3B6D11' }]}>{totalCO2} kg</ThemedText>
+        <View style={[styles.summaryCard, { borderLeftColor: CORES.verdeClaro }]}>
+          <ThemedText style={[styles.summaryValue, { color: CORES.verdeClaro }]}>{totalCO2}</ThemedText>
+          <ThemedText style={styles.summaryUnit}>kg</ThemedText>
+          <ThemedText style={styles.summaryLabel}>CO2 poupado</ThemedText>
         </View>
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color="#639922" />
+        <ActivityIndicator style={{ marginTop: 48 }} color={CORES.verdeClaro} />
       ) : registos.length === 0 ? (
         <ThemedText style={styles.empty}>Ainda não tens registos de reciclagem.</ThemedText>
       ) : (
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           {groupByMonth(registos).map(({ month, items }) => (
             <View key={month} style={styles.group}>
-              <ThemedText style={styles.sectionLabel}>{month.toUpperCase()}</ThemedText>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionLine} />
+                <ThemedText style={styles.sectionLabel}>{month.toUpperCase()}</ThemedText>
+                <View style={styles.sectionLine} />
+              </View>
               {items.map(item => renderCard(item))}
             </View>
           ))}
         </ScrollView>
       )}
     </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, paddingHorizontal: 20 },
-  subtitle:     { fontSize: 13, color: '#888', marginBottom: 2 },
-  header:       { marginBottom: 16 },
-  summaryRow:   { flexDirection: 'row', gap: 8, marginBottom: 20 },
-  summaryCard:  { flex: 1, backgroundColor: '#fff', borderRadius: 10, padding: 12, borderWidth: 0.5, borderColor: '#e0e0e0' },
-  summaryLabel: { fontSize: 12, color: '#888', marginBottom: 4 },
-  summaryValue: { fontSize: 20, fontWeight: '500' },
-  list:         { paddingBottom: 40 },
-  group:        { marginBottom: 16 },
-  sectionLabel: { fontSize: 11, color: '#aaa', letterSpacing: 0.8, marginBottom: 8, fontWeight: '500' },
-  empty:        { textAlign: 'center', color: '#aaa', marginTop: 40 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: '#e0e0e0',
-    borderLeftWidth: 3,
-    borderLeftColor: '#639922',
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 7,
+  container: { flex: 1, paddingHorizontal: 20, paddingTop: 8 },
+
+  headerRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline',
+    marginBottom: 20, marginTop: 40,
   },
-  left:        { flex: 1 },
-  titleRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
-  type:        { fontSize: 15, fontWeight: '500' },
-  badge:       { backgroundColor: '#EAF3DE', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
-  badgeText:   { fontSize: 11, color: '#3B6D11' },
-  date:        { fontSize: 12, color: '#aaa' },
-  impact:      { fontSize: 13, fontWeight: '500', color: '#3B6D11' },
+  titulo: { fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5, lineHeight: 36 },
+  totalRegistos: { fontSize: 13, color: '#bbb', fontWeight: '500' },
+
+  summaryRow: { flexDirection: 'row', gap: 12, marginBottom: 28 },
+  summaryCard: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 14,
+    padding: 16, borderLeftWidth: 3,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+  },
+  summaryValue: { fontSize: 28, fontWeight: '800', color: '#1B4332' },
+  summaryUnit: { fontSize: 12, fontWeight: '600', color: '#aaa', marginTop: -4, marginBottom: 2 },
+  summaryLabel: { fontSize: 12, color: '#999', fontWeight: '500' },
+
+  list: { paddingBottom: 40 },
+  group: { marginBottom: 24 },
+  sectionHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    marginBottom: 14,
+  },
+  sectionLine: { flex: 1, height: 1, backgroundColor: '#eee' },
+  sectionLabel: { fontSize: 12, color: '#bbb', fontWeight: '700', letterSpacing: 0.6 },
+
+  empty: { textAlign: 'center', color: '#aaa', marginTop: 48 },
+
+  card: {
+    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12,
+    marginBottom: 8, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
+  },
+  cardIndicator: { width: 4 },
+  cardBody: { flex: 1, padding: 14 },
+  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  cardRowNoMargin: { marginBottom: 0 },
+  materialBadge: {
+    borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3,
+  },
+  materialBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
+  cardAmount: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
+  cardDate: { fontSize: 12, color: '#bbb' },
+  cardImpact: { fontSize: 13, fontWeight: '600', color: '#639922' },
 });

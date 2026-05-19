@@ -1,132 +1,143 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db, auth } from '@/services/firebase'; // Garante que o caminho está correto
- 
-// define a estrutura de um utilizador no ranking
+import { db, auth } from '@/services/firebase';
+
 interface UserRank {
   id: string;
   name: string;
   username?: string;
   totalPontos: number;
 }
- 
+
+const RANK_CORES: Record<number, { bg: string; text: string }> = {
+  0: { bg: '#FEF3C7', text: '#92400E' },
+  1: { bg: '#F3F4F6', text: '#4B5563' },
+  2: { bg: '#FEF2F2', text: '#991B1B' },
+};
+
+const getIniciais = (name: string) =>
+  name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
 export default function LeaderboardScreen() {
-  const insets = useSafeAreaInsets();
-  // estado para saber se estamos a carregar os dados
   const [loading, setLoading] = useState(true);
-  // estado para guardar a lista de utilizadores do ranking
   const [users, setUsers] = useState<UserRank[]>([]);
- 
-  // efeito que corre uma vez quando o ecrã é montado
+
   useEffect(() => {
-    // função temporária para testar a UI 
-    const seedData = async () => {
-      try {
-        const { addDoc, collection } = await import('firebase/firestore');
-        await addDoc(collection(db, 'utilizadores'), { name: 'Eco Hero', totalPontos: 1500 });
-        await addDoc(collection(db, 'utilizadores'), { name: 'Recycle Master', totalPontos: 1200 });
-        await addDoc(collection(db, 'utilizadores'), { name: 'Planeta Limpo', totalPontos: 800 });
-      } catch (e) {
-        console.error("Erro ao inserir mock:", e);
-      }
-    };
-
-    // remover ou comentar esta linha logo a seguir a correr a app uma vez
-    //seedData();
-
-    // função para ir buscar os dados à base de dados
     const fetchLeaderboard = async () => {
       if (!auth.currentUser) {
         setUsers([]);
         setLoading(false);
         return;
       }
-
       try {
-        // cria uma query para ir buscar os utilizadores
         const q = query(
           collection(db, 'utilizadores'),
           orderBy('totalPontos', 'desc'),
           limit(10)
         );
-        
         const querySnapshot = await getDocs(q);
-        // mapeia os resultados para o formato que queremos
         const leaderboardData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as UserRank[];
- 
-        // atualiza o estado com os dados recebidos
         setUsers(leaderboardData);
       } catch (error) {
-        // se der erro, mostra na consola
         console.error("erro ao carregar ranking:", error);
       } finally {
-        // no final, quer dê erro ou não, para de carregar
         setLoading(false);
       }
     };
- 
-    // chama a função para ir buscar os dados
     fetchLeaderboard();
-  }, []); // o array vazio faz com que este efeito corra só uma vez
- 
-  const getRankStyle = (index: number) => {
-    switch (index) {
-      case 0:
-        return { color: '#FFD700' }; // ouro
-      case 1:
-        return { color: '#C0C0C0' }; // prata
-      case 2:
-        return { color: '#CD7F32' }; // bronze
-      default:
-        return {}; // cor padrão do estilo
-    }
+  }, []);
+
+  const renderItem = ({ item, index }: { item: UserRank, index: number }) => {
+    const rankStyle = RANK_CORES[index];
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.7}
+        onPress={() => router.push(`/user-profile?userId=${item.id}`)}
+      >
+        <View style={[styles.rankBadge, rankStyle ? { backgroundColor: rankStyle.bg } : undefined]}>
+          <Text style={[styles.rankText, rankStyle ? { color: rankStyle.text } : undefined]}>
+            {index + 1}
+          </Text>
+        </View>
+        <View style={[styles.avatar, { backgroundColor: index === 0 ? '#1B4332' : index === 1 ? '#4B5563' : index === 2 ? '#92400E' : '#E5E5E5' }]}>
+          <Text style={styles.avatarText}>{getIniciais(item.name || item.username || 'U')}</Text>
+        </View>
+        <View style={styles.info}>
+          <Text style={styles.name} numberOfLines={1}>{item.name || item.username || 'Utilizador'}</Text>
+          {item.username && <Text style={styles.username}>@{item.username}</Text>}
+        </View>
+        <Text style={styles.points}>{(item.totalPontos || 0).toLocaleString()} pts</Text>
+      </TouchableOpacity>
+    );
   };
 
-  // função que desenha cada item da lista
-  const renderItem = ({ item, index }: { item: UserRank, index: number }) => (
-    <View style={styles.itemContainer}>
-      <Text style={[styles.rank, getRankStyle(index)]}>{index + 1}º</Text>
-      <Text style={styles.name}>{item.name || item.username || 'utilizador anónimo'}</Text>
-      <Text style={styles.points}>{(item.totalPontos || 0).toLocaleString()} pts</Text>
-    </View>
-  );
- 
-  // se ainda estiver a carregar, mostra uma animação
   if (loading) {
-    return <ActivityIndicator size="large" color="#1B4332" style={{ flex: 1 }} />;
+    return (
+      <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
+        <View style={[styles.container, styles.loadingContainer]}>
+          <ActivityIndicator size="large" color="#1B4332" />
+        </View>
+      </SafeAreaView>
+    );
   }
- 
-  // quando os dados estiverem carregados, mostra o ecrã
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-      <Text style={styles.title}>Top Recicladores 🏆</Text>
-      <FlatList
-        data={users} // os dados da lista
-        renderItem={renderItem} // como desenhar cada item
-        keyExtractor={item => item.id} // identificador único para cada item
-        contentContainerStyle={styles.list}
-      />
-    </View>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Ranking</Text>
+          <Text style={styles.subtitle}>Os melhores recicladores este mês</Text>
+        </View>
+        <FlatList
+          data={users}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1B4332', marginBottom: 20, textAlign: 'center' },
-  list: { paddingBottom: 20 },
-  itemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  loadingContainer: { justifyContent: 'center' },
+  header:   { marginBottom: 20 },
+  title:    { fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5, lineHeight: 36 },
+  subtitle: { fontSize: 13, color: '#999', marginTop: 3 },
+  list:     { paddingBottom: 20 },
+  card: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 14,
+    padding: 14, marginBottom: 10,
+    borderWidth: 1, borderColor: '#f0f0f0',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  rank: { fontSize: 18, fontWeight: 'bold', color: '#409167', width: 40 },
-  name: { flex: 1, fontSize: 16, color: '#333' },
-  points: { fontSize: 16, fontWeight: 'bold', color: '#1B4332' },
+  rankBadge: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center', alignItems: 'center',
+    marginRight: 12,
+  },
+  rankText: { fontSize: 13, fontWeight: '700', color: '#999' },
+  avatar: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: '#E5E5E5',
+    justifyContent: 'center', alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  info:   { flex: 1 },
+  name:   { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
+  username: { fontSize: 12, color: '#aaa', marginTop: 1 },
+  points: { fontSize: 15, fontWeight: '700', color: '#1B4332' },
 });

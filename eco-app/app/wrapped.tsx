@@ -115,7 +115,7 @@ export default function WrappedScreen() {
     if (!wrappedData) return;
     try {
       await Share.share({
-        message: `O meu ano em reciclagem! Poupei ${wrappedData.co2Saved}kg de CO2 no MyImpact 🌍♻️ Junta-te a mim!`,
+        message: `O meu ano em reciclagem! Poupei ${wrappedData.co2Saved}kg de CO2 no MyImpact. Junta-te a mim!`,
       });
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível partilhar.');
@@ -135,7 +135,7 @@ export default function WrappedScreen() {
   if (!wrappedData) {
     return (
       <View style={styles.loadingContainer} testID="wrapped-empty-state">
-        <Text style={styles.lockIcon}>🌱</Text>
+        <Text style={styles.lockIcon}>♻</Text>
         <Text style={styles.incompleteTitle}>Ainda sem dados</Text>
         <Text style={styles.incompleteDescription}>
           Começa a registar as tuas reciclagens para poderes ver o teu Wrapped de final de ano!
@@ -150,7 +150,7 @@ export default function WrappedScreen() {
   if (hasLocationDenied && !showPartialWrapped) {
     return (
       <View style={styles.incompleteContainer}>
-        <Text style={styles.lockIcon}>🔒</Text>
+        <Text style={styles.lockIcon}>♻</Text>
         <Text style={styles.incompleteTitle}>Wrapped incompleto</Text>
         <Text style={styles.incompleteDescription}>
           Não conseguimos gerar o teu resumo porque a localização está desativada. A localização é necessária para mostrar onde reciclaste mais.
@@ -158,8 +158,8 @@ export default function WrappedScreen() {
 
         <View style={styles.blockedSections}>
           <Text style={styles.blockedSectionTitle}>Secções Bloqueadas:</Text>
-          <Text style={styles.blockedItem}>📍 Onde mais reciclaste</Text>
-          <Text style={styles.blockedItem}>📍 Ecoponto mais visitado</Text>
+          <Text style={styles.blockedItem}>— Onde mais reciclaste</Text>
+          <Text style={styles.blockedItem}>— Ecoponto mais visitado</Text>
         </View>
 
         <TouchableOpacity style={styles.enableLocationButton} onPress={() => Linking.openSettings()}>
@@ -178,7 +178,7 @@ export default function WrappedScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} testID="wrapped-content">
       <Text style={styles.badge}>WRAPPED 2026</Text>
       <Text style={styles.headerTitle}>O teu ano em reciclagem</Text>
-      <Text style={styles.headerSubtitle}>Aqui está tudo o que fizeste pelo planeta este ano ✨</Text>
+      <Text style={styles.headerSubtitle}>Aqui está tudo o que fizeste pelo planeta este ano</Text>
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   loadingText: { marginTop: 12, fontSize: 16, color: '#1B4332', fontWeight: '600' },
   
   incompleteContainer: { flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', padding: 30 },
-  lockIcon: { fontSize: 60, marginBottom: 20 },
+  lockIcon: { fontSize: 48, marginBottom: 20, color: '#1B4332' },
   incompleteTitle: { fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', textAlign: 'center', marginBottom: 12 },
   incompleteDescription: { fontSize: 15, color: '#666', textAlign: 'center', marginBottom: 30, lineHeight: 22 },
   blockedSections: { backgroundColor: '#f9f9f9', width: '100%', padding: 20, borderRadius: 12, marginBottom: 30, borderWidth: 1, borderColor: '#eee' },

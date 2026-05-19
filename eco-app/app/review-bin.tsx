@@ -41,7 +41,7 @@ export default function ReviewBinScreen() {
         // 3. SUCESSO
         Alert.alert(
           'Sucesso',
-          'Thank you for your feedback!',
+          'Obrigado pela tua avaliação!',
           [{ text: 'OK', onPress: () => router.back() }]
         );
 
@@ -93,7 +93,7 @@ export default function ReviewBinScreen() {
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.botaoTexto}>Submit Review</Text>
+            <Text style={styles.botaoTexto}>Submeter</Text>
           )}
         </TouchableOpacity>
 
@@ -101,17 +101,17 @@ export default function ReviewBinScreen() {
         <Modal visible={showErrorModal} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalBox}>
-              <Text style={styles.modalIcone}>📶</Text>
-              <Text style={styles.modalTitulo}>Erro de Ligação</Text>
+              <Text style={styles.modalIcone}>!</Text>
+              <Text style={styles.modalTitulo}>Erro de ligação</Text>
               <Text style={styles.modalMensagem}> 
-                We couldn't post your review. Please check your internet connection and try again.
+                Não foi possível submeter a tua avaliação. Verifica a tua ligação à internet e tenta novamente.
               </Text>
               <View style={styles.modalBotoes}>
                 <TouchableOpacity style={[styles.modalBotao, styles.botaoCancelar]} onPress={() => setShowErrorModal(false)}>
                   <Text style={styles.botaoCancelarTexto}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.modalBotao, styles.botaoTentarNovamente]} onPress={handleSubmit}>
-                  <Text style={styles.botaoTentarTexto}>Retry</Text>
+                  <Text style={styles.botaoTentarTexto}>Tentar novamente</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   // Estilos do Modal de Erro
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   modalBox: { backgroundColor: '#fff', borderRadius: 16, padding: 24, alignItems: 'center', width: '100%', elevation: 10 },
-  modalIcone: { fontSize: 40, marginBottom: 16 },
+  modalIcone: { fontSize: 40, marginBottom: 16, fontWeight: '700', color: '#DC2626' },
   modalTitulo: { fontSize: 18, fontWeight: 'bold', color: '#DC2626', marginBottom: 10 },
   modalMensagem: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 24, lineHeight: 20 },
   modalBotoes: { flexDirection: 'row', gap: 12, width: '100%' },

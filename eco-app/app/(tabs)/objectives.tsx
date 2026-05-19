@@ -298,6 +298,11 @@ export default function ObjectivesScreen() {
                 Ajuda o planeta e a Nike a atingir as suas metas de sustentabilidade. Participa no desafio e recebe um voucher exclusivo.
               </Text>
 
+              {/* Add deadline indicator so the user knows when the challenge ends */}
+              <Text style={{ fontSize: 12, color: '#e63946', marginTop: 8, fontWeight: 'bold' }}>
+                ⏳ Termina a 31 de Maio
+              </Text>
+
               {isParticipatingNike ? (
                 <View style={styles.progressContainer}>
                   <Text style={styles.progressText}>{nikeProgress.toFixed(1)} / 10.0 kg</Text>
@@ -312,6 +317,34 @@ export default function ObjectivesScreen() {
               )}
             </View>
           </View>
+
+          {/* Past challenges section */}
+        <Text style={styles.pastChallengesTitle}>DESAFIOS PASSADOS</Text>
+
+         {/* Expired Challenge Card */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => Alert.alert(
+            "Desafio Terminado",
+            "Ficaste pelos 8/10kg! O desafio terminou, mas recebeste 80 EcoCoins base pelo teu esforço. Conseguirás da próxima vez!",
+            [{ text: "OK" }]
+          )}
+        >
+          <View style={[styles.challengeCard, styles.expiredCard]}>
+            <View style={[styles.challengeHeader, styles.expiredHeader]}>
+              <Text style={styles.challengeBrand}>Adidas Challenge (Expirado)</Text> 
+            </View>
+            <View style={styles.challengeBody}>
+              <Text style={[styles.challengeTitle, styles.expiredText]}>
+                Recicla 10kg de plástico e ganha 15% de desconto! 
+              </Text>
+              <Text style={[styles.challengeDescription, styles.expiredText]}>
+                Este desafio terminou a 30 de Abril. 
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
         </View>
       )}
 
@@ -446,6 +479,25 @@ const styles = StyleSheet.create({
   progressText: { fontSize: 13, color: '#666', fontWeight: '600', textAlign: 'right', marginBottom: 6 },
   challengeProgressBar: { height: 12, backgroundColor: '#e0e0e0', borderRadius: 6, overflow: 'hidden' },
   challengeProgress: { height: '100%', backgroundColor: '#1B4332', borderRadius: 6 },
+
+  // Expired Challenge Styles
+  pastChallengesTitle: {
+    marginTop: 32,
+    marginBottom: 12,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#aaa',
+    letterSpacing: 0.5,
+  },
+  expiredCard: {
+    backgroundColor: '#f5f5f5',
+    shadowOpacity: 0.05,
+    elevation: 2,
+  },
+  expiredHeader: {
+    backgroundColor: '#b0b0b0',
+  },
+  expiredText: { color: '#999' },
 
   // Modal Styles
   modalOverlay: {

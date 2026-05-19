@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useState, useEffect } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   ActivityIndicator, Alert, TextInput, Modal,
@@ -88,11 +88,10 @@ export default function ObjectivesScreen() {
 
   useFocusEffect(useCallback(() => {
     setLoading(true);
-  useEffect(() => {
     Promise.all([getObjetivos(), getHistoricoReciclagem()])
       .then(([obj, reg]) => { setObjetivos(obj); setRegistos(reg); })
       .finally(() => setLoading(false));
-  }, []);
+  }, []));
 
   // Calculate Nike Challenge progress dynamically based on real 'Plástico' logs
   const nikeProgress = registos
@@ -162,28 +161,6 @@ export default function ObjectivesScreen() {
         </TouchableOpacity>
       </View>
 
-      {mostrarForm && (
-        <View style={styles.form}>
-          <Text style={styles.formTitulo}>Novo objetivo</Text>
-
-          <Text style={styles.fieldLabel}>MATERIAL</Text>
-          <View style={styles.chips}>
-            {MATERIAIS.map(m => {
-              const meta = MATERIAL_META[m];
-              const sel = material === m;
-              return (
-                <TouchableOpacity
-                  key={m}
-                  style={[styles.chip, sel && { backgroundColor: meta.cor, borderColor: meta.cor }]}
-                  onPress={() => setMaterial(m)}
-                  testID={`chip-material-${m}`}
-                >
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: meta.cor }}>{meta.iniciais}</Text>
-                  <Text style={[styles.chipTexto, sel && styles.chipTextoSelecionado]}>{m}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
       {/* Tab Navigator */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -220,7 +197,7 @@ export default function ObjectivesScreen() {
                       onPress={() => setMaterial(m)}
                       testID={`chip-material-${m}`}
                     >
-                      <Text style={{ fontSize: 14 }}>{meta.emoji}</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: meta.cor }}>{meta.iniciais}</Text>
                       <Text style={[styles.chipTexto, sel && styles.chipTextoSelecionado]}>{m}</Text>
                     </TouchableOpacity>
                   );
@@ -278,23 +255,8 @@ export default function ObjectivesScreen() {
               const percentagem = Math.round(progresso * 100);
               const concluido = progresso >= 1;
 
-      {loading ? (
-        <ActivityIndicator color="#1B4332" style={{ marginTop: 48 }} />
-      ) : objetivos.length === 0 ? (
-        <View style={styles.vazio} testID="objectives-empty-state">
-          <Text style={styles.vazioTexto}>Sem objetivos</Text>
-          <Text style={styles.vazioSub}>Cria o teu primeiro objetivo de reciclagem.</Text>
-        </View>
-      ) : (
-        objetivos.map(obj => {
-          const meta = MATERIAL_META[obj.material] ?? MATERIAL_META['Todos'];
-          const progresso = calcularProgresso(obj, registos);
-          const kgFeitos = (progresso * obj.metaKg).toFixed(1);
-          const percentagem = Math.round(progresso * 100);
-          const concluido = progresso >= 1;
-
-          return (
-            <View key={obj.id}>
+              return (
+              <View key={obj.id}>
               <TouchableOpacity
                 style={[styles.card, { borderLeftColor: meta.cor }, selectedObjetivoId === obj.id && styles.cardSelecionado]}
                 activeOpacity={0.7}
@@ -373,50 +335,8 @@ export default function ObjectivesScreen() {
                       ))
                   )}
                 </View>
-              return (
-                <View key={obj.id} style={[styles.card, { borderLeftColor: meta.cor }]}>
-
-                  {/* Topo */}
-                  <View style={styles.cardTopo}>
-                    <View style={[styles.iconCircle, { backgroundColor: meta.fundo }]}>
-                      <Text style={styles.iconEmoji}>{meta.emoji}</Text>
-                    </View>
-
-                    <View style={styles.cardInfo}>
-                      <Text style={styles.cardTitulo}>{obj.material === 'Todos' ? 'Todos os materiais' : obj.material}</Text>
-                      <Text style={styles.cardSub}>
-                        {obj.periodo === 'semanal' ? 'Esta semana' : 'Este mês'} · meta {obj.metaKg} kg
-                      </Text>
-                    </View>
-
-                    <View style={styles.cardDireita}>
-                      <Text style={[styles.percentagem, { color: concluido ? '#1B4332' : meta.cor }]}>
-                        {percentagem}%
-                      </Text>
-                      <TouchableOpacity onPress={() => eliminar(obj.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} testID={`objectives-delete-${obj.id}`}>
-                        <Text style={styles.botaoEliminarTexto}>✕</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  {/* Barra */}
-                  <View style={styles.barraFundo}>
-                    <View style={[
-                      styles.barraProgresso,
-                      { width: `${percentagem}%`, backgroundColor: concluido ? '#1B4332' : meta.cor },
-                    ]} />
-                  </View>
-
-                  {/* Rodapé */}
-                  <View style={styles.cardRodape}>
-                    <Text style={styles.kgTexto}>{kgFeitos} kg feitos</Text>
-                    {concluido
-                      ? <View style={styles.badgeConcluido}><Text style={styles.badgeTexto}>✓ Concluído</Text></View>
-                      : <Text style={styles.kgTexto}>{(obj.metaKg - Number(kgFeitos)).toFixed(1)} kg em falta</Text>
-                    }
-                  </View>
-
-                </View>
+              )}
+              </View>
               );
             })
           )}
@@ -571,6 +491,7 @@ const styles = StyleSheet.create({
   botaoGuardarTexto: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
   vazio:      { alignItems: 'center', marginTop: 64, paddingHorizontal: 24 },
+  vazioEmoji: { fontSize: 40, marginBottom: 12 },
   vazioTexto: { fontSize: 18, fontWeight: '700', color: '#333', marginBottom: 8 },
   vazioSub:   { fontSize: 14, color: '#aaa', textAlign: 'center', lineHeight: 20 },
 

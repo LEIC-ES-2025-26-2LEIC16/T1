@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const BANNER_HEIGHT = 130;
+const AVATAR_SIZE = 90;
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -59,10 +63,24 @@ export default function UserProfileScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 20 }]}>
+    <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.bannerWrapper, { height: BANNER_HEIGHT }]}>
+        {userData?.bannerUrl ? (
+          <Image source={{ uri: userData.bannerUrl }} style={styles.bannerImage} contentFit="cover" />
+        ) : (
+          <View style={styles.banner} />
+        )}
+      </View>
+
       <View style={styles.profileHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarTexto}>{iniciais}</Text>
+        <View style={[styles.avatarWrapper, { marginTop: -(AVATAR_SIZE / 2) }]}>
+          <View style={styles.avatar}>
+            {userData?.avatarUrl ? (
+              <Image source={{ uri: userData.avatarUrl }} style={styles.avatarImage} contentFit="cover" />
+            ) : (
+              <Text style={styles.avatarTexto}>{iniciais}</Text>
+            )}
+          </View>
         </View>
         <Text style={styles.nome}>{userData?.nome || userData?.username || 'Utilizador'}</Text>
         {userData?.username && <Text style={styles.username}>@{userData.username}</Text>}
@@ -95,22 +113,25 @@ export default function UserProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#fff', paddingHorizontal: 20, paddingBottom: 48 },
-  profileHeader: { alignItems: 'center', marginBottom: 20 },
+  container: { flexGrow: 1, backgroundColor: '#fff', paddingBottom: 48 },
+  bannerWrapper: { overflow: 'hidden' },
+  banner: { flex: 1, backgroundColor: '#1B4332' },
+  bannerImage: { width: '100%', height: BANNER_HEIGHT },
+  profileHeader: { alignItems: 'center', marginBottom: 20, paddingHorizontal: 20 },
+  avatarWrapper: { marginBottom: 16 },
   avatar: {
-    width: 90, height: 90, borderRadius: 45,
-    backgroundColor: '#639922',
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 3, borderColor: '#fff',
-    marginBottom: 16,
+    width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2,
+    backgroundColor: '#639922', justifyContent: 'center', alignItems: 'center',
+    borderWidth: 3, borderColor: '#fff', overflow: 'hidden',
   },
+  avatarImage: { width: AVATAR_SIZE, height: AVATAR_SIZE },
   avatarTexto: { fontSize: 34, fontWeight: '700', color: '#fff' },
   nome:     { fontSize: 22, fontWeight: '700', color: '#1a1a1a' },
   username: { fontSize: 14, color: '#639922', fontWeight: '600', marginTop: 4 },
   bio:      { fontSize: 14, color: '#444', marginTop: 8, textAlign: 'center', lineHeight: 20, paddingHorizontal: 20 },
-  separador:    { height: 1, backgroundColor: '#f0f0f0', marginVertical: 20 },
-  secaoTitulo:  { fontSize: 11, fontWeight: '600', color: '#aaa', letterSpacing: 0.8, marginBottom: 12 },
-  grelha:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  separador:    { height: 1, backgroundColor: '#f0f0f0', marginVertical: 20, marginHorizontal: 20 },
+  secaoTitulo:  { fontSize: 11, fontWeight: '600', color: '#aaa', letterSpacing: 0.8, marginBottom: 12, paddingHorizontal: 20 },
+  grelha:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 20 },
   statCard:     { flex: 1, minWidth: '45%', backgroundColor: '#f7f7f7', borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 0.5, borderColor: '#e8e8e8' },
   statCardVerde:{ backgroundColor: '#EAF3DE', borderColor: '#c4e0a0' },
   statValor:    { fontSize: 20, fontWeight: '700', color: '#1a1a1a', marginBottom: 3 },

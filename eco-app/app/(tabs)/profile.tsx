@@ -1,9 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
   ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,12 +34,11 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
-  useFocusEffect(useCallback(() => {
-    setLoading(true);
+  useEffect(() => {
     Promise.all([getEstatisticasUtilizador(), getPerfilUtilizador()])
       .then(([s, p]) => { setStats(s); setPerfil(p); })
       .finally(() => setLoading(false));
-  }, []));
+  }, []);
 
   const iniciais = perfil.nome
     ? perfil.nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()

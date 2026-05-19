@@ -1,9 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   ActivityIndicator, Alert, TextInput,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getObjetivos, criarObjetivo, eliminarObjetivo, getHistoricoReciclagem,
@@ -59,12 +58,11 @@ export default function ObjectivesScreen() {
   const [periodo, setPeriodo] = useState<'semanal' | 'mensal'>('mensal');
   const [guardando, setGuardando] = useState(false);
 
-  useFocusEffect(useCallback(() => {
-    setLoading(true);
+  useEffect(() => {
     Promise.all([getObjetivos(), getHistoricoReciclagem()])
       .then(([obj, reg]) => { setObjetivos(obj); setRegistos(reg); })
       .finally(() => setLoading(false));
-  }, []));
+  }, []);
 
   const guardar = async () => {
     if (!metaKg || isNaN(Number(metaKg)) || Number(metaKg) <= 0) {

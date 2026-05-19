@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, View, ActivityIndicator } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -26,12 +25,11 @@ export default function HistoryScreen() {
   const [registos, setRegistos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useFocusEffect(useCallback(() => {
-    setLoading(true);
+  useEffect(() => {
     getHistoricoReciclagem()
       .then(setRegistos)
       .finally(() => setLoading(false));
-  }, []));
+  }, []);
 
   const totalKg = registos.reduce((s, i) => s + parseFloat(i.amount), 0).toFixed(1);
   const totalCO2 = registos.reduce((s, i) => s + parseFloat(i.impact), 0).toFixed(1);

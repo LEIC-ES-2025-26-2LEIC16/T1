@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { auth } from '@/services/firebase';
 import {
   ouvirEcopontos, seedEcopontos, getFavoritos,
@@ -44,10 +44,8 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const fetchData = useCallback(() => {
+  const fetchData = () => {
     if (!auth.currentUser) return;
-    setLoading(true);
-    setError(false);
     Promise.all([getFavoritos(), getHistoricoReciclagem(), getObjetivos(), getPerfilUtilizador()])
       .then(([favs, recs, objs, prof]) => {
         setFavorites(favs);
@@ -57,7 +55,7 @@ export default function HomeScreen() {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   useEffect(() => {
     seedEcopontos();
@@ -68,9 +66,7 @@ export default function HomeScreen() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user: import('firebase/auth').User | null) => { if (user) fetchData(); });
     return unsubscribe;
-  }, [fetchData]);
-
-  useFocusEffect(fetchData);
+  }, []);
 
   const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const registosMes = records.filter(r => {

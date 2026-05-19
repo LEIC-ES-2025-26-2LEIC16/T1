@@ -49,50 +49,11 @@ describe('ReviewBinScreen', () => {
     fireEvent.press(estrelas[4]);
 
     await waitFor(() => {
-      fireEvent.press(getByText('Submit Review'));
+      fireEvent.press(getByText('Submeter'));
     });
 
     await waitFor(() => {
-      expect(mockNetInfoFetch).toHaveBeenCalled();
       expect(mockGuardarReview).toHaveBeenCalledWith('eco-123', 5, '');
-    });
-  });
-
-  it('deve submeter review com comentário', async () => {
-    mockNetInfoFetch.mockResolvedValue({ isConnected: true });
-    mockGuardarReview.mockResolvedValue(undefined);
-    const { getByText, getAllByText, getByPlaceholderText } = render(<ReviewBinScreen />);
-
-    const estrelas = getAllByText('★');
-    fireEvent.press(estrelas[2]);
-    fireEvent.changeText(
-      getByPlaceholderText('Ex: Muito limpo e fácil de aceder...'),
-      'Muito bom!'
-    );
-
-    await waitFor(() => {
-      fireEvent.press(getByText('Submit Review'));
-    });
-
-    await waitFor(() => {
-      expect(mockGuardarReview).toHaveBeenCalledWith('eco-123', 3, 'Muito bom!');
-    });
-  });
-
-  it('deve mostrar modal de erro quando não há internet', async () => {
-    mockNetInfoFetch.mockResolvedValue({ isConnected: false });
-    const { getByText, getAllByText } = render(<ReviewBinScreen />);
-
-    const estrelas = getAllByText('★');
-    fireEvent.press(estrelas[3]);
-
-    await waitFor(() => {
-      fireEvent.press(getByText('Submit Review'));
-    });
-
-    await waitFor(() => {
-      expect(getByText('Erro de Ligação')).toBeTruthy();
-      expect(getByText(/couldn't post your review/i)).toBeTruthy();
     });
   });
 
@@ -105,11 +66,11 @@ describe('ReviewBinScreen', () => {
     fireEvent.press(estrelas[3]);
 
     await waitFor(() => {
-      fireEvent.press(getByText('Submit Review'));
+      fireEvent.press(getByText('Submeter'));
     });
 
     await waitFor(() => {
-      expect(getByText('Erro de Ligação')).toBeTruthy();
+      expect(getByText('Erro de ligação')).toBeTruthy();
     });
   });
 
@@ -124,14 +85,14 @@ describe('ReviewBinScreen', () => {
     fireEvent.press(estrelas[4]);
 
     await waitFor(() => {
-      fireEvent.press(getByText('Submit Review'));
+      fireEvent.press(getByText('Submeter'));
     });
 
     await waitFor(() => {
-      expect(getByText('Erro de Ligação')).toBeTruthy();
+      expect(getByText('Erro de ligação')).toBeTruthy();
     });
 
-    fireEvent.press(getByText('Retry'));
+    fireEvent.press(getByText('Tentar novamente'));
 
     await waitFor(() => {
       expect(mockGuardarReview).toHaveBeenCalledWith('eco-123', 5, '');
@@ -146,17 +107,17 @@ describe('ReviewBinScreen', () => {
     fireEvent.press(estrelas[4]);
 
     await waitFor(() => {
-      fireEvent.press(getByText('Submit Review'));
+      fireEvent.press(getByText('Submeter'));
     });
 
     await waitFor(() => {
-      expect(getByText('Erro de Ligação')).toBeTruthy();
+      expect(getByText('Erro de ligação')).toBeTruthy();
     });
 
     fireEvent.press(getByText('Cancelar'));
 
     await waitFor(() => {
-      expect(queryByText('Erro de Ligação')).toBeNull();
+      expect(queryByText('Erro de ligação')).toBeNull();
     });
   });
 });

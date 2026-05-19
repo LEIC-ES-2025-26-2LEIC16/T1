@@ -192,7 +192,7 @@ export default function ProfileScreen() {
         onPress={() => router.push('/wrapped' as any)}
         testID="profile-wrapped-button"
       >
-        <Text style={styles.botaoWrappedTexto}>✨ Ver o meu Wrapped 2026</Text>
+        <Text style={styles.botaoWrappedTexto}>Ver o meu Wrapped 2026</Text>
       </TouchableOpacity>
 
         <TouchableOpacity style={styles.botaoSair} onPress={handleLogout}>

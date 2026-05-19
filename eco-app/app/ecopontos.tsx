@@ -50,7 +50,7 @@ export default function EcopontosScreen() {
 
       {/* Pesquisa */}
       <View style={styles.pesquisaContainer}>
-        <Text style={styles.pesquisaIcone}>🔍</Text>
+        <Text style={styles.pesquisaIcone}>🔎</Text>
         <TextInput
           style={styles.pesquisaInput}
           placeholder="Pesquisar por nome ou morada..."

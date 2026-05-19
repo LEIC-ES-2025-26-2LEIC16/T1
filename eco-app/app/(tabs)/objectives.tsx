@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getObjetivos, criarObjetivo, eliminarObjetivo, getHistoricoReciclagem,
@@ -67,10 +67,11 @@ export default function ObjectivesScreen() {
 
   useFocusEffect(useCallback(() => {
     setLoading(true);
+  useEffect(() => {
     Promise.all([getObjetivos(), getHistoricoReciclagem()])
       .then(([obj, reg]) => { setObjetivos(obj); setRegistos(reg); })
       .finally(() => setLoading(false));
-  }, []));
+  }, []);
 
   // Calculate Nike Challenge progress dynamically based on real 'Plástico' logs
   const nikeProgress = registos

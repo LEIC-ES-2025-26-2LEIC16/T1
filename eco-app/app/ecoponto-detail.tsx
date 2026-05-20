@@ -60,7 +60,7 @@ export default function EcopontoDetailScreen() {
           </View>
         </View>
         <View style={styles.moradaRow}>
-          <Text style={styles.moradaIcone}>📍</Text>
+          <Text style={styles.moradaIcone}>♻</Text>
           <Text style={styles.morada}>{ecopontoMorada}</Text>
         </View>
       </View>
@@ -83,7 +83,7 @@ export default function EcopontoDetailScreen() {
           // Exception: No collection dates available
           <View style={[styles.manutencaoBox, styles.manutencaoIndisponivel]}>
             <Text style={styles.manutencaoIndisponivelTexto}>
-              Collection schedule currently unavailable for this location.
+              Horário de recolha indisponível para este local.
             </Text>
           </View>
         )}
@@ -99,7 +99,7 @@ export default function EcopontoDetailScreen() {
         onPress={() => router.push('/log-recycling' as any)}
       >
         <View style={[styles.acaoIconeWrap, { backgroundColor: '#D1FAE5' }]}>
-          <Text style={styles.acaoIcone}>📸</Text>
+          <Text style={styles.acaoIcone}>♻</Text>
         </View>
         <View style={styles.acaoTextos}>
           <Text style={styles.acaoTitulo}>Registar reciclagem</Text>
@@ -115,7 +115,7 @@ export default function EcopontoDetailScreen() {
         onPress={() => router.push({ pathname: '/review-bin', params: { ecopontoId, ecopontoNome } } as any)}
       >
         <View style={[styles.acaoIconeWrap, { backgroundColor: '#FEF3C7' }]}>
-          <Text style={styles.acaoIcone}>⭐</Text>
+          <Text style={styles.acaoIcone}>★</Text>
         </View>
         <View style={styles.acaoTextos}>
           <Text style={styles.acaoTitulo}>Avaliar ecoponto</Text>
@@ -131,7 +131,7 @@ export default function EcopontoDetailScreen() {
         onPress={() => router.push({ pathname: '/report-problem', params: { ecopontoNome, ecopontoMorada } } as any)}
       >
         <View style={[styles.acaoIconeWrap, { backgroundColor: '#FEE2E2' }]}>
-          <Text style={styles.acaoIcone}>⚠️</Text>
+          <Text style={styles.acaoIcone}>!</Text>
         </View>
         <View style={styles.acaoTextos}>
           <Text style={styles.acaoTitulo}>Reportar problema</Text>

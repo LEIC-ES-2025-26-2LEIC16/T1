@@ -47,7 +47,7 @@ export default function MapaScreen() {
     <View style={styles.container}>
       {isExpoGo ? (
         <View style={[styles.mapa, { backgroundColor: '#f0fdf4', justifyContent: 'center', alignItems: 'center' }]}>
-          <Text style={{ fontSize: 40, marginBottom: 10 }}>📍</Text>
+          <Text style={{ fontSize: 32, marginBottom: 10, color: '#1B4332' }}>♻</Text>
           <Text style={{ color: '#1B4332', fontWeight: '700', fontSize: 16 }}>Modo: Expo Go</Text>
           <Text style={{ textAlign: 'center', padding: 20 }}>O mapa real só carrega no Dev Client!</Text>
         </View>
@@ -134,7 +134,7 @@ export default function MapaScreen() {
                 } as any)
               }
             >
-              <Text style={[styles.botaoTexto, { color: '#1B4332' }]}>⭐ avaliar</Text>
+              <Text style={[styles.botaoTexto, { color: '#1B4332' }]}>avaliar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

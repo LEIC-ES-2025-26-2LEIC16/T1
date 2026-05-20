@@ -124,7 +124,7 @@ export default function WrappedScreen() {
     if (!wrappedData) return;
     try {
       await Share.share({
-        message: `O meu ano em reciclagem! Poupei ${wrappedData.co2Saved}kg de CO2 no MyImpact 🌍♻️ Junta-te a mim!`,
+        message: `O meu ano em reciclagem! Poupei ${wrappedData.co2Saved}kg de CO2 no MyImpact. Junta-te a mim!`,
       });
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível partilhar.');
@@ -162,7 +162,7 @@ export default function WrappedScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} testID="wrapped-content">
       <Text style={styles.badge}>WRAPPED {anoAtual}</Text>
       <Text style={styles.headerTitle}>O teu ano em reciclagem</Text>
-      <Text style={styles.headerSubtitle}>Aqui está tudo o que fizeste pelo planeta este ano ✨</Text>
+      <Text style={styles.headerSubtitle}>Aqui está tudo o que fizeste pelo planeta este ano</Text>
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>

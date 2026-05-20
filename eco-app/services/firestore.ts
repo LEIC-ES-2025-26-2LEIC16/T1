@@ -103,6 +103,8 @@ export type PerfilUtilizador = {
   nome: string;
   username: string;
   bio: string;
+  avatarUrl: string;
+  bannerUrl: string;
 };
 
 export async function getPerfilUtilizador(): Promise<PerfilUtilizador> {
@@ -110,7 +112,7 @@ export async function getPerfilUtilizador(): Promise<PerfilUtilizador> {
 
   if (!user) {
     console.log("Aguardando autenticação para carregar o perfil...");
-    return { nome: '', username: '', bio: '' };
+    return { nome: '', username: '', bio: '', avatarUrl: '', bannerUrl: '' };
   }
 
   try {
@@ -123,12 +125,14 @@ export async function getPerfilUtilizador(): Promise<PerfilUtilizador> {
         nome: data.nome || '',
         username: data.username || '',
         bio: data.bio || '',
+        avatarUrl: data.avatarUrl || '',
+        bannerUrl: data.bannerUrl || '',
       };
     }
-    return { nome: user.displayName ?? '', username: '', bio: '' };
+    return { nome: user.displayName ?? '', username: '', bio: '', avatarUrl: '', bannerUrl: '' };
   } catch (error) {
     console.error("Erro ao obter perfil do utilizador:", error);
-    return { nome: '', username: '', bio: '' };
+    return { nome: '', username: '', bio: '', avatarUrl: '', bannerUrl: '' };
   }
 }
 

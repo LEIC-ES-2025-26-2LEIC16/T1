@@ -3,17 +3,21 @@ import { StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } fro
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/services/firebase';
+import { processarReferral } from '@/services/firestore';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const { ref: codigoReferral } = useLocalSearchParams<{ ref?: string }>();
+
   const handleRegister = async () => {
     if (!email || !password) {
-      Alert.alert("Erro", "Preenche todos os campos.");
+      Alert.alert('Erro', 'Preenche todos os campos.');
       return;
     }
     setLoading(true);
@@ -23,6 +27,12 @@ export default function RegisterScreen() {
         email: credencial.user.email,
         criadoEm: serverTimestamp(),
       });
+
+      // Processa o referral se veio com código no link
+      if (codigoReferral) {
+        await processarReferral(codigoReferral);
+      }
+
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
     } catch (e: any) {
       const mensagens: Record<string, string> = {
@@ -30,6 +40,7 @@ export default function RegisterScreen() {
         'auth/invalid-email': 'Email inválido.',
         'auth/weak-password': 'A password deve ter pelo menos 6 caracteres.',
       };
+      // Cenário 2: email já existe — não notificamos o dono do link
       Alert.alert('Erro', mensagens[e.code] ?? 'Não foi possível criar a conta.');
     } finally {
       setLoading(false);

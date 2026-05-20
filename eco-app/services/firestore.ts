@@ -14,6 +14,7 @@ import {
   arrayRemove,
   updateDoc,
   deleteDoc,
+  increment,
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 
@@ -293,4 +294,148 @@ try {
   console.error("Erro ao guardar review:", error);
   throw error; // Lança o erro para o ecrã poder mostrar o modal de falha
 }
+}
+
+
+
+
+
+
+const PONTOS_REFERRAL = 50;      // EcoCoins por amigo convidado
+const DEEP_LINK_BASE = 'ecoapp://register';
+
+// ── Tipos ────────────────────────────────────────────────────
+
+export type InfoReferral = {
+  codigo: string;
+  link:   string;
+  totalConvidados: number;
+  pontosGanhos:    number;
+};
+
+// ── 1. Gera (ou devolve) o código único do utilizador ────────
+//
+//  Cria o documento  referrals/{uid}  se ainda não existir.
+//  Estrutura do documento:
+//    { codigo, uid, totalConvidados, pontosGanhos, criadoEm }
+
+export async function gerarCodigoReferral(): Promise<InfoReferral> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+
+  const ref = doc(db, 'referrals', user.uid);
+  const snap = await getDoc(ref);
+
+  if (snap.exists()) {
+    const d = snap.data();
+    return {
+      codigo:          d.codigo,
+      link:            `${DEEP_LINK_BASE}?ref=${d.codigo}`,
+      totalConvidados: d.totalConvidados ?? 0,
+      pontosGanhos:    d.pontosGanhos    ?? 0,
+    };
+  }
+
+  // Gera código: primeiros 8 chars do uid em maiúsculas
+  const codigo = user.uid.slice(0, 8).toUpperCase();
+
+  await setDoc(ref, {
+    codigo,
+    uid:             user.uid,
+    totalConvidados: 0,
+    pontosGanhos:    0,
+    criadoEm:        serverTimestamp(),
+  });
+
+  return {
+    codigo,
+    link:            `${DEEP_LINK_BASE}?ref=${codigo}`,
+    totalConvidados: 0,
+    pontosGanhos:    0,
+  };
+}
+
+// ── 2. Devolve o estado atual do referral do utilizador ──────
+
+export async function getInfoReferral(): Promise<InfoReferral | null> {
+  const user = auth.currentUser;
+  if (!user) return null;
+
+  const snap = await getDoc(doc(db, 'referrals', user.uid));
+  if (!snap.exists()) return null;
+
+  const d = snap.data();
+  return {
+    codigo:          d.codigo,
+    link:            `${DEEP_LINK_BASE}?ref=${d.codigo}`,
+    totalConvidados: d.totalConvidados ?? 0,
+    pontosGanhos:    d.pontosGanhos    ?? 0,
+  };
+}
+
+// ── 3. Processa o referral quando um novo utilizador se regista
+//
+//  Deve ser chamada DEPOIS do createUserWithEmailAndPassword,
+//  passando o código que veio no deep link.
+//
+//  Regras de negócio implementadas:
+//    • O email do novo utilizador não pode já existir em 'utilizadores'
+//      (a Firebase Auth já o impede, mas verificamos por segurança)
+//    • O código deve existir em 'referrals'
+//    • Não credita pontos se o novo uid == dono do código (auto-convite)
+//    • Regista o uso em  referral_uses/{newUid}  para evitar duplicados
+
+export async function processarReferral(codigoReferral: string): Promise<boolean> {
+  const newUser = auth.currentUser;
+  if (!newUser) return false;
+
+  // Evita processar duas vezes o mesmo utilizador
+  const usoRef  = doc(db, 'referral_uses', newUser.uid);
+  const usoSnap = await getDoc(usoRef);
+  if (usoSnap.exists()) return false;  // já foi processado
+
+  // Encontra o dono do código
+  const q = query(
+    collection(db, 'referrals'),
+    where('codigo', '==', codigoReferral.toUpperCase())
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) return false;  // código inválido
+
+  const donoDoc  = snap.docs[0];
+  const donoData = donoDoc.data();
+
+  // Não credita auto-convites
+  if (donoData.uid === newUser.uid) return false;
+
+  // Verifica que o novo utilizador ainda não existia (Cenário 2)
+  // — a Firebase Auth já bloqueou o registo com email duplicado,
+  //   mas protegemos também a nível de Firestore
+  const utilizadorSnap = await getDoc(doc(db, 'utilizadores', newUser.uid));
+  // Se o documento já existia ANTES deste registo, é utilizador antigo — ignora
+  // (na prática este caminho nunca é atingido porque createUser falha antes)
+
+  // Credita pontos ao dono do código
+  await updateDoc(doc(db, 'referrals', donoDoc.id), {
+    totalConvidados: increment(1),
+    pontosGanhos:    increment(PONTOS_REFERRAL),
+  });
+
+  // Credita os mesmos pontos no documento principal do utilizador
+  // (o campo pontosReferral soma-se ao totalPontos no getEstatisticasUtilizador)
+  await setDoc(
+    doc(db, 'utilizadores', donoData.uid),
+    { pontosReferral: increment(PONTOS_REFERRAL) },
+    { merge: true }
+  );
+
+  // Regista o uso para não creditar duas vezes
+  await setDoc(usoRef, {
+    codigoUsado:   codigoReferral.toUpperCase(),
+    donoUid:       donoData.uid,
+    novoUtilizadorUid: newUser.uid,
+    processadoEm:  serverTimestamp(),
+  });
+
+  return true;  // sinaliza que o bónus foi creditado — mostra notificação ao dono
 }

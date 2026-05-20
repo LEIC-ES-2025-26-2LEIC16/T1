@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.myimpact.app"
+      "bundleIdentifier": "com.myimpact.app",
+      "infoPlist": {
+         "LSApplicationQueriesSchemes": ["ecoapp"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +24,21 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.myimpact.app"
+      "package": "com.myimpact.app",
+
+      "intentFilters": [
+    {
+      "action": "VIEW",
+      "autoVerify": false,
+      "data": [
+        {
+          "scheme": "ecoapp",
+          "host": "register"
+        }
+      ],
+      "category": ["BROWSABLE", "DEFAULT"]
+    }
+  ]
     },
     "web": {
       "output": "static",
@@ -68,7 +85,7 @@
     },
     "extra": {
       "router": {},
-      "eas": {
+      "eas": {  
         "projectId": "09c42625-ca9d-458c-8157-9896be3c47b8"
       }
     }

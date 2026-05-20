@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
-  ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform,
+  ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform, Share, Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -14,6 +14,9 @@ import {
   getPerfilUtilizador,
   guardarPerfilUtilizador,
   type PerfilUtilizador,
+  gerarCodigoReferral,
+  getInfoReferral,
+  type InfoReferral,
 } from '@/services/firestore';
 
 type Estatisticas = {
@@ -48,11 +51,56 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
+    // Referral
+  const [referral,          setReferral]          = useState<InfoReferral | null>(null);
+  const [loadingReferral,   setLoadingReferral]   = useState(false);
+  const [partilhando,       setPartilhando]       = useState(false);
+  const [mostrarBonusModal, setMostrarBonusModal] = useState(false);
+
   useEffect(() => {
-    Promise.all([getEstatisticasUtilizador(), getPerfilUtilizador()])
-      .then(([s, p]) => { setStats(s); setPerfil(p); })
+    Promise.all([getEstatisticasUtilizador(), getPerfilUtilizador(),  getInfoReferral()])
+      .then(([s, p, r]) => { setStats(s); setPerfil(p);  setReferral(r);})
       .finally(() => setLoading(false));
   }, []);
+
+
+
+   // Polling: deteta quando um novo amigo se regista
+  useEffect(() => {
+    if (!referral) return;
+    const interval = setInterval(async () => {
+      const info = await getInfoReferral();
+      if (info && referral && info.totalConvidados > referral.totalConvidados) {
+        setMostrarBonusModal(true);
+        setReferral(info);
+      }
+    }, 15_000);
+    return () => clearInterval(interval);
+  }, [referral]);
+
+  const partilharConvite = async () => {
+    setPartilhando(true);
+    try {
+      let info = referral;
+      if (!info) {
+        setLoadingReferral(true);
+        info = await gerarCodigoReferral();
+        setReferral(info);
+        setLoadingReferral(false);
+      }
+      const mensagem =
+        `Junta-te a mim no MyImpact e vamos reciclar juntos! 🌱\n\n` +
+        `Usa o meu link de convite:\n${info.link}\n\nCódigo: ${info.codigo}`;
+      await Share.share({ message: mensagem, url: info.link });
+    } catch (err: any) {
+      if (err?.message !== 'User did not share')
+        Alert.alert('Erro', 'Não foi possível abrir o menu de partilha.');
+    } finally {
+      setPartilhando(false);
+      setLoadingReferral(false);
+    }
+  };
+
 
   const iniciais = perfil.nome
     ? perfil.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -262,12 +310,88 @@ export default function ProfileScreen() {
         <Text style={styles.botaoWrappedTexto}>Ver o meu Wrapped 2026</Text>
       </TouchableOpacity>
 
+        <View style={styles.separador} />
+
+        {/* ── Painel Convidar Amigos ── */}
+        <Text style={styles.secaoTitulo}>CONVIDAR AMIGOS</Text>
+        <View style={styles.referralCard}>
+          <View style={styles.referralCabecalho}>
+            <View style={styles.referralIcone}>
+              <Text style={styles.referralIconeTexto}>🌱</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.referralTitulo}>Convida e ganha EcoCoins</Text>
+              <Text style={styles.referralSub}>
+                Cada amigo que se registar com o teu link vale{' '}
+                <Text style={{ color: '#1B4332', fontWeight: '700' }}>50 EcoCoins</Text> para ti.
+              </Text>
+            </View>
+          </View>
+
+          {referral && (
+            <View style={styles.referralStats}>
+              <View style={styles.referralStatItem}>
+                <Text style={styles.referralStatValor}>{referral.totalConvidados}</Text>
+                <Text style={styles.referralStatLabel}>amigos{'\n'}convidados</Text>
+              </View>
+              <View style={styles.referralStatDivider} />
+              <View style={styles.referralStatItem}>
+                <Text style={styles.referralStatValor}>{referral.pontosGanhos}</Text>
+                <Text style={styles.referralStatLabel}>EcoCoins{'\n'}ganhos</Text>
+              </View>
+              <View style={styles.referralStatDivider} />
+              <View style={styles.referralStatItem}>
+                <Text style={[styles.referralStatValor, { fontSize: 13, letterSpacing: 1 }]}>
+                  {referral.codigo}
+                </Text>
+                <Text style={styles.referralStatLabel}>o teu{'\n'}código</Text>
+              </View>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.botaoPartilhar}
+            onPress={partilharConvite}
+            disabled={partilhando || loadingReferral}
+            testID="profile-share-invite-button"
+          >
+            {partilhando || loadingReferral
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={styles.botaoPartilharTexto}>↗ Partilhar link de convite</Text>
+            }
+          </TouchableOpacity>
+
+          <Text style={styles.referralNota}>
+            O bónus só é creditado após o teu amigo completar o registo.
+          </Text>
+        </View>
+
+        <View style={styles.separador} />
+
         <TouchableOpacity style={styles.botaoSair} onPress={handleLogout}>
           <Text style={styles.botaoSairTexto}>Terminar sessão</Text>
         </TouchableOpacity>
 
-  
-    </ScrollView>
+      </ScrollView>
+
+      {/* Modal bónus */}
+      <Modal animationType="slide" transparent visible={mostrarBonusModal}
+        onRequestClose={() => setMostrarBonusModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>🎉</Text>
+            <Text style={styles.modalTitulo}>O teu amigo juntou-se!</Text>
+            <Text style={styles.modalTexto}>
+              Registou-se no MyImpact através do teu convite.{'\n'}
+              Ganhaste <Text style={{ color: '#1B4332', fontWeight: '700' }}>50 EcoCoins</Text>!
+            </Text>
+            <TouchableOpacity style={styles.modalBotao} onPress={() => setMostrarBonusModal(false)}>
+              <Text style={styles.modalBotaoTexto}>Ótimo!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </KeyboardAvoidingView>
   );
 }
@@ -375,4 +499,30 @@ const styles = StyleSheet.create({
   botaoSairTexto: { color: '#DC2626', fontWeight: '700', fontSize: 15 },
   botaoWrapped: { marginHorizontal: 20, backgroundColor: '#1B4332', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 20, shadowColor: '#1B4332', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4},
   botaoWrappedTexto: { color: '#fff', fontWeight: '700', fontSize: 16,},
+
+
+  referralCard: {
+    marginHorizontal: 20, marginBottom: 8, backgroundColor: '#FAFAFA',
+    borderRadius: 16, borderWidth: 1, borderColor: '#EFEFEF', padding: 20,
+  },
+  referralCabecalho:  { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 16 },
+  referralIcone:      { width: 44, height: 44, borderRadius: 12, backgroundColor: '#EAF3DE', justifyContent: 'center', alignItems: 'center' },
+  referralIconeTexto: { fontSize: 22 },
+  referralTitulo:     { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 3 },
+  referralSub:        { fontSize: 13, color: '#666', lineHeight: 18 },
+  referralStats:      { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#EFEFEF', marginBottom: 16, overflow: 'hidden' },
+  referralStatItem:   { flex: 1, alignItems: 'center', paddingVertical: 14 },
+  referralStatDivider:{ width: 1, backgroundColor: '#EFEFEF' },
+  referralStatValor:  { fontSize: 18, fontWeight: '800', color: '#1B4332', marginBottom: 3 },
+  referralStatLabel:  { fontSize: 10, color: '#aaa', textAlign: 'center', lineHeight: 14 },
+  botaoPartilhar:     { backgroundColor: '#1B4332', borderRadius: 12, padding: 15, alignItems: 'center' },
+  botaoPartilharTexto:{ color: '#fff', fontWeight: '700', fontSize: 15 },
+  referralNota:       { fontSize: 11, color: '#bbb', textAlign: 'center', marginTop: 12, lineHeight: 16 },
+  modalOverlay:       { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalContent:       { width: '82%', backgroundColor: '#fff', borderRadius: 20, padding: 28, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 },
+  modalEmoji:         { fontSize: 52, marginBottom: 12 },
+  modalTitulo:        { fontSize: 20, fontWeight: '800', color: '#1a1a1a', marginBottom: 8 },
+  modalTexto:         { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  modalBotao:         { backgroundColor: '#1B4332', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 40 },
+  modalBotaoTexto:    { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

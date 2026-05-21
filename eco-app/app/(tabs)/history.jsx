@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { StyleSheet, ScrollView, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
@@ -51,14 +52,17 @@ export default function HistoryScreen() {
   const [registos, setRegistos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    getHistoricoReciclagem()
-      .then(setRegistos)
-      .finally(() => setLoading(false));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      getHistoricoReciclagem()
+        .then(setRegistos)
+        .finally(() => setLoading(false));
+    }, [])
+  );
 
-  const totalKg = registos.reduce((s, i) => s + parseFloat(i.amount), 0).toFixed(1);
-  const totalCO2 = registos.reduce((s, i) => s + parseFloat(i.impact), 0).toFixed(1);
+  const totalKg = registos.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0).toFixed(1);
+  const totalCO2 = registos.reduce((s, i) => s + (parseFloat(i.impact) || 0), 0).toFixed(1);
 
   const renderCard = (item) => (
     <View key={item.id} style={styles.card}>
@@ -70,56 +74,59 @@ export default function HistoryScreen() {
               {materialLabel(item.type)}
             </ThemedText>
           </View>
-          <ThemedText style={styles.cardAmount}>{item.amount}</ThemedText>
+          <ThemedText style={styles.cardAmount}>{parseFloat(item.amount || 0).toFixed(2)} kg</ThemedText>
         </View>
         <View style={styles.cardRow}>
           <ThemedText style={styles.cardDate}>{formatDate(item.date)}</ThemedText>
-          <ThemedText style={styles.cardImpact}>-{item.impact}</ThemedText>
+          <ThemedText style={styles.cardImpact}>-{parseFloat(item.impact || 0).toFixed(2)} kg CO₂</ThemedText>
         </View>
+        {item.ecopontoNome ? (
+          <ThemedText style={styles.cardEcoponto}>📍 {item.ecopontoNome}</ThemedText>
+        ) : null}
       </View>
     </View>
   );
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
-    <ThemedView style={styles.container}>
-      <View style={styles.headerRow}>
-        <ThemedText style={styles.titulo}>Histórico</ThemedText>
-        <ThemedText style={styles.totalRegistos}>{registos.length} registos</ThemedText>
-      </View>
-
-      <View style={styles.summaryRow}>
-        <View style={[styles.summaryCard, { borderLeftColor: CORES.verde }]}>
-          <ThemedText style={styles.summaryValue}>{totalKg}</ThemedText>
-          <ThemedText style={styles.summaryUnit}>kg</ThemedText>
-          <ThemedText style={styles.summaryLabel}>reciclados</ThemedText>
+      <ThemedView style={styles.container}>
+        <View style={styles.headerRow}>
+          <ThemedText style={styles.titulo}>Histórico</ThemedText>
+          <ThemedText style={styles.totalRegistos}>{registos.length} registos</ThemedText>
         </View>
-        <View style={[styles.summaryCard, { borderLeftColor: CORES.verdeClaro }]}>
-          <ThemedText style={[styles.summaryValue, { color: CORES.verdeClaro }]}>{totalCO2}</ThemedText>
-          <ThemedText style={styles.summaryUnit}>kg</ThemedText>
-          <ThemedText style={styles.summaryLabel}>CO2 poupado</ThemedText>
-        </View>
-      </View>
 
-      {loading ? (
-        <ActivityIndicator style={{ marginTop: 48 }} color={CORES.verdeClaro} />
-      ) : registos.length === 0 ? (
-        <ThemedText style={styles.empty}>Ainda não tens registos de reciclagem.</ThemedText>
-      ) : (
-        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-          {groupByMonth(registos).map(({ month, items }) => (
-            <View key={month} style={styles.group}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionLine} />
-                <ThemedText style={styles.sectionLabel}>{month.toUpperCase()}</ThemedText>
-                <View style={styles.sectionLine} />
+        <View style={styles.summaryRow}>
+          <View style={[styles.summaryCard, { borderLeftColor: CORES.verde }]}>
+            <ThemedText style={styles.summaryValue}>{totalKg}</ThemedText>
+            <ThemedText style={styles.summaryUnit}>kg</ThemedText>
+            <ThemedText style={styles.summaryLabel}>reciclados</ThemedText>
+          </View>
+          <View style={[styles.summaryCard, { borderLeftColor: CORES.verdeClaro }]}>
+            <ThemedText style={[styles.summaryValue, { color: CORES.verdeClaro }]}>{totalCO2}</ThemedText>
+            <ThemedText style={styles.summaryUnit}>kg</ThemedText>
+            <ThemedText style={styles.summaryLabel}>CO2 poupado</ThemedText>
+          </View>
+        </View>
+
+        {loading ? (
+          <ActivityIndicator style={{ marginTop: 48 }} color={CORES.verdeClaro} />
+        ) : registos.length === 0 ? (
+          <ThemedText style={styles.empty}>Ainda não tens registos de reciclagem.</ThemedText>
+        ) : (
+          <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+            {groupByMonth(registos).map(({ month, items }) => (
+              <View key={month} style={styles.group}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionLine} />
+                  <ThemedText style={styles.sectionLabel}>{month.toUpperCase()}</ThemedText>
+                  <View style={styles.sectionLine} />
+                </View>
+                {items.map(item => renderCard(item))}
               </View>
-              {items.map(item => renderCard(item))}
-            </View>
-          ))}
-        </ScrollView>
-      )}
-    </ThemedView>
+            ))}
+          </ScrollView>
+        )}
+      </ThemedView>
     </SafeAreaView>
   );
 }
@@ -170,7 +177,8 @@ const styles = StyleSheet.create({
     borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3,
   },
   materialBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
-  cardAmount: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
+  cardAmount: { fontSize: 18, fontWeight: '700', color: '#1a1a1a' },
   cardDate: { fontSize: 12, color: '#bbb' },
   cardImpact: { fontSize: 13, fontWeight: '600', color: '#639922' },
+  cardEcoponto: { fontSize: 11, color: '#aaa', marginTop: 1 },
 });

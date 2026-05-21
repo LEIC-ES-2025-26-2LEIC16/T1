@@ -64,8 +64,15 @@ export async function seedEcopontos() {
   }
 }
 
-export async function guardarRegistoReciclagem(imageUri: string, material: string, pontos: number, peso: string,     // <-- Adicionado
-  co2: string) {
+export async function guardarRegistoReciclagem(
+  imageUri: string,
+  material: string,
+  pontos: number,
+  peso: string,
+  co2: string,
+  ecopontoId?: string,
+  ecopontoNome?: string,
+) {
   const user = auth.currentUser;
   
   //garante que a transação só ocorre se existir um login válido
@@ -96,6 +103,8 @@ export async function guardarRegistoReciclagem(imageUri: string, material: strin
     pontosAtribuidos: pontos,
     quantidade: peso,
     impactoCO2: co2,
+    ...(ecopontoId   && { ecopontoId }),
+    ...(ecopontoNome && { ecopontoNome }),
     criadoEm: serverTimestamp(),
   });
 }
@@ -272,7 +281,23 @@ export const getHistoricoReciclagem = async () => {
       orderBy("criadoEm", "desc")
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return querySnapshot.docs.map(d => {
+      const data = d.data();
+      // Converte o Timestamp do Firestore para string ISO legível pelo JavaScript
+      const criadoEm = data.criadoEm?.toDate?.() ?? new Date();
+      return {
+        id: d.id,
+        // Normaliza os nomes dos campos para os usados no ecrã de histórico
+        date: criadoEm.toISOString(),
+        type: data.material ?? '',
+        amount: data.quantidade ?? '0',
+        impact: data.impactoCO2 ?? '0',
+        imagemUrl: data.imagemUrl ?? '',
+        pontosAtribuidos: data.pontosAtribuidos ?? 0,
+        ecopontoNome: data.ecopontoNome ?? null,
+        ecopontoId: data.ecopontoId ?? null,
+      };
+    });
   } catch (error) {
     console.error("Erro ao procurar histórico:", error);
     return [];

@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { auth } from '@/services/firebase';
 import {
   ouvirEcopontos, seedEcopontos, getFavoritos,
@@ -44,10 +44,8 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const fetchData = useCallback(() => {
+  const fetchData = () => {
     if (!auth.currentUser) return;
-    setLoading(true);
-    setError(false);
     Promise.all([getFavoritos(), getHistoricoReciclagem(), getObjetivos(), getPerfilUtilizador()])
       .then(([favs, recs, objs, prof]) => {
         setFavorites(favs);
@@ -57,7 +55,7 @@ export default function HomeScreen() {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   useEffect(() => {
     seedEcopontos();
@@ -68,9 +66,7 @@ export default function HomeScreen() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user: import('firebase/auth').User | null) => { if (user) fetchData(); });
     return unsubscribe;
-  }, [fetchData]);
-
-  useFocusEffect(fetchData);
+  }, []);
 
   const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const registosMes = records.filter(r => {
@@ -127,7 +123,7 @@ export default function HomeScreen() {
       {/* Saudação */}
       <View style={styles.header}>
         <Text style={styles.greetingLabel}>{getGreeting()},</Text>
-        <Text style={styles.greetingName}>{nome} 👋</Text>
+        <Text style={styles.greetingName}>{nome}</Text>
       </View>
 
       {/* Ver todos os ecopontos */}
@@ -145,7 +141,7 @@ export default function HomeScreen() {
       </TouchableOpacity>
 
       {/* Impacto este mês */}
-      <View style={styles.impactoCard}>
+      <TouchableOpacity style={styles.impactoCard} activeOpacity={0.8} onPress={() => router.push('/(tabs)/history' as any)}>
         <Text style={styles.impactoLabel}>O TEU IMPACTO ESTE MÊS</Text>
         <View style={styles.impactoRow}>
           <View style={styles.impactoItem}>
@@ -163,11 +159,11 @@ export default function HomeScreen() {
             <Text style={styles.impactoSub}>pontos</Text>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
 
       {/* Favoritos */}
       <View style={styles.secaoHeader}>
-        <Text style={styles.secaoTitulo}>⭐  Favoritos</Text>
+        <Text style={styles.secaoTitulo}>Favoritos</Text>
         <TouchableOpacity onPress={() => router.push({ pathname: '/ecopontos', params: { apenasFavoritos: '1' } } as any)}>
           <Text style={styles.verTodos}>ver todos</Text>
         </TouchableOpacity>
@@ -176,7 +172,7 @@ export default function HomeScreen() {
       {ecopontosFav.length === 0 ? (
         <View style={styles.favVazio}>
           <Text style={styles.favVazioTexto}>Ainda não tens favoritos</Text>
-          <Text style={styles.favVazioSub}>Vai à lista de ecopontos e carrega em ☆ para adicionar.</Text>
+          <Text style={styles.favVazioSub}>Vai à lista de ecopontos e adiciona aos favoritos.</Text>
         </View>
       ) : (
         ecopontosFav.map(e => (
@@ -203,8 +199,8 @@ export default function HomeScreen() {
       {/* Objetivo do mês */}
       {objective && (
         <>
-          <Text style={styles.secaoTituloObjetivo}>🎯  Objetivo do mês</Text>
-          <View style={styles.objetivoCard}>
+          <Text style={styles.secaoTituloObjetivo}>Objetivo do mês</Text>
+          <TouchableOpacity style={styles.objetivoCard} activeOpacity={0.8} onPress={() => router.push('/(tabs)/objectives' as any)}>
             <Text style={styles.objetivoTitulo}>
               Reciclar {objective.metaKg}kg em {nomeMes}
             </Text>
@@ -215,11 +211,11 @@ export default function HomeScreen() {
               <Text style={styles.objetivoKg}>{kgFeitos} / {objective.metaKg}kg</Text>
             </View>
             {progresso >= 1 ? (
-              <Text style={styles.objetivoSub}>✓ Objetivo concluído! Parabéns 🎉</Text>
+              <Text style={styles.objetivoSub}>Objetivo concluído! Parabéns</Text>
             ) : (
-              <Text style={styles.objetivoSub}>Faltam {kgEmFalta}kg para atingires o objetivo 💪</Text>
+              <Text style={styles.objetivoSub}>Faltam {kgEmFalta}kg para atingires o objetivo</Text>
             )}
-          </View>
+          </TouchableOpacity>
         </>
       )}
     </ScrollView>

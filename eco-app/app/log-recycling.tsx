@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Linking, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { guardarRegistoReciclagem } from '@/services/firestore';
 import { calcularPontosGanhos, calcularPoupancaCO2, tabelaPontos } from '@/utils/recyclingUtils';
 
 export default function LogRecyclingScreen() {
   const router = useRouter();
+  const { ecopontoId, ecopontoNome } = useLocalSearchParams<{ ecopontoId?: string; ecopontoNome?: string }>();
   const [image, setImage] = useState<string | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>('');
@@ -74,7 +75,9 @@ export default function LogRecyclingScreen() {
         selectedMaterial, 
         pontosGanhos, 
         `${pesoEmKg}kg`, 
-        `${co2Calculado}kg CO2`
+        `${co2Calculado}kg CO2`,
+        ecopontoId as string | undefined,
+        ecopontoNome as string | undefined,
       );
 
       Alert.alert(

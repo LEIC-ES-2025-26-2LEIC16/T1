@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
-  ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform,
+  ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform, Share, Modal,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { signOut } from 'firebase/auth';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { auth } from '@/services/firebase';
@@ -13,6 +14,9 @@ import {
   getPerfilUtilizador,
   guardarPerfilUtilizador,
   type PerfilUtilizador,
+  gerarCodigoReferral,
+  getInfoReferral,
+  type InfoReferral,
 } from '@/services/firestore';
 
 type Estatisticas = {
@@ -25,30 +29,96 @@ type Estatisticas = {
 const BANNER_HEIGHT = 130;
 const AVATAR_SIZE = 90;
 
+async function pickImagem(maxW = 600): Promise<string> {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsEditing: true,
+    quality: 0.4,
+    base64: true,
+  });
+  if (result.canceled) return '';
+  const asset = result.assets[0];
+  return `data:image/jpeg;base64,${asset.base64}`;
+}
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const user = auth.currentUser;
   const [stats, setStats] = useState<Estatisticas | null>(null);
-  const [perfil, setPerfil] = useState<PerfilUtilizador>({ nome: '', username: '', bio: '' });
-  const [rascunho, setRascunho] = useState<PerfilUtilizador>({ nome: '', username: '', bio: '' });
+  const [perfil, setPerfil] = useState<PerfilUtilizador>({ nome: '', username: '', bio: '', avatarUrl: '', bannerUrl: '' });
+  const [rascunho, setRascunho] = useState<PerfilUtilizador>({ nome: '', username: '', bio: '', avatarUrl: '', bannerUrl: '' });
   const [editando, setEditando] = useState(false);
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
-  useFocusEffect(useCallback(() => {
-    setLoading(true);
-    Promise.all([getEstatisticasUtilizador(), getPerfilUtilizador()])
-      .then(([s, p]) => { setStats(s); setPerfil(p); })
+    // Referral
+  const [referral,          setReferral]          = useState<InfoReferral | null>(null);
+  const [loadingReferral,   setLoadingReferral]   = useState(false);
+  const [partilhando,       setPartilhando]       = useState(false);
+  const [mostrarBonusModal, setMostrarBonusModal] = useState(false);
+
+  useEffect(() => {
+    Promise.all([getEstatisticasUtilizador(), getPerfilUtilizador(),  getInfoReferral()])
+      .then(([s, p, r]) => { setStats(s); setPerfil(p);  setReferral(r);})
       .finally(() => setLoading(false));
-  }, []));
+  }, []);
+
+
+
+   // Polling: deteta quando um novo amigo se regista
+  useEffect(() => {
+    if (!referral) return;
+    const interval = setInterval(async () => {
+      const info = await getInfoReferral();
+      if (info && referral && info.totalConvidados > referral.totalConvidados) {
+        setMostrarBonusModal(true);
+        setReferral(info);
+      }
+    }, 15_000);
+    return () => clearInterval(interval);
+  }, [referral]);
+
+  const partilharConvite = async () => {
+    setPartilhando(true);
+    try {
+      let info = referral;
+      if (!info) {
+        setLoadingReferral(true);
+        info = await gerarCodigoReferral();
+        setReferral(info);
+        setLoadingReferral(false);
+      }
+      const mensagem =
+        `Junta-te a mim no MyImpact e vamos reciclar juntos! 🌱\n\n` +
+        `Usa o meu link de convite:\n${info.link}\n\nCódigo: ${info.codigo}`;
+      await Share.share({ message: mensagem, url: info.link });
+    } catch (err: any) {
+      if (err?.message !== 'User did not share')
+        Alert.alert('Erro', 'Não foi possível abrir o menu de partilha.');
+    } finally {
+      setPartilhando(false);
+      setLoadingReferral(false);
+    }
+  };
+
 
   const iniciais = perfil.nome
-    ? perfil.nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    ? perfil.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : user?.email?.[0]?.toUpperCase() ?? '?';
 
   const abrirEdicao = () => {
     setRascunho({ ...perfil });
     setEditando(true);
+  };
+
+  const escolherAvatar = async () => {
+    const data = await pickImagem();
+    if (data) setRascunho(r => ({ ...r, avatarUrl: data }));
+  };
+
+  const escolherBanner = async () => {
+    const data = await pickImagem(900);
+    if (data) setRascunho(r => ({ ...r, bannerUrl: data }));
   };
 
   const guardar = async () => {
@@ -79,18 +149,47 @@ export default function ProfileScreen() {
     );
   }
 
+  const avatarSource = editando ? rascunho.avatarUrl : perfil.avatarUrl;
+  const bannerSource = editando ? rascunho.bannerUrl : perfil.bannerUrl;
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* Banner */}
-        <View style={[styles.banner, { height: BANNER_HEIGHT + insets.top }]} />
+        <TouchableOpacity
+          activeOpacity={editando ? 0.7 : 1}
+          onPress={editando ? escolherBanner : undefined}
+          style={[styles.bannerWrapper, { height: BANNER_HEIGHT + insets.top }]}
+        >
+          {bannerSource ? (
+            <Image source={{ uri: bannerSource }} style={styles.bannerImage} contentFit="cover" />
+          ) : (
+            <View style={[styles.banner, { height: BANNER_HEIGHT + insets.top }]} />
+          )}
+          {editando && (
+            <View style={styles.editOverlay}>
+              <Text style={styles.editOverlayText}>Alterar capa</Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
         {/* Avatar + botão editar */}
         <View style={styles.avatarRow}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarTexto}>{iniciais}</Text>
-          </View>
+          <TouchableOpacity activeOpacity={editando ? 0.7 : 1} onPress={editando ? escolherAvatar : undefined}>
+            <View style={styles.avatar}>
+              {avatarSource ? (
+                <Image source={{ uri: avatarSource }} style={styles.avatarImage} contentFit="cover" />
+              ) : (
+                <Text style={styles.avatarTexto}>{iniciais}</Text>
+              )}
+              {editando && (
+                <View style={styles.avatarEditOverlay}>
+                  <Text style={styles.avatarEditText}>Editar</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
           {!editando && (
             <TouchableOpacity
              accessible={true}
@@ -98,7 +197,7 @@ export default function ProfileScreen() {
              accessibilityLabel="profile-edit-button"
              style={styles.botaoEditar}
              onPress={abrirEdicao}
->          
+>
               <Text style={styles.botaoEditarTexto}>Editar perfil</Text>
             </TouchableOpacity>
           )}
@@ -108,6 +207,20 @@ export default function ProfileScreen() {
         <View style={styles.infoContainer}>
           {editando ? (
             <>
+              <Text style={styles.fieldLabel}>Foto de perfil</Text>
+              <TouchableOpacity style={styles.botaoImagem} onPress={escolherAvatar}>
+                <Text style={styles.botaoImagemTexto}>
+                  {rascunho.avatarUrl ? 'Alterar foto' : 'Adicionar foto'}
+                </Text>
+              </TouchableOpacity>
+
+              <Text style={styles.fieldLabel}>Imagem de capa</Text>
+              <TouchableOpacity style={styles.botaoImagem} onPress={escolherBanner}>
+                <Text style={styles.botaoImagemTexto}>
+                  {rascunho.bannerUrl ? 'Alterar capa' : 'Adicionar capa'}
+                </Text>
+              </TouchableOpacity>
+
               <Text style={styles.fieldLabel}>Nome</Text>
               <TextInput
                 testID="profile-name-input"
@@ -194,15 +307,91 @@ export default function ProfileScreen() {
         onPress={() => router.push('/wrapped' as any)}
         testID="profile-wrapped-button"
       >
-        <Text style={styles.botaoWrappedTexto}>✨ Ver o meu Wrapped 2026</Text>
+        <Text style={styles.botaoWrappedTexto}>Ver o meu Wrapped 2026</Text>
       </TouchableOpacity>
+
+        <View style={styles.separador} />
+
+        {/* ── Painel Convidar Amigos ── */}
+        <Text style={styles.secaoTitulo}>CONVIDAR AMIGOS</Text>
+        <View style={styles.referralCard}>
+          <View style={styles.referralCabecalho}>
+            <View style={styles.referralIcone}>
+              <Text style={styles.referralIconeTexto}>🌱</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.referralTitulo}>Convida e ganha EcoCoins</Text>
+              <Text style={styles.referralSub}>
+                Cada amigo que se registar com o teu link vale{' '}
+                <Text style={{ color: '#1B4332', fontWeight: '700' }}>50 EcoCoins</Text> para ti.
+              </Text>
+            </View>
+          </View>
+
+          {referral && (
+            <View style={styles.referralStats}>
+              <View style={styles.referralStatItem}>
+                <Text style={styles.referralStatValor}>{referral.totalConvidados}</Text>
+                <Text style={styles.referralStatLabel}>amigos{'\n'}convidados</Text>
+              </View>
+              <View style={styles.referralStatDivider} />
+              <View style={styles.referralStatItem}>
+                <Text style={styles.referralStatValor}>{referral.pontosGanhos}</Text>
+                <Text style={styles.referralStatLabel}>EcoCoins{'\n'}ganhos</Text>
+              </View>
+              <View style={styles.referralStatDivider} />
+              <View style={styles.referralStatItem}>
+                <Text style={[styles.referralStatValor, { fontSize: 13, letterSpacing: 1 }]}>
+                  {referral.codigo}
+                </Text>
+                <Text style={styles.referralStatLabel}>o teu{'\n'}código</Text>
+              </View>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.botaoPartilhar}
+            onPress={partilharConvite}
+            disabled={partilhando || loadingReferral}
+            testID="profile-share-invite-button"
+          >
+            {partilhando || loadingReferral
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={styles.botaoPartilharTexto}>↗ Partilhar link de convite</Text>
+            }
+          </TouchableOpacity>
+
+          <Text style={styles.referralNota}>
+            O bónus só é creditado após o teu amigo completar o registo.
+          </Text>
+        </View>
+
+        <View style={styles.separador} />
 
         <TouchableOpacity style={styles.botaoSair} onPress={handleLogout}>
           <Text style={styles.botaoSairTexto}>Terminar sessão</Text>
         </TouchableOpacity>
 
-  
-    </ScrollView>
+      </ScrollView>
+
+      {/* Modal bónus */}
+      <Modal animationType="slide" transparent visible={mostrarBonusModal}
+        onRequestClose={() => setMostrarBonusModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>🎉</Text>
+            <Text style={styles.modalTitulo}>O teu amigo juntou-se!</Text>
+            <Text style={styles.modalTexto}>
+              Registou-se no MyImpact através do teu convite.{'\n'}
+              Ganhaste <Text style={{ color: '#1B4332', fontWeight: '700' }}>50 EcoCoins</Text>!
+            </Text>
+            <TouchableOpacity style={styles.modalBotao} onPress={() => setMostrarBonusModal(false)}>
+              <Text style={styles.modalBotaoTexto}>Ótimo!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </KeyboardAvoidingView>
   );
 }
@@ -211,10 +400,21 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   container:        { backgroundColor: '#fff', paddingBottom: 48 },
 
+  bannerWrapper: { overflow: 'hidden' },
   banner: {
     height: BANNER_HEIGHT,
     backgroundColor: '#1B4332',
   },
+  bannerImage: {
+    width: '100%',
+    height: BANNER_HEIGHT,
+  },
+  editOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  editOverlayText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 
   avatarRow: {
     flexDirection: 'row',
@@ -232,8 +432,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: '#fff',
+    overflow: 'hidden',
   },
+  avatarImage: { width: AVATAR_SIZE, height: AVATAR_SIZE },
   avatarTexto: { fontSize: 34, fontWeight: '700', color: '#fff' },
+  avatarEditOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center', alignItems: 'center',
+    borderRadius: AVATAR_SIZE / 2,
+  },
+  avatarEditText: { color: '#fff', fontSize: 11, fontWeight: '600' },
 
   botaoEditar: {
     marginLeft: 'auto',
@@ -245,6 +454,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   botaoEditarTexto: { color: '#1B4332', fontWeight: '600', fontSize: 13 },
+
+  botaoImagem: {
+    backgroundColor: '#f0f0f0', borderRadius: 10, padding: 12,
+    alignItems: 'center', marginBottom: 4, borderWidth: 1, borderColor: '#e0e0e0',
+  },
+  botaoImagemTexto: { color: '#555', fontWeight: '600', fontSize: 14 },
 
   infoContainer: { paddingHorizontal: 20, marginBottom: 4 },
 
@@ -284,4 +499,30 @@ const styles = StyleSheet.create({
   botaoSairTexto: { color: '#DC2626', fontWeight: '700', fontSize: 15 },
   botaoWrapped: { marginHorizontal: 20, backgroundColor: '#1B4332', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 20, shadowColor: '#1B4332', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4},
   botaoWrappedTexto: { color: '#fff', fontWeight: '700', fontSize: 16,},
+
+
+  referralCard: {
+    marginHorizontal: 20, marginBottom: 8, backgroundColor: '#FAFAFA',
+    borderRadius: 16, borderWidth: 1, borderColor: '#EFEFEF', padding: 20,
+  },
+  referralCabecalho:  { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 16 },
+  referralIcone:      { width: 44, height: 44, borderRadius: 12, backgroundColor: '#EAF3DE', justifyContent: 'center', alignItems: 'center' },
+  referralIconeTexto: { fontSize: 22 },
+  referralTitulo:     { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 3 },
+  referralSub:        { fontSize: 13, color: '#666', lineHeight: 18 },
+  referralStats:      { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#EFEFEF', marginBottom: 16, overflow: 'hidden' },
+  referralStatItem:   { flex: 1, alignItems: 'center', paddingVertical: 14 },
+  referralStatDivider:{ width: 1, backgroundColor: '#EFEFEF' },
+  referralStatValor:  { fontSize: 18, fontWeight: '800', color: '#1B4332', marginBottom: 3 },
+  referralStatLabel:  { fontSize: 10, color: '#aaa', textAlign: 'center', lineHeight: 14 },
+  botaoPartilhar:     { backgroundColor: '#1B4332', borderRadius: 12, padding: 15, alignItems: 'center' },
+  botaoPartilharTexto:{ color: '#fff', fontWeight: '700', fontSize: 15 },
+  referralNota:       { fontSize: 11, color: '#bbb', textAlign: 'center', marginTop: 12, lineHeight: 16 },
+  modalOverlay:       { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalContent:       { width: '82%', backgroundColor: '#fff', borderRadius: 20, padding: 28, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 },
+  modalEmoji:         { fontSize: 52, marginBottom: 12 },
+  modalTitulo:        { fontSize: 20, fontWeight: '800', color: '#1a1a1a', marginBottom: 8 },
+  modalTexto:         { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  modalBotao:         { backgroundColor: '#1B4332', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 40 },
+  modalBotaoTexto:    { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

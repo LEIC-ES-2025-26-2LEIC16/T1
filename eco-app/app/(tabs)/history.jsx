@@ -97,13 +97,17 @@ export default function HistoryScreen() {
 
         <View style={styles.summaryRow}>
           <View style={[styles.summaryCard, { borderLeftColor: CORES.verde }]}>
-            <ThemedText style={styles.summaryValue}>{totalKg}</ThemedText>
-            <ThemedText style={styles.summaryUnit}>kg</ThemedText>
+            <View style={styles.summaryValueRow}>
+              <ThemedText style={styles.summaryValue}>{totalKg}</ThemedText>
+              <ThemedText style={styles.summaryUnit}> kg</ThemedText>
+            </View>
             <ThemedText style={styles.summaryLabel}>reciclados</ThemedText>
           </View>
           <View style={[styles.summaryCard, { borderLeftColor: CORES.verdeClaro }]}>
-            <ThemedText style={[styles.summaryValue, { color: CORES.verdeClaro }]}>{totalCO2}</ThemedText>
-            <ThemedText style={styles.summaryUnit}>kg</ThemedText>
+            <View style={styles.summaryValueRow}>
+              <ThemedText style={[styles.summaryValue, { color: CORES.verdeClaro }]}>{totalCO2}</ThemedText>
+              <ThemedText style={styles.summaryUnit}> kg</ThemedText>
+            </View>
             <ThemedText style={styles.summaryLabel}>CO2 poupado</ThemedText>
           </View>
         </View>
@@ -148,8 +152,9 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
-  summaryValue: { fontSize: 28, fontWeight: '800', color: '#1B4332' },
-  summaryUnit: { fontSize: 12, fontWeight: '600', color: '#aaa', marginTop: -4, marginBottom: 2 },
+  summaryValueRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 2 },
+  summaryValue: { fontSize: 24, fontWeight: '800', color: '#1B4332' },
+  summaryUnit: { fontSize: 14, fontWeight: '600', color: '#aaa' },
   summaryLabel: { fontSize: 12, color: '#999', fontWeight: '500' },
 
   list: { paddingBottom: 40 },

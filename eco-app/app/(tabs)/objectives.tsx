@@ -14,6 +14,7 @@ import {
   type Objetivo, type ObjetivoPartilhado,
 } from '@/services/firestore';
 import { tabelaPontos } from '@/utils/recyclingUtils';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 const MATERIAL_META: Record<string, { cor: string; fundo: string; iniciais: string }> = {
   'Todos':    { cor: '#1B4332', fundo: '#EAF3DE', iniciais: 'Td' },
@@ -74,6 +75,7 @@ const materialLabel = (type: string) => {
 };
 
 export default function ObjectivesScreen() {
+  const colors = useThemeColors();
   const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
   const [registos, setRegistos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,6 @@ export default function ObjectivesScreen() {
   const [guardando, setGuardando] = useState(false);
   const [selectedObjetivoId, setSelectedObjetivoId] = useState<string | null>(null);
 
-  // new state for the tabs and challenges
   const [currentTab, setCurrentTab] = useState<'pessoais' | 'partilhados' | 'desafios'>('pessoais');
   const [objetivosPartilhados, setObjetivosPartilhados] = useState<(ObjetivoPartilhado & { progressoUid1: number; progressoUid2: number })[]>([]);
   const [listaAmigos, setListaAmigos] = useState<{ uid: string; nome: string }[]>([]);
@@ -113,14 +114,12 @@ export default function ObjectivesScreen() {
       .finally(() => setLoading(false));
   }, []));
 
-  // Calculate Nike Challenge progress dynamically based on real 'Plástico' logs
   const nikeProgress = registos
     .filter(r => r.material === 'Plástico' || r.type === 'Plástico')
     .reduce((sum, r) => sum + (parseFloat(r.quantidade ?? r.amount) || 0), 0);
 
   const nikeProgressPercentage = Math.min((nikeProgress / 10.0) * 100, 100);
 
-  // This effect checks if the user has completed the Nike challenge and shows the reward modal.
   useEffect(() => {
     if (isParticipatingNike && nikeProgress >= 10 && !hasClaimedNikeReward) {
       setShowRewardModal(true);
@@ -163,56 +162,56 @@ export default function ObjectivesScreen() {
     ]);
   };
 
-  return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+  const iniciais = (nome: string) =>
+    nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
-      <View style={styles.header}>
+  return (
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        <View style={styles.header}>
         <View>
-          <Text style={styles.titulo}>Objetivos</Text>
-          <Text style={styles.subtitulo}>Acompanha o teu progresso de reciclagem</Text>
+          <Text style={[styles.titulo, { color: colors.textPrimary }]}>Objetivos</Text>
+          <Text style={[styles.subtitulo, { color: colors.textMuted }]}>Acompanha o teu progresso de reciclagem</Text>
         </View>
       </View>
 
-      {/* Tab Navigator */}
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity
-          style={[styles.tabButton, currentTab === 'pessoais' && styles.tabButtonActive]}
+          style={[styles.tabButton, currentTab === 'pessoais' && { backgroundColor: colors.card, shadowColor: '#000' }]}
           onPress={() => setCurrentTab('pessoais')}
         >
-          <Text style={[styles.tabButtonText, currentTab === 'pessoais' && styles.tabButtonTextActive]}>Meus Objetivos</Text>
+          <Text style={[styles.tabButtonText, { color: colors.textSecondary }, currentTab === 'pessoais' && { color: colors.primary }]}>Meus Objetivos</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabButton, currentTab === 'partilhados' && styles.tabButtonActive]}
+          style={[styles.tabButton, currentTab === 'partilhados' && { backgroundColor: colors.card, shadowColor: '#000' }]}
           onPress={() => setCurrentTab('partilhados')}
         >
-          <Text style={[styles.tabButtonText, currentTab === 'partilhados' && styles.tabButtonTextActive]}>Partilhados</Text>
+          <Text style={[styles.tabButtonText, { color: colors.textSecondary }, currentTab === 'partilhados' && { color: colors.primary }]}>Partilhados</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabButton, currentTab === 'desafios' && styles.tabButtonActive]}
+          style={[styles.tabButton, currentTab === 'desafios' && { backgroundColor: colors.card, shadowColor: '#000' }]}
           onPress={() => setCurrentTab('desafios')}
         >
-          <Text style={[styles.tabButtonText, currentTab === 'desafios' && styles.tabButtonTextActive]}>Desafios</Text>
+          <Text style={[styles.tabButtonText, { color: colors.textSecondary }, currentTab === 'desafios' && { color: colors.primary }]}>Desafios</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Personal Objectives Tab */}
       {currentTab === 'pessoais' && (
         <>
           <TouchableOpacity
-            style={[styles.botaoNovo, { alignSelf: 'flex-end', marginBottom: 16 }, mostrarForm && styles.botaoNovoAtivo]}
+            style={[styles.botaoNovo, { backgroundColor: colors.primary, shadowColor: colors.primary }, mostrarForm && { backgroundColor: colors.textSecondary }]}
             onPress={() => setMostrarForm(v => !v)}
             testID="objectives-add-button"
           >
             <Text style={styles.botaoNovoTexto}>{mostrarForm ? '×' : '+'}</Text>
           </TouchableOpacity>
 
-          {/* Formulário */}
           {mostrarForm && (
-            <View style={styles.form}>
-              <Text style={styles.formTitulo}>Novo objetivo</Text>
+            <View style={[styles.form, { backgroundColor: colors.formBackground, borderColor: colors.cardBorder }]}>
+              <Text style={[styles.formTitulo, { color: colors.textPrimary }]}>Novo objetivo</Text>
 
-              <Text style={styles.fieldLabel}>MATERIAL</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>MATERIAL</Text>
               <View style={styles.chips}>
                 {MATERIAIS.map(m => {
                   const meta = MATERIAL_META[m];
@@ -220,44 +219,44 @@ export default function ObjectivesScreen() {
                   return (
                     <TouchableOpacity
                       key={m}
-                      style={[styles.chip, sel && { backgroundColor: meta.cor, borderColor: meta.cor }]}
+                      style={[styles.chip, { borderColor: colors.border, backgroundColor: colors.card }, sel && { backgroundColor: meta.cor, borderColor: meta.cor }]}
                       onPress={() => setMaterial(m)}
                       testID={`chip-material-${m}`}
                     >
                       <Text style={{ fontSize: 11, fontWeight: '700', color: meta.cor }}>{meta.iniciais}</Text>
-                      <Text style={[styles.chipTexto, sel && styles.chipTextoSelecionado]}>{m}</Text>
+                      <Text style={[styles.chipTexto, { color: colors.textSecondary }, sel && styles.chipTextoSelecionado]}>{m}</Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
 
-              <Text style={styles.fieldLabel}>META (KG)</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>META (KG)</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.card }]}
                 keyboardType="numeric"
                 placeholder="Ex: 10"
-                placeholderTextColor="#bbb"
+                placeholderTextColor={colors.textPlaceholder}
                 value={metaKg}
                 onChangeText={setMetaKg}
               />
 
-              <Text style={styles.fieldLabel}>PERÍODO</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>PERÍODO</Text>
               <View style={styles.chips}>
                 {PERIODOS.map(p => (
                   <TouchableOpacity
                     key={p.value}
-                    style={[styles.chip, styles.chipPeriodo, periodo === p.value && styles.chipSelecionado]}
+                    style={[styles.chip, styles.chipPeriodo, { borderColor: colors.border, backgroundColor: colors.card }, periodo === p.value && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                     onPress={() => setPeriodo(p.value)}
                     testID={`chip-periodo-${p.value}`}
                   >
-                    <Text style={[styles.chipTexto, periodo === p.value && styles.chipTextoSelecionado]}>
+                    <Text style={[styles.chipTexto, { color: colors.textSecondary }, periodo === p.value && { color: colors.card }]}>
                       {p.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <TouchableOpacity style={styles.botaoGuardar} onPress={guardar} disabled={guardando} testID="objectives-create-button">
+              <TouchableOpacity style={[styles.botaoGuardar, { backgroundColor: colors.primary }]} onPress={guardar} disabled={guardando} testID="objectives-create-button">
                 {guardando
                   ? <ActivityIndicator color="#fff" />
                   : <Text style={styles.botaoGuardarTexto}>Criar objetivo</Text>}
@@ -265,14 +264,13 @@ export default function ObjectivesScreen() {
             </View>
           )}
 
-          {/* Lista */}
           {loading ? (
-            <ActivityIndicator color="#1B4332" style={{ marginTop: 48 }} />
+            <ActivityIndicator color={colors.primary} style={{ marginTop: 48 }} />
           ) : objetivos.length === 0 ? (
             <View style={styles.vazio} testID="objectives-empty-state">
               <Text style={styles.vazioEmoji}>🎯</Text>
-              <Text style={styles.vazioTexto}>Sem objetivos ainda</Text>
-              <Text style={styles.vazioSub}>Carrega em + para criar o teu primeiro objetivo de reciclagem.</Text>
+              <Text style={[styles.vazioTexto, { color: colors.textPrimary }]}>Sem objetivos ainda</Text>
+              <Text style={[styles.vazioSub, { color: colors.textMuted }]}>Carrega em + para criar o teu primeiro objetivo de reciclagem.</Text>
             </View>
           ) : (
             objetivos.map(obj => {
@@ -285,7 +283,7 @@ export default function ObjectivesScreen() {
               return (
               <View key={obj.id}>
               <TouchableOpacity
-                style={[styles.card, { borderLeftColor: meta.cor }, selectedObjetivoId === obj.id && styles.cardSelecionado]}
+                style={[styles.card, { backgroundColor: colors.card, borderLeftColor: meta.cor }, selectedObjetivoId === obj.id && styles.cardSelecionado]}
                 activeOpacity={0.7}
                 onPress={() => setSelectedObjetivoId(selectedObjetivoId === obj.id ? null : obj.id)}
               >
@@ -296,53 +294,53 @@ export default function ObjectivesScreen() {
                   </View>
 
                   <View style={styles.cardInfo}>
-                    <Text style={styles.cardTitulo}>{obj.material === 'Todos' ? 'Todos os materiais' : obj.material}</Text>
-                    <Text style={styles.cardSub}>
+                    <Text style={[styles.cardTitulo, { color: colors.textPrimary }]}>{obj.material === 'Todos' ? 'Todos os materiais' : obj.material}</Text>
+                    <Text style={[styles.cardSub, { color: colors.textMuted }]}>
                       {obj.periodo === 'semanal' ? 'Esta semana' : 'Este mês'} · meta {obj.metaKg} kg
                     </Text>
                   </View>
 
                   <View style={styles.cardDireita}>
-                    <Text style={[styles.percentagem, { color: concluido ? '#1B4332' : meta.cor }]}>
+                    <Text style={[styles.percentagem, { color: concluido ? colors.primary : meta.cor }]}>
                       {percentagem}%
                     </Text>
                     <TouchableOpacity onPress={() => eliminar(obj.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} testID={`objectives-delete-${obj.id}`}>
-                      <Text style={styles.botaoEliminarTexto}>×</Text>
+                      <Text style={[styles.botaoEliminarTexto, { color: colors.textMuted }]}>×</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
 
-                <View style={styles.barraFundo}>
+                <View style={[styles.barraFundo, { backgroundColor: colors.cardBackground }]}>
                   <View style={[
                     styles.barraProgresso,
-                    { width: `${percentagem}%`, backgroundColor: concluido ? '#1B4332' : meta.cor },
+                    { width: `${percentagem}%`, backgroundColor: concluido ? colors.primary : meta.cor },
                   ]} />
                 </View>
 
                 <View style={styles.cardRodape}>
-                  <Text style={styles.kgTexto}>{kgFeitos} kg feitos</Text>
+                  <Text style={[styles.kgTexto, { color: colors.textMuted }]}>{kgFeitos} kg feitos</Text>
                   {concluido
-                    ? <View style={styles.badgeConcluido}><Text style={styles.badgeTexto}>Concluído</Text></View>
-                    : <Text style={styles.kgTexto}>{(obj.metaKg - Number(kgFeitos)).toFixed(1)} kg em falta</Text>
+                    ? <View style={[styles.badgeConcluido, { backgroundColor: colors.primaryLight }]}><Text style={[styles.badgeTexto, { color: colors.primary }]}>Concluído</Text></View>
+                    : <Text style={[styles.kgTexto, { color: colors.textMuted }]}>{(obj.metaKg - Number(kgFeitos)).toFixed(1)} kg em falta</Text>
                   }
                 </View>
 
               </TouchableOpacity>
 
               {selectedObjetivoId === obj.id && (
-                <View style={styles.historicoInline}>
-                  <Text style={styles.historicoInlineTitulo}>
+                <View style={[styles.historicoInline, { backgroundColor: colors.formBackground, borderColor: colors.cardBorder }]}>
+                  <Text style={[styles.historicoInlineTitulo, { color: colors.textMuted }]}>
                     Registos de {obj.material === 'Todos' ? 'todos os materiais' : obj.material}
                   </Text>
                   {registos.filter(r => obj.material === 'Todos' || (r.material ?? r.type) === obj.material).length === 0 ? (
-                    <Text style={styles.historicoInlineVazio}>Nenhum registo encontrado.</Text>
+                    <Text style={[styles.historicoInlineVazio, { color: colors.textPlaceholder }]}>Nenhum registo encontrado.</Text>
                   ) : (
                     registos
                       .filter(r => obj.material === 'Todos' || (r.material ?? r.type) === obj.material)
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .slice(0, 10)
                       .map(r => (
-                        <View key={r.id} style={styles.historicoInlineCard}>
+                        <View key={r.id} style={[styles.historicoInlineCard, { backgroundColor: colors.card }]}>
                           <View style={[styles.historicoInlineIndicator, { backgroundColor: materialColor(r.type) }]} />
                           <View style={styles.historicoInlineBody}>
                             <View style={styles.historicoInlineRow}>
@@ -351,11 +349,11 @@ export default function ObjectivesScreen() {
                                   {materialLabel(r.type)}
                                 </Text>
                               </View>
-                              <Text style={styles.historicoInlineAmount}>{r.amount}</Text>
+                              <Text style={[styles.historicoInlineAmount, { color: colors.textPrimary }]}>{r.amount}</Text>
                             </View>
                             <View style={styles.historicoInlineRow}>
-                              <Text style={styles.historicoInlineDate}>{formatDate(r.date)}</Text>
-                              <Text style={styles.historicoInlineImpact}>-{r.impact}</Text>
+                              <Text style={[styles.historicoInlineDate, { color: colors.textMuted }]}>{formatDate(r.date)}</Text>
+                              <Text style={[styles.historicoInlineImpact, { color: colors.secondary }]}>-{r.impact}</Text>
                             </View>
                           </View>
                         </View>
@@ -370,16 +368,15 @@ export default function ObjectivesScreen() {
         </>
       )}
 
-      {/* Shared Objectives Tab */}
       {currentTab === 'partilhados' && (
         <>
           {!loading && listaAmigos.length === 0 ? (
             <View style={styles.vazio}>
               <Text style={styles.vazioEmoji}>👥</Text>
-              <Text style={styles.vazioTexto}>Sem amigos ainda</Text>
-              <Text style={styles.vazioSub}>Adiciona amigos para criares objetivos partilhados.</Text>
+              <Text style={[styles.vazioTexto, { color: colors.textPrimary }]}>Sem amigos ainda</Text>
+              <Text style={[styles.vazioSub, { color: colors.textMuted }]}>Adiciona amigos para criares objetivos partilhados.</Text>
               <TouchableOpacity
-                style={styles.botaoGuardar}
+                style={[styles.botaoGuardar, { backgroundColor: colors.primary }]}
                 onPress={() => router.push('/amigos')}
               >
                 <Text style={styles.botaoGuardarTexto}>Adicionar amigos</Text>
@@ -388,23 +385,23 @@ export default function ObjectivesScreen() {
           ) : (
             <>
               {mostrarFormPartilhado && (
-                <View style={styles.form}>
-                  <Text style={styles.formTitulo}>Novo objetivo partilhado</Text>
+                <View style={[styles.form, { backgroundColor: colors.formBackground, borderColor: colors.cardBorder }]}>
+                  <Text style={[styles.formTitulo, { color: colors.textPrimary }]}>Novo objetivo partilhado</Text>
 
-                  <Text style={styles.fieldLabel}>COM AMIGO</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>COM AMIGO</Text>
                   <View style={styles.chips}>
                     {listaAmigos.map(a => (
                       <TouchableOpacity
                         key={a.uid}
-                        style={[styles.chip, amigoSelecionado === a.uid && { backgroundColor: '#1B4332', borderColor: '#1B4332' }]}
+                        style={[styles.chip, { borderColor: colors.border, backgroundColor: colors.card }, amigoSelecionado === a.uid && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                         onPress={() => setAmigoSelecionado(a.uid)}
                       >
-                        <Text style={[styles.chipTexto, amigoSelecionado === a.uid && styles.chipTextoSelecionado]}>{a.nome}</Text>
+                        <Text style={[styles.chipTexto, { color: colors.textSecondary }, amigoSelecionado === a.uid && styles.chipTextoSelecionado]}>{a.nome}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
 
-                  <Text style={styles.fieldLabel}>MATERIAL</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>MATERIAL</Text>
                   <View style={styles.chips}>
                     {MATERIAIS.map(m => {
                       const meta = MATERIAL_META[m];
@@ -412,40 +409,40 @@ export default function ObjectivesScreen() {
                       return (
                         <TouchableOpacity
                           key={m}
-                          style={[styles.chip, sel && { backgroundColor: meta.cor, borderColor: meta.cor }]}
+                          style={[styles.chip, { borderColor: colors.border, backgroundColor: colors.card }, sel && { backgroundColor: meta.cor, borderColor: meta.cor }]}
                           onPress={() => setMaterial(m)}
                         >
                           <Text style={{ fontSize: 11, fontWeight: '700', color: meta.cor }}>{meta.iniciais}</Text>
-                          <Text style={[styles.chipTexto, sel && styles.chipTextoSelecionado]}>{m}</Text>
+                          <Text style={[styles.chipTexto, { color: colors.textSecondary }, sel && styles.chipTextoSelecionado]}>{m}</Text>
                         </TouchableOpacity>
                       );
                     })}
                   </View>
 
-                  <Text style={styles.fieldLabel}>META (KG)</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>META (KG)</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.card }]}
                     keyboardType="numeric"
                     placeholder="Ex: 10"
-                    placeholderTextColor="#bbb"
+                    placeholderTextColor={colors.textPlaceholder}
                     value={metaKg}
                     onChangeText={setMetaKg}
                   />
 
-                  <Text style={styles.fieldLabel}>PERÍODO</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>PERÍODO</Text>
                   <View style={styles.chips}>
                     {PERIODOS.map(p => (
                       <TouchableOpacity
                         key={p.value}
-                        style={[styles.chip, styles.chipPeriodo, periodo === p.value && styles.chipSelecionado]}
+                        style={[styles.chip, styles.chipPeriodo, { borderColor: colors.border, backgroundColor: colors.card }, periodo === p.value && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                         onPress={() => setPeriodo(p.value)}
                       >
-                        <Text style={[styles.chipTexto, periodo === p.value && styles.chipTextoSelecionado]}>{p.label}</Text>
+                        <Text style={[styles.chipTexto, { color: colors.textSecondary }, periodo === p.value && { color: colors.card }]}>{p.label}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
 
-                  <TouchableOpacity style={styles.botaoGuardar} onPress={async () => {
+                  <TouchableOpacity style={[styles.botaoGuardar, { backgroundColor: colors.primary }]} onPress={async () => {
                     if (!amigoSelecionado) { Alert.alert('Seleciona um amigo'); return; }
                     if (!metaKg || isNaN(Number(metaKg)) || Number(metaKg) <= 0) { Alert.alert('Meta inválida'); return; }
                     try {
@@ -463,11 +460,11 @@ export default function ObjectivesScreen() {
               )}
 
               {loading ? (
-                <ActivityIndicator color="#1B4332" style={{ marginTop: 48 }} />
+                <ActivityIndicator color={colors.primary} style={{ marginTop: 48 }} />
               ) : (
                 <>
                   <TouchableOpacity
-                    style={[styles.botaoNovo, { alignSelf: 'flex-end', marginBottom: 16 }]}
+                    style={[styles.botaoNovo, { backgroundColor: colors.primary, shadowColor: colors.primary }, mostrarFormPartilhado && { backgroundColor: colors.textSecondary }]}
                     onPress={() => setMostrarFormPartilhado(v => !v)}
                   >
                     <Text style={styles.botaoNovoTexto}>{mostrarFormPartilhado ? '×' : '+'}</Text>
@@ -476,8 +473,8 @@ export default function ObjectivesScreen() {
                   {objetivosPartilhados.length === 0 ? (
                     <View style={styles.vazio}>
                       <Text style={styles.vazioEmoji}>🤝</Text>
-                      <Text style={styles.vazioTexto}>Sem objetivos partilhados</Text>
-                      <Text style={styles.vazioSub}>Cria um objetivo com um amigo para compararem o progresso.</Text>
+                      <Text style={[styles.vazioTexto, { color: colors.textPrimary }]}>Sem objetivos partilhados</Text>
+                      <Text style={[styles.vazioSub, { color: colors.textMuted }]}>Cria um objetivo com um amigo para compararem o progresso.</Text>
                     </View>
                   ) : (
                     objetivosPartilhados.map(o => {
@@ -489,31 +486,31 @@ export default function ObjectivesScreen() {
                       const meta = MATERIAL_META[o.material] || MATERIAL_META['Todos'];
 
                       return (
-                        <View key={o.id} style={[styles.card, { borderLeftColor: meta.cor }]}>
+                        <View key={o.id} style={[styles.card, { backgroundColor: colors.card, borderLeftColor: meta.cor }]}>
                           <View style={styles.cardTopo}>
                             <View style={[styles.iconCircle, { backgroundColor: meta.fundo }]}>
                               <Text style={[styles.iconTexto, { color: meta.cor }]}>{meta.iniciais}</Text>
                             </View>
                             <View style={styles.cardInfo}>
-                              <Text style={styles.cardTitulo}>Partilhado com {amigoNome}</Text>
-                              <Text style={styles.cardSub}>{o.material} · meta {o.metaKg} kg ({o.periodo})</Text>
+                              <Text style={[styles.cardTitulo, { color: colors.textPrimary }]}>Partilhado com {amigoNome}</Text>
+                              <Text style={[styles.cardSub, { color: colors.textMuted }]}>{o.material} · meta {o.metaKg} kg ({o.periodo})</Text>
                             </View>
                             <TouchableOpacity onPress={() => eliminarObjetivoPartilhado(o.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                              <Text style={styles.botaoEliminarTexto}>×</Text>
+                              <Text style={[styles.botaoEliminarTexto, { color: colors.textMuted }]}>×</Text>
                             </TouchableOpacity>
                           </View>
 
                           <View style={{ marginTop: 12 }}>
                             <View style={styles.barraComparacao}>
-                              <Text style={styles.comparacaoLabel}>Tu: {meuProgresso.toFixed(1)} kg</Text>
-                              <View style={styles.barraFundoComparacao}>
-                                <View style={[styles.barraProgressoComparacao, { width: `${Math.min((meuProgresso / o.metaKg) * 100, 100)}%`, backgroundColor: '#1B4332' }]} />
+                              <Text style={[styles.comparacaoLabel, { color: colors.textSecondary }]}>Tu: {meuProgresso.toFixed(1)} kg</Text>
+                              <View style={[styles.barraFundoComparacao, { backgroundColor: colors.cardBackground }]}>
+                                <View style={[styles.barraProgressoComparacao, { width: `${Math.min((meuProgresso / o.metaKg) * 100, 100)}%`, backgroundColor: colors.primary }]} />
                               </View>
                             </View>
                             <View style={styles.barraComparacao}>
-                              <Text style={styles.comparacaoLabel}>{amigoNome}: {progressoAmigo.toFixed(1)} kg</Text>
-                              <View style={styles.barraFundoComparacao}>
-                                <View style={[styles.barraProgressoComparacao, { width: `${Math.min((progressoAmigo / o.metaKg) * 100, 100)}%`, backgroundColor: '#639922' }]} />
+                              <Text style={[styles.comparacaoLabel, { color: colors.textSecondary }]}>{amigoNome}: {progressoAmigo.toFixed(1)} kg</Text>
+                              <View style={[styles.barraFundoComparacao, { backgroundColor: colors.cardBackground }]}>
+                                <View style={[styles.barraProgressoComparacao, { width: `${Math.min((progressoAmigo / o.metaKg) * 100, 100)}%`, backgroundColor: colors.secondary }]} />
                               </View>
                             </View>
                           </View>
@@ -528,44 +525,39 @@ export default function ObjectivesScreen() {
         </>
       )}
 
-      {/* Brand Challenges Tab */}
       {currentTab === 'desafios' && (
         <View>
-          {/* Mock Nike Challenge Card */}
-          <View style={styles.challengeCard}>
-            <View style={styles.challengeHeader}>
+          <View style={[styles.challengeCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <View style={[styles.challengeHeader, { backgroundColor: colors.textPrimary }]}>
               <Text style={styles.challengeBrand}>NIKE CHALLENGE</Text>
             </View>
             <View style={styles.challengeBody}>
-              <Text style={styles.challengeTitle}>Recicla 10kg de plástico e ganha 20% de desconto!</Text>
-              <Text style={styles.challengeDescription}>
+              <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>Recicla 10kg de plástico e ganha 20% de desconto!</Text>
+              <Text style={[styles.challengeDescription, { color: colors.textSecondary }]}>
                 Ajuda o planeta e a Nike a atingir as suas metas de sustentabilidade. Participa no desafio e recebe um voucher exclusivo.
               </Text>
 
-              {/* Add deadline indicator so the user knows when the challenge ends */}
               <Text style={{ fontSize: 12, color: '#e63946', marginTop: 8, fontWeight: 'bold' }}>
                 ⏳ Termina a 31 de Maio
               </Text>
 
               {isParticipatingNike ? (
                 <View style={styles.progressContainer}>
-                  <Text style={styles.progressText}>{nikeProgress.toFixed(1)} / 10.0 kg</Text>
-                  <View style={styles.challengeProgressBar}>
-                    <View style={[styles.challengeProgress, { width: `${nikeProgressPercentage}%` }]} />
+                  <Text style={[styles.progressText, { color: colors.textSecondary }]}>{nikeProgress.toFixed(1)} / 10.0 kg</Text>
+                  <View style={[styles.challengeProgressBar, { backgroundColor: colors.cardBackground }]}>
+                    <View style={[styles.challengeProgress, { backgroundColor: colors.primary, width: `${nikeProgressPercentage}%` }]} />
                   </View>
                 </View>
               ) : (
-                <TouchableOpacity style={styles.challengeButton} onPress={() => setIsParticipatingNike(true)}>
+                <TouchableOpacity style={[styles.challengeButton, { backgroundColor: colors.primary }]} onPress={() => setIsParticipatingNike(true)}>
                   <Text style={styles.challengeButtonText}>Participar</Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
-          {/* Past challenges section */}
-        <Text style={styles.pastChallengesTitle}>DESAFIOS PASSADOS</Text>
+        <Text style={[styles.pastChallengesTitle, { color: colors.textMuted }]}>DESAFIOS PASSADOS</Text>
 
-         {/* Expired Challenge Card */}
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={() => Alert.alert(
@@ -574,16 +566,16 @@ export default function ObjectivesScreen() {
             [{ text: "OK" }]
           )}
         >
-          <View style={[styles.challengeCard, styles.expiredCard]}>
-            <View style={[styles.challengeHeader, styles.expiredHeader]}>
-              <Text style={styles.challengeBrand}>Adidas Challenge (Expirado)</Text> 
+          <View style={[styles.challengeCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+            <View style={[styles.challengeHeader, { backgroundColor: colors.textMuted }]}>
+              <Text style={styles.challengeBrand}>Adidas Challenge (Expirado)</Text>
             </View>
             <View style={styles.challengeBody}>
-              <Text style={[styles.challengeTitle, styles.expiredText]}>
-                Recicla 10kg de plástico e ganha 15% de desconto! 
+              <Text style={[styles.challengeTitle, { color: colors.textSecondary }]}>
+                Recicla 10kg de plástico e ganha 15% de desconto!
               </Text>
-              <Text style={[styles.challengeDescription, styles.expiredText]}>
-                Este desafio terminou a 30 de Abril. 
+              <Text style={[styles.challengeDescription, { color: colors.textMuted }]}>
+                Este desafio terminou a 30 de Abril.
               </Text>
             </View>
           </View>
@@ -592,7 +584,6 @@ export default function ObjectivesScreen() {
         </View>
       )}
 
-      {/* Reward Modal for completing the Nike Challenge */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -600,15 +591,15 @@ export default function ObjectivesScreen() {
         onRequestClose={() => setShowRewardModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <Text style={styles.modalEmoji}>🎉</Text>
-            <Text style={styles.modalTitle}>Parabéns!</Text>
-            <Text style={styles.modalText}>Atingiste os 10kg no desafio da Nike. Aqui está o teu prémio:</Text>
-            <View style={styles.rewardCodeBox}>
-              <Text style={styles.rewardCodeText}>NIKE-ECO-20</Text>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Parabéns!</Text>
+            <Text style={[styles.modalText, { color: colors.textSecondary }]}>Atingiste os 10kg no desafio da Nike. Aqui está o teu prémio:</Text>
+            <View style={[styles.rewardCodeBox, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+              <Text style={[styles.rewardCodeText, { color: colors.primary }]}>NIKE-ECO-20</Text>
             </View>
             <TouchableOpacity
-              style={styles.modalButton}
+              style={[styles.modalButton, { backgroundColor: colors.primary }]}
               onPress={() => {
                 setShowRewardModal(false);
                 setHasClaimedNikeReward(true);
@@ -625,68 +616,57 @@ export default function ObjectivesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, paddingHorizontal: 20, backgroundColor: '#fff', paddingBottom: 48, paddingTop: 8 },
+  scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 48, paddingTop: 8 },
 
   header:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, marginTop: 40 },
-  titulo:    { fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5, lineHeight: 36 },
-  subtitulo: { fontSize: 13, color: '#999', marginTop: 3 },
+  titulo:    { fontSize: 28, fontWeight: '800', letterSpacing: -0.5, lineHeight: 36 },
+  subtitulo: { fontSize: 13, marginTop: 3 },
   botaoNovo: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#1B4332',
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#1B4332', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3, shadowRadius: 6, elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 6, elevation: 4, alignSelf: 'flex-end', marginBottom: 16,
   },
-  botaoNovoAtivo:  { backgroundColor: '#555' },
   botaoNovoTexto:  { color: '#fff', fontSize: 22, fontWeight: '400', lineHeight: 26 },
 
-  tabContainer: { flexDirection: 'row', backgroundColor: '#f0f0f0', borderRadius: 10, padding: 4, marginBottom: 24 },
+  tabContainer: { flexDirection: 'row', borderRadius: 10, padding: 4, marginBottom: 24 },
   tabButton: { flex: 1, paddingVertical: 10, borderRadius: 8 },
-  tabButtonActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-  tabButtonText: { textAlign: 'center', color: '#666', fontWeight: '600', fontSize: 13 },
-  tabButtonTextActive: { color: '#1B4332' },
-
+  tabButtonText: { textAlign: 'center', fontWeight: '600', fontSize: 13 },
 
   form: {
-    backgroundColor: '#FAFAFA',
     borderRadius: 16,
     padding: 20,
     marginBottom: 28,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
   },
-  formTitulo:  { fontSize: 17, fontWeight: '700', color: '#1a1a1a', marginBottom: 16 },
-  fieldLabel:  { fontSize: 11, fontWeight: '700', color: '#aaa', letterSpacing: 0.8, marginBottom: 10, marginTop: 16 },
+  formTitulo:  { fontSize: 17, fontWeight: '700', marginBottom: 16 },
+  fieldLabel:  { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, marginBottom: 10, marginTop: 16 },
   chips:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    borderWidth: 1.5, borderColor: '#E5E5E5',
+    borderWidth: 1.5,
     borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7,
-    backgroundColor: '#fff',
   },
   chipPeriodo:          { paddingHorizontal: 16 },
-  chipSelecionado:      { backgroundColor: '#1B4332', borderColor: '#1B4332' },
-  chipTexto:            { fontSize: 13, color: '#555', fontWeight: '500' },
+  chipTexto:            { fontSize: 13, fontWeight: '500' },
   chipTextoSelecionado: { color: '#fff', fontWeight: '600' },
   input: {
-    borderWidth: 1.5, borderColor: '#E5E5E5', borderRadius: 12,
-    padding: 13, fontSize: 16, color: '#1a1a1a', backgroundColor: '#fff',
+    borderWidth: 1.5, borderRadius: 12,
+    padding: 13, fontSize: 16,
   },
-  botaoGuardar:      { backgroundColor: '#1B4332', borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 20 },
+  botaoGuardar:      { borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 20 },
   botaoGuardarTexto: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
   vazio:      { alignItems: 'center', marginTop: 64, paddingHorizontal: 24 },
   vazioEmoji: { fontSize: 40, marginBottom: 12 },
-  vazioTexto: { fontSize: 18, fontWeight: '700', color: '#333', marginBottom: 8 },
-  vazioSub:   { fontSize: 14, color: '#aaa', textAlign: 'center', lineHeight: 20 },
+  vazioTexto: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  vazioSub:   { fontSize: 14, textAlign: 'center', lineHeight: 20 },
 
   card: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     marginBottom: 14,
     borderLeftWidth: 4,
-    borderLeftColor: '#1B4332',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,
@@ -697,29 +677,29 @@ const styles = StyleSheet.create({
   iconCircle:  { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   iconTexto:   { fontSize: 13, fontWeight: '700' },
   cardInfo:    { flex: 1 },
-  cardTitulo:  { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 2 },
-  cardSub:     { fontSize: 12, color: '#aaa' },
+  cardTitulo:  { fontSize: 15, fontWeight: '700', marginBottom: 2 },
+  cardSub:     { fontSize: 12 },
   cardDireita: { alignItems: 'flex-end', gap: 6 },
   percentagem: { fontSize: 20, fontWeight: '800' },
-  botaoEliminarTexto: { color: '#ddd', fontSize: 15, fontWeight: '700' },
+  botaoEliminarTexto: { fontSize: 15, fontWeight: '700' },
 
-  barraFundo:     { height: 10, backgroundColor: '#F3F3F3', borderRadius: 5, overflow: 'hidden', marginBottom: 10 },
+  barraFundo:     { height: 10, borderRadius: 5, overflow: 'hidden', marginBottom: 10 },
   barraProgresso: { height: 10, borderRadius: 5 },
 
   cardRodape:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  kgTexto:        { fontSize: 12, color: '#bbb' },
-  badgeConcluido: { backgroundColor: '#EAF3DE', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3 },
-  badgeTexto:     { fontSize: 12, fontWeight: '700', color: '#1B4332' },
+  kgTexto:        { fontSize: 12 },
+  badgeConcluido: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3 },
+  badgeTexto:     { fontSize: 12, fontWeight: '700' },
   cardSelecionado: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginBottom: 0 },
   historicoInline: {
-    backgroundColor: '#FAFAFA', borderWidth: 1, borderColor: '#EFEFEF',
+    borderWidth: 1,
     borderBottomLeftRadius: 12, borderBottomRightRadius: 12,
     padding: 12, marginBottom: 14, borderTopWidth: 0,
   },
-  historicoInlineTitulo: { fontSize: 12, fontWeight: '600', color: '#999', marginBottom: 10, letterSpacing: 0.5 },
-  historicoInlineVazio: { fontSize: 13, color: '#bbb', textAlign: 'center', paddingVertical: 12 },
+  historicoInlineTitulo: { fontSize: 12, fontWeight: '600', marginBottom: 10, letterSpacing: 0.5 },
+  historicoInlineVazio: { fontSize: 13, textAlign: 'center', paddingVertical: 12 },
   historicoInlineCard: {
-    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 8,
+    flexDirection: 'row', borderRadius: 8,
     marginBottom: 6, overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03, shadowRadius: 2, elevation: 1,
@@ -734,50 +714,36 @@ const styles = StyleSheet.create({
     borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2,
   },
   historicoInlineBadgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
-  historicoInlineDate:   { fontSize: 11, color: '#aaa' },
-  historicoInlineAmount: { fontSize: 13, fontWeight: '700', color: '#1a1a1a' },
-  historicoInlineImpact: { fontSize: 11, fontWeight: '600', color: '#639922' },
+  historicoInlineDate:   { fontSize: 11 },
+  historicoInlineAmount: { fontSize: 13, fontWeight: '700' },
+  historicoInlineImpact: { fontSize: 11, fontWeight: '600' },
 
-  // Challenge Card Styles
-  challengeCard: { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#e5e5e5', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 },
-  challengeHeader: { backgroundColor: '#1a1a1a', padding: 14 },
+  challengeCard: { borderRadius: 16, overflow: 'hidden', borderWidth: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 },
+  challengeHeader: { padding: 14 },
   challengeBrand: { color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: 1 },
   challengeBody: { padding: 20 },
-  challengeTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a1a', marginBottom: 8 },
-  challengeDescription: { fontSize: 14, color: '#666', lineHeight: 20, marginBottom: 20 },
-  challengeButton: { backgroundColor: '#1B4332', borderRadius: 10, padding: 14, alignItems: 'center' },
+  challengeTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  challengeDescription: { fontSize: 14, lineHeight: 20, marginBottom: 20 },
+  challengeButton: { borderRadius: 10, padding: 14, alignItems: 'center' },
   challengeButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   progressContainer: { marginTop: 8 },
-  progressText: { fontSize: 13, color: '#666', fontWeight: '600', textAlign: 'right', marginBottom: 6 },
-  challengeProgressBar: { height: 12, backgroundColor: '#e0e0e0', borderRadius: 6, overflow: 'hidden' },
-  challengeProgress: { height: '100%', backgroundColor: '#1B4332', borderRadius: 6 },
+  progressText: { fontSize: 13, fontWeight: '600', textAlign: 'right', marginBottom: 6 },
+  challengeProgressBar: { height: 12, borderRadius: 6, overflow: 'hidden' },
+  challengeProgress: { height: '100%', borderRadius: 6 },
 
-  // Expired Challenge Styles
   pastChallengesTitle: {
     marginTop: 32,
     marginBottom: 12,
     fontSize: 12,
     fontWeight: '700',
-    color: '#aaa',
     letterSpacing: 0.5,
   },
-  expiredCard: {
-    backgroundColor: '#f5f5f5',
-    shadowOpacity: 0.05,
-    elevation: 2,
-  },
-  expiredHeader: {
-    backgroundColor: '#b0b0b0',
-  },
-  expiredText: { color: '#999' },
 
-  // Comparison bar styles for shared objectives
   barraComparacao: { marginBottom: 6 },
-  comparacaoLabel: { fontSize: 12, color: '#666', marginBottom: 3 },
-  barraFundoComparacao: { height: 8, backgroundColor: '#E5E5E5', borderRadius: 4, overflow: 'hidden' },
+  comparacaoLabel: { fontSize: 12, marginBottom: 3 },
+  barraFundoComparacao: { height: 8, borderRadius: 4, overflow: 'hidden' },
   barraProgressoComparacao: { height: 8, borderRadius: 4 },
 
-  // Modal Styles
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -786,7 +752,6 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '85%',
-    backgroundColor: 'white',
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
@@ -796,25 +761,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  modalEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  modalText: {
-    fontSize: 15,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 20,
-  },
-  rewardCodeBox: { backgroundColor: '#f0f0f0', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 20, marginBottom: 24, borderWidth: 1, borderColor: '#e5e5e5' },
-  rewardCodeText: { fontSize: 18, fontWeight: '700', color: '#1B4332', letterSpacing: 1 },
-  modalButton: { backgroundColor: '#1B4332', borderRadius: 12, padding: 15, alignItems: 'center', width: '100%' },
+  modalEmoji: { fontSize: 48, marginBottom: 16 },
+  modalTitle: { fontSize: 22, fontWeight: '800', marginBottom: 8 },
+  modalText: { fontSize: 15, textAlign: 'center', lineHeight: 22, marginBottom: 20 },
+  rewardCodeBox: { borderRadius: 10, paddingVertical: 12, paddingHorizontal: 20, marginBottom: 24, borderWidth: 1 },
+  rewardCodeText: { fontSize: 18, fontWeight: '700', letterSpacing: 1 },
+  modalButton: { borderRadius: 12, padding: 15, alignItems: 'center', width: '100%' },
   modalButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

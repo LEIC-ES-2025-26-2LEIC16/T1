@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/services/firebase';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import {
   ouvirEcopontos, seedEcopontos, getFavoritos,
   getHistoricoReciclagem, getObjetivos, getPerfilUtilizador,
@@ -36,6 +37,7 @@ const ESTADO_LABEL: Record<string, string> = {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useThemeColors();
 
   const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
   const [profile, setProfile] = useState<PerfilUtilizador | null>(null);
@@ -114,17 +116,17 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1B4332" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Não foi possível carregar os dados.</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Não foi possível carregar os dados.</Text>
+        <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={fetchData}>
           <Text style={styles.retryButtonText}>Tentar novamente</Text>
         </TouchableOpacity>
       </View>
@@ -133,135 +135,135 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: 40 }}
       showsVerticalScrollIndicator={false}
     >
       {/* Avatar topo direito */}
       <View style={[styles.avatarRow, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/(tabs)/profile' as any)} testID="profile-avatar-button">
+        <TouchableOpacity style={[styles.avatar, { backgroundColor: colors.primary }]} onPress={() => router.push('/(tabs)/profile' as any)} testID="profile-avatar-button">
           <Text style={styles.avatarText}>{iniciais}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Saudação */}
       <View style={styles.header}>
-        <Text style={styles.greetingLabel}>{getGreeting()},</Text>
-        <Text style={styles.greetingName}>{nome}</Text>
+        <Text style={[styles.greetingLabel, { color: colors.textPrimary }]}>{getGreeting()},</Text>
+        <Text style={[styles.greetingName, { color: colors.textPrimary }]}>{nome}</Text>
       </View>
 
       {/* Ver todos os ecopontos */}
-      <TouchableOpacity style={styles.botaoLista} onPress={() => router.push('/ecopontos' as any)}>
+      <TouchableOpacity style={[styles.botaoLista, { backgroundColor: colors.primaryLight, borderColor: colors.primaryLight }]} onPress={() => router.push('/ecopontos' as any)}>
         <View style={styles.botaoListaEsq}>
-          <View style={styles.botaoListaIconeWrap}>
+          <View style={[styles.botaoListaIconeWrap, { backgroundColor: colors.primaryLight }]}>
             <Text style={styles.botaoListaIcone}>♻</Text>
           </View>
           <View>
-            <Text style={styles.botaoListaTitulo}>Ver todos os ecopontos</Text>
-            <Text style={styles.botaoListaSub}>Pesquisar, adicionar e favoritar</Text>
+            <Text style={[styles.botaoListaTitulo, { color: colors.primary }]}>Ver todos os ecopontos</Text>
+            <Text style={[styles.botaoListaSub, { color: colors.secondary }]}>Pesquisar, adicionar e favoritar</Text>
           </View>
         </View>
-        <Text style={styles.botaoListaSeta}>›</Text>
+        <Text style={[styles.botaoListaSeta, { color: colors.primary }]}>›</Text>
       </TouchableOpacity>
 
       {/* Impacto este mês */}
-      <TouchableOpacity style={styles.impactoCard} activeOpacity={0.8} onPress={() => router.push('/(tabs)/history' as any)}>
-        <Text style={styles.impactoLabel}>O TEU IMPACTO ESTE MÊS</Text>
+      <TouchableOpacity style={[styles.impactoCard, { backgroundColor: colors.primary }]} activeOpacity={0.8} onPress={() => router.push('/(tabs)/history' as any)}>
+        <Text style={[styles.impactoLabel, { color: colors.secondary }]}>O TEU IMPACTO ESTE MÊS</Text>
         <View style={styles.impactoRow}>
           <View style={styles.impactoItem}>
             <Text style={styles.impactoValor}>{visitas}</Text>
-            <Text style={styles.impactoSub}>visitas</Text>
+            <Text style={[styles.impactoSub, { color: colors.secondary }]}>visitas</Text>
           </View>
-          <View style={styles.impactoDivider} />
+          <View style={[styles.impactoDivider, { backgroundColor: '#2D6A4F' }]} />
           <View style={styles.impactoItem}>
             <Text style={styles.impactoValor}>{kgMes.toFixed(0)}kg</Text>
-            <Text style={styles.impactoSub}>reciclado</Text>
+            <Text style={[styles.impactoSub, { color: colors.secondary }]}>reciclado</Text>
           </View>
-          <View style={styles.impactoDivider} />
+          <View style={[styles.impactoDivider, { backgroundColor: '#2D6A4F' }]} />
           <View style={styles.impactoItem}>
             <Text style={styles.impactoValor}>{pontosMes}</Text>
-            <Text style={styles.impactoSub}>pontos</Text>
+            <Text style={[styles.impactoSub, { color: colors.secondary }]}>pontos</Text>
           </View>
         </View>
       </TouchableOpacity>
 
       {/* Favoritos */}
       <View style={styles.secaoHeader}>
-        <Text style={styles.secaoTitulo}>Favoritos</Text>
+        <Text style={[styles.secaoTitulo, { color: colors.textPrimary }]}>Favoritos</Text>
         <TouchableOpacity onPress={() => router.push({ pathname: '/ecopontos', params: { apenasFavoritos: '1' } } as any)}>
-          <Text style={styles.verTodos}>ver todos</Text>
+          <Text style={[styles.verTodos, { color: colors.primary }]}>ver todos</Text>
         </TouchableOpacity>
       </View>
 
       {ecopontosFav.length === 0 ? (
         <View style={styles.favVazio}>
-          <Text style={styles.favVazioTexto}>Ainda não tens favoritos</Text>
-          <Text style={styles.favVazioSub}>Vai à lista de ecopontos e adiciona aos favoritos.</Text>
+          <Text style={[styles.favVazioTexto, { color: colors.textSecondary }]}>Ainda não tens favoritos</Text>
+          <Text style={[styles.favVazioSub, { color: colors.textMuted }]}>Vai à lista de ecopontos e adiciona aos favoritos.</Text>
         </View>
       ) : (
         ecopontosFav.map(e => (
           <TouchableOpacity
             key={e.id}
-            style={styles.favCard}
+            style={[styles.favCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
             activeOpacity={0.7}
             onPress={() => router.push({ pathname: '/ecoponto-detail', params: { ecopontoId: e.id, ecopontoNome: e.nome, ecopontoMorada: e.morada, ecopontoEstado: e.estado } } as any)}
           >
-            <View style={styles.favIconeWrap}>
+            <View style={[styles.favIconeWrap, { backgroundColor: colors.primaryLight }]}>
               <Text style={styles.favIcone}>♻</Text>
             </View>
             <View style={styles.favInfo}>
-              <Text style={styles.favNome}>{e.nome}</Text>
-              <Text style={[styles.favEstado, { color: ESTADO_COR[e.estado] ?? '#aaa' }]}>
+              <Text style={[styles.favNome, { color: colors.textPrimary }]}>{e.nome}</Text>
+              <Text style={[styles.favEstado, { color: ESTADO_COR[e.estado] ?? colors.textMuted }]}>
                 {ESTADO_LABEL[e.estado] ?? e.estado}
               </Text>
             </View>
-            <Text style={styles.favSeta}>›</Text>
+            <Text style={[styles.favSeta, { color: colors.textMuted }]}>›</Text>
           </TouchableOpacity>
         ))
       )}
 
       {/* Ranking */}
       <View style={styles.secaoHeader}>
-        <Text style={styles.secaoTitulo}>Ranking</Text>
+        <Text style={[styles.secaoTitulo, { color: colors.textPrimary }]}>Ranking</Text>
         <TouchableOpacity onPress={() => router.push('/(tabs)/leaderboard' as any)}>
-          <Text style={styles.verTodos}>ver tudo</Text>
+          <Text style={[styles.verTodos, { color: colors.primary }]}>ver tudo</Text>
         </TouchableOpacity>
       </View>
       {ranking.map((u, i) => (
-        <TouchableOpacity key={u.id} style={styles.rankCard} activeOpacity={0.7}
+        <TouchableOpacity key={u.id} style={[styles.rankCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]} activeOpacity={0.7}
           onPress={() => router.push({ pathname: '/user-profile', params: { userId: u.id } } as any)}>
-          <View style={[styles.rankPos, i < 3 && { backgroundColor: i === 0 ? '#FEF3C7' : i === 1 ? '#F3F4F6' : '#FEF2F2' }]}>
-            <Text style={[styles.rankPosTexto, i < 3 && { color: i === 0 ? '#92400E' : i === 1 ? '#4B5563' : '#991B1B' }]}>{i + 1}</Text>
+          <View style={[styles.rankPos, { backgroundColor: colors.rankDefault }, i < 3 && { backgroundColor: i === 0 ? colors.rankGold : i === 1 ? colors.rankSilver : colors.rankBronze }]}>
+            <Text style={[styles.rankPosTexto, { color: colors.textMuted }, i < 3 && { color: i === 0 ? colors.rankGoldText : i === 1 ? colors.rankSilverText : colors.rankBronzeText }]}>{i + 1}</Text>
           </View>
-          <View style={[styles.rankAvatar, { backgroundColor: i === 0 ? '#1B4332' : i === 1 ? '#4B5563' : i === 2 ? '#92400E' : '#E5E5E5' }]}>
+          <View style={[styles.rankAvatar, { backgroundColor: i === 0 ? colors.primary : i === 1 ? colors.rankSilverText : i === 2 ? colors.rankGoldText : colors.rankDefault }]}>
             <Text style={styles.rankAvatarTexto}>{getIniciais(u.nome)}</Text>
           </View>
           <View style={styles.rankInfo}>
-            <Text style={styles.rankNome} numberOfLines={1}>{u.nome}</Text>
-            {u.username ? <Text style={styles.rankUsername}>@{u.username}</Text> : null}
+            <Text style={[styles.rankNome, { color: colors.textPrimary }]} numberOfLines={1}>{u.nome}</Text>
+            {u.username ? <Text style={[styles.rankUsername, { color: colors.textMuted }]}>@{u.username}</Text> : null}
           </View>
-          <Text style={styles.rankPontos}>{(u.totalPontos || 0).toLocaleString()} pts</Text>
+          <Text style={[styles.rankPontos, { color: colors.primary }]}>{(u.totalPontos || 0).toLocaleString()} pts</Text>
         </TouchableOpacity>
       ))}
 
       {/* Objetivo do mês */}
       {objective && (
         <>
-          <Text style={styles.secaoTituloObjetivo}>Objetivo do mês</Text>
-          <TouchableOpacity style={styles.objetivoCard} activeOpacity={0.8} onPress={() => router.push('/(tabs)/objectives' as any)}>
-            <Text style={styles.objetivoTitulo}>
+          <Text style={[styles.secaoTituloObjetivo, { color: colors.textPrimary }]}>Objetivo do mês</Text>
+          <TouchableOpacity style={[styles.objetivoCard, { backgroundColor: colors.primaryLight, borderColor: colors.primaryLight }]} activeOpacity={0.8} onPress={() => router.push('/(tabs)/objectives' as any)}>
+            <Text style={[styles.objetivoTitulo, { color: colors.textPrimary }]}>
               Reciclar {objective.metaKg}kg em {nomeMes}
             </Text>
             <View style={styles.objetivoProgressoRow}>
-              <View style={styles.barraFundo}>
-                <View style={[styles.barraProgresso, { width: `${percentagem}%` }]} />
+              <View style={[styles.barraFundo, { backgroundColor: colors.primaryLight }]}>
+                <View style={[styles.barraProgresso, { backgroundColor: colors.primary, width: `${percentagem}%` }]} />
               </View>
-              <Text style={styles.objetivoKg}>{kgFeitos} / {objective.metaKg}kg</Text>
+              <Text style={[styles.objetivoKg, { color: colors.primary }]}>{kgFeitos} / {objective.metaKg}kg</Text>
             </View>
             {progresso >= 1 ? (
-              <Text style={styles.objetivoSub}>Objetivo concluído! Parabéns</Text>
+              <Text style={[styles.objetivoSub, { color: colors.secondary }]}>Objetivo concluído! Parabéns</Text>
             ) : (
-              <Text style={styles.objetivoSub}>Faltam {kgEmFalta}kg para atingires o objetivo</Text>
+              <Text style={[styles.objetivoSub, { color: colors.secondary }]}>Faltam {kgEmFalta}kg para atingires o objetivo</Text>
             )}
           </TouchableOpacity>
         </>
@@ -271,80 +273,80 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:        { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  errorText:        { fontSize: 15, color: '#555', textAlign: 'center', marginBottom: 16 },
-  retryButton:      { backgroundColor: '#1B4332', borderRadius: 20, paddingHorizontal: 24, paddingVertical: 10 },
+  container:        { flex: 1, paddingHorizontal: 16 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorText:        { fontSize: 15, textAlign: 'center', marginBottom: 16 },
+  retryButton:      { borderRadius: 20, paddingHorizontal: 24, paddingVertical: 10 },
   retryButtonText:  { color: '#fff', fontWeight: '600' },
 
   avatarRow: { alignItems: 'flex-end', marginBottom: 4 },
-  avatar:    { width: 44, height: 44, borderRadius: 22, backgroundColor: '#1B4332', justifyContent: 'center', alignItems: 'center' },
+  avatar:    { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
   avatarText:{ fontSize: 15, fontWeight: '700', color: '#fff' },
 
   header:       { marginBottom: 20 },
-  greetingLabel:{ fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5 },
-  greetingName: { fontSize: 28, fontWeight: '800', color: '#1a1a1a', letterSpacing: -0.5 },
+  greetingLabel:{ fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  greetingName: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
 
   botaoLista: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#F0F7F0', borderRadius: 14, padding: 16, marginBottom: 16,
-    borderWidth: 1, borderColor: '#D1EAD1',
+    borderRadius: 14, padding: 16, marginBottom: 16,
+    borderWidth: 1,
   },
   botaoListaEsq:      { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  botaoListaIconeWrap:{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#D1EAD1', justifyContent: 'center', alignItems: 'center' },
+  botaoListaIconeWrap:{ width: 44, height: 44, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   botaoListaIcone:    { fontSize: 24 },
-  botaoListaTitulo:   { fontSize: 15, fontWeight: '700', color: '#1B4332' },
-  botaoListaSub:      { fontSize: 12, color: '#639922', marginTop: 2 },
-  botaoListaSeta:     { fontSize: 24, color: '#1B4332', fontWeight: '300' },
+  botaoListaTitulo:   { fontSize: 15, fontWeight: '700' },
+  botaoListaSub:      { fontSize: 12, marginTop: 2 },
+  botaoListaSeta:     { fontSize: 24, fontWeight: '300' },
 
-  impactoCard:   { backgroundColor: '#1B4332', borderRadius: 16, padding: 20, marginBottom: 24 },
-  impactoLabel:  { fontSize: 11, fontWeight: '700', color: '#86EFAC', letterSpacing: 1, marginBottom: 16 },
+  impactoCard:   { borderRadius: 16, padding: 20, marginBottom: 24 },
+  impactoLabel:  { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 16 },
   impactoRow:    { flexDirection: 'row', alignItems: 'center' },
   impactoItem:   { flex: 1, alignItems: 'center' },
   impactoValor:  { fontSize: 30, fontWeight: '800', color: '#fff' },
-  impactoSub:    { fontSize: 12, color: '#86EFAC', marginTop: 4 },
+  impactoSub:    { fontSize: 12, marginTop: 4 },
   impactoDivider:{ width: 1, height: 40, backgroundColor: '#2D6A4F' },
 
   secaoHeader:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  secaoTitulo:        { fontSize: 17, fontWeight: '700', color: '#1a1a1a' },
-  secaoTituloObjetivo:{ fontSize: 17, fontWeight: '700', color: '#1a1a1a', marginTop: 8, marginBottom: 12 },
-  verTodos:           { fontSize: 13, color: '#1B4332', fontWeight: '600' },
+  secaoTitulo:        { fontSize: 17, fontWeight: '700' },
+  secaoTituloObjetivo:{ fontSize: 17, fontWeight: '700', marginTop: 8, marginBottom: 12 },
+  verTodos:           { fontSize: 13, fontWeight: '600' },
 
   favVazio:     { paddingVertical: 24, alignItems: 'center' },
-  favVazioTexto:{ fontSize: 15, color: '#555', fontWeight: '600', marginBottom: 6 },
-  favVazioSub:  { fontSize: 13, color: '#aaa', textAlign: 'center' },
+  favVazioTexto:{ fontSize: 15, fontWeight: '600', marginBottom: 6 },
+  favVazioSub:  { fontSize: 13, textAlign: 'center' },
 
   favCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10,
-    borderWidth: 1, borderColor: '#efefef',
+    borderRadius: 14, padding: 14, marginBottom: 10,
+    borderWidth: 1,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  favIconeWrap:{ width: 48, height: 48, borderRadius: 10, backgroundColor: '#F0F7F0', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  favIconeWrap:{ width: 48, height: 48, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
   favIcone:    { fontSize: 24 },
   favInfo:     { flex: 1 },
-  favNome:     { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 3 },
+  favNome:     { fontSize: 15, fontWeight: '700', marginBottom: 3 },
   favEstado:   { fontSize: 12, fontWeight: '500' },
-  favSeta:     { fontSize: 22, color: '#ccc', fontWeight: '300' },
+  favSeta:     { fontSize: 22, fontWeight: '300' },
 
-  objetivoCard:        { backgroundColor: '#F0F7F0', borderRadius: 16, padding: 18, borderWidth: 1, borderColor: '#D1EAD1' },
-  objetivoTitulo:      { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 14 },
+  objetivoCard:        { borderRadius: 16, padding: 18, borderWidth: 1 },
+  objetivoTitulo:      { fontSize: 15, fontWeight: '700', marginBottom: 14 },
   objetivoProgressoRow:{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
-  barraFundo:          { flex: 1, height: 10, backgroundColor: '#D1EAD1', borderRadius: 5, overflow: 'hidden' },
-  barraProgresso:      { height: 10, backgroundColor: '#1B4332', borderRadius: 5 },
-  objetivoKg:          { fontSize: 13, fontWeight: '700', color: '#1B4332', minWidth: 70, textAlign: 'right' },
-  objetivoSub:         { fontSize: 13, color: '#639922' },
+  barraFundo:          { flex: 1, height: 10, borderRadius: 5, overflow: 'hidden' },
+  barraProgresso:      { height: 10, borderRadius: 5 },
+  objetivoKg:          { fontSize: 13, fontWeight: '700', minWidth: 70, textAlign: 'right' },
+  objetivoSub:         { fontSize: 13 },
 
   rankCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14,
-    padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#f0f0f0',
+    flexDirection: 'row', alignItems: 'center', borderRadius: 14,
+    padding: 12, marginBottom: 8, borderWidth: 1,
   },
-  rankPos: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  rankPosTexto: { fontSize: 12, fontWeight: '700', color: '#999' },
+  rankPos: { width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  rankPosTexto: { fontSize: 12, fontWeight: '700' },
   rankAvatar: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   rankAvatarTexto: { fontSize: 12, fontWeight: '700', color: '#fff' },
   rankInfo: { flex: 1 },
-  rankNome: { fontSize: 14, fontWeight: '700', color: '#1a1a1a' },
-  rankUsername: { fontSize: 11, color: '#aaa', marginTop: 1 },
-  rankPontos: { fontSize: 13, fontWeight: '700', color: '#1B4332' },
+  rankNome: { fontSize: 14, fontWeight: '700' },
+  rankUsername: { fontSize: 11, marginTop: 1 },
+  rankPontos: { fontSize: 13, fontWeight: '700' },
 });

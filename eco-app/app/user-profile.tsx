@@ -9,6 +9,7 @@ import {
   verificarAmizade, enviarPedidoAmizade, removerAmigo,
   getObjetivosPartilhados, criarObjetivoPartilhado, type ObjetivoPartilhado,
 } from '@/services/firestore';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 const BANNER_HEIGHT = 130;
 const AVATAR_SIZE = 90;
@@ -16,6 +17,7 @@ const AVATAR_SIZE = 90;
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [stats, setStats] = useState({ totalReciclagens: 0, totalKg: '0.0', totalCO2: '0.0', totalPontos: 0 });
@@ -110,98 +112,98 @@ export default function UserProfileScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#1B4332" />
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top }]}>
+    <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <View style={[styles.bannerWrapper, { height: BANNER_HEIGHT }]}>
         {userData?.bannerUrl ? (
           <Image source={{ uri: userData.bannerUrl }} style={styles.bannerImage} contentFit="cover" />
         ) : (
-          <View style={styles.banner} />
+          <View style={[styles.banner, { backgroundColor: colors.primary }]} />
         )}
       </View>
 
       <View style={styles.profileHeader}>
         <View style={[styles.avatarWrapper, { marginTop: -(AVATAR_SIZE / 2) }]}>
-          <View style={styles.avatar}>
+          <View style={[styles.avatar, { backgroundColor: colors.avatarBg, borderColor: colors.background }]}>
             {userData?.avatarUrl ? (
               <Image source={{ uri: userData.avatarUrl }} style={styles.avatarImage} contentFit="cover" />
             ) : (
-              <Text style={styles.avatarTexto}>{iniciais}</Text>
+              <Text style={[styles.avatarTexto, { color: '#fff' }]}>{iniciais}</Text>
             )}
           </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={styles.nome}>{userData?.nome || userData?.username || 'Utilizador'}</Text>
+          <Text style={[styles.nome, { color: colors.textPrimary }]}>{userData?.nome || userData?.username || 'Utilizador'}</Text>
           {rankPos !== null && (
-            <View style={[styles.rankBadge, rankPos <= 3 && { backgroundColor: rankPos === 1 ? '#FEF3C7' : rankPos === 2 ? '#F3F4F6' : '#FEF2F2' }]}>
-              <Text style={[styles.rankBadgeTexto, rankPos <= 3 && { color: rankPos === 1 ? '#92400E' : rankPos === 2 ? '#4B5563' : '#991B1B' }]}>
+            <View style={[styles.rankBadge, { backgroundColor: colors.rankDefault }, rankPos <= 3 && { backgroundColor: rankPos === 1 ? colors.rankGold : rankPos === 2 ? colors.rankSilver : colors.rankBronze }]}>
+              <Text style={[styles.rankBadgeTexto, { color: colors.textMuted }, rankPos <= 3 && { color: rankPos === 1 ? colors.rankGoldText : rankPos === 2 ? colors.rankSilverText : colors.rankBronzeText }]}>
                 #{rankPos}
               </Text>
             </View>
           )}
         </View>
-        {userData?.username && <Text style={styles.username}>@{userData.username}</Text>}
-        {userData?.bio && <Text style={styles.bio}>{userData.bio}</Text>}
+        {userData?.username && <Text style={[styles.username, { color: colors.secondary }]}>@{userData.username}</Text>}
+        {userData?.bio && <Text style={[styles.bio, { color: colors.textSecondary }]}>{userData.bio}</Text>}
       </View>
 
-      <View style={styles.separador} />
+      <View style={[styles.separador, { backgroundColor: colors.divider }]} />
 
-      <Text style={styles.secaoTitulo}>O MEU IMPACTO</Text>
+      <Text style={[styles.secaoTitulo, { color: colors.textMuted }]}>O MEU IMPACTO</Text>
       <View style={styles.grelha}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValor}>{stats.totalReciclagens}</Text>
-          <Text style={styles.statLabel}>reciclagens</Text>
+        <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.statValor, { color: colors.textPrimary }]}>{stats.totalReciclagens}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>reciclagens</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValor}>{stats.totalPontos}</Text>
-          <Text style={styles.statLabel}>pontos</Text>
+        <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.statValor, { color: colors.textPrimary }]}>{stats.totalPontos}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>pontos</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValor}>{stats.totalKg} kg</Text>
-          <Text style={styles.statLabel}>reciclado</Text>
+        <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.statValor, { color: colors.textPrimary }]}>{stats.totalKg} kg</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>reciclado</Text>
         </View>
-        <View style={[styles.statCard, styles.statCardVerde]}>
-          <Text style={[styles.statValor, { color: '#1B4332' }]}>{stats.totalCO2} kg</Text>
-          <Text style={[styles.statLabel, { color: '#1B4332' }]}>CO2 poupado</Text>
+        <View style={[styles.statCard, { backgroundColor: colors.primaryLight, borderColor: colors.primaryLight }, styles.statCardVerde]}>
+          <Text style={[styles.statValor, { color: colors.primary }]}>{stats.totalCO2} kg</Text>
+          <Text style={[styles.statLabel, { color: colors.primary }]}>CO2 poupado</Text>
         </View>
       </View>
 
       {!isOwnProfile && isLoggedIn && (
         <View style={styles.acoesAmizade}>
           {amizadeStatus === 'nenhuma' && (
-            <TouchableOpacity style={styles.botaoAmizade} onPress={async () => {
+            <TouchableOpacity style={[styles.botaoAmizade, { backgroundColor: colors.primary }]} onPress={async () => {
               try {
                 await enviarPedidoAmizade(userId);
                 setAmizadeStatus('pendente');
                 Alert.alert('Pedido enviado', 'Pedido de amizade enviado!');
               } catch (e: any) { Alert.alert('Erro', e.message); }
             }}>
-              <Text style={styles.botaoAmizadeTexto}>+ Adicionar amigo</Text>
+              <Text style={[styles.botaoAmizadeTexto, { color: '#fff' }]}>+ Adicionar amigo</Text>
             </TouchableOpacity>
           )}
           {amizadeStatus === 'pendente' && (
-            <View style={[styles.botaoAmizade, styles.botaoPendente]}>
-              <Text style={[styles.botaoAmizadeTexto, { color: '#999' }]}>Pedido enviado</Text>
+            <View style={[styles.botaoAmizade, { backgroundColor: colors.cardBackground }]}>
+              <Text style={[styles.botaoAmizadeTexto, { color: colors.textMuted }]}>Pedido enviado</Text>
             </View>
           )}
           {amizadeStatus === 'aceite' && (
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableOpacity style={[styles.botaoAmizade, { flex: 1 }]} onPress={() => setMostrarComparacao(v => !v)}>
-                <Text style={styles.botaoAmizadeTexto}>Comparar</Text>
+              <TouchableOpacity style={[styles.botaoAmizade, { flex: 1, backgroundColor: colors.primary }]} onPress={() => setMostrarComparacao(v => !v)}>
+                <Text style={[styles.botaoAmizadeTexto, { color: '#fff' }]}>Comparar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.botaoAmizade, styles.botaoRemoverAmigo]} onPress={() => {
+              <TouchableOpacity style={[styles.botaoAmizade, { backgroundColor: colors.dangerBg }]} onPress={() => {
                 Alert.alert('Remover amigo', 'Tens a certeza?', [
                   { text: 'Cancelar', style: 'cancel' },
                   { text: 'Remover', style: 'destructive', onPress: async () => { await removerAmigo(userId); setAmizadeStatus('nenhuma'); } },
                 ]);
               }}>
-                <Text style={[styles.botaoAmizadeTexto, { color: '#DC2626' }]}>Remover</Text>
+                <Text style={[styles.botaoAmizadeTexto, { color: colors.danger }]}>Remover</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -210,31 +212,31 @@ export default function UserProfileScreen() {
 
       {mostrarComparacao && amizadeStatus === 'aceite' && (
         <View style={styles.comparacao}>
-          <Text style={styles.secaoTitulo}>COMPARAÇÃO DE ESTATÍSTICAS</Text>
+          <Text style={[styles.secaoTitulo, { color: colors.textMuted }]}>COMPARAÇÃO DE ESTATÍSTICAS</Text>
 
-          <View style={styles.compStatsRow}>
+          <View style={[styles.compStatsRow, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
             <View style={styles.compLabelCol}>
-              <Text style={styles.compLabel}>Reciclagens</Text>
-              <Text style={styles.compLabel}>Total kg</Text>
-              <Text style={styles.compLabel}>Pontos</Text>
-              <Text style={styles.compLabel}>CO₂ poupado</Text>
+              <Text style={[styles.compLabel, { color: colors.textMuted }]}>Reciclagens</Text>
+              <Text style={[styles.compLabel, { color: colors.textMuted }]}>Total kg</Text>
+              <Text style={[styles.compLabel, { color: colors.textMuted }]}>Pontos</Text>
+              <Text style={[styles.compLabel, { color: colors.textMuted }]}>CO₂ poupado</Text>
             </View>
             <View style={styles.compValCol}>
               <View style={styles.compValRow}>
-                <Text style={[styles.compValNome, myStats.totalReciclagens > stats.totalReciclagens && styles.compVencedor]}>Tu</Text>
-                <Text style={styles.compValor}>{myStats.totalReciclagens}</Text>
+                <Text style={[styles.compValNome, { color: colors.textSecondary }, myStats.totalReciclagens > stats.totalReciclagens && { color: colors.primary, fontWeight: '800' }]}>Tu</Text>
+                <Text style={[styles.compValor, { color: colors.textPrimary }]}>{myStats.totalReciclagens}</Text>
               </View>
               <View style={styles.compValRow}>
-                <Text style={[styles.compValNome, parseFloat(myStats.totalKg) > parseFloat(stats.totalKg) && styles.compVencedor]}>Tu</Text>
-                <Text style={styles.compValor}>{myStats.totalKg}</Text>
+                <Text style={[styles.compValNome, { color: colors.textSecondary }, parseFloat(myStats.totalKg) > parseFloat(stats.totalKg) && { color: colors.primary, fontWeight: '800' }]}>Tu</Text>
+                <Text style={[styles.compValor, { color: colors.textPrimary }]}>{myStats.totalKg}</Text>
               </View>
               <View style={styles.compValRow}>
-                <Text style={[styles.compValNome, myStats.totalPontos > stats.totalPontos && styles.compVencedor]}>Tu</Text>
-                <Text style={styles.compValor}>{myStats.totalPontos}</Text>
+                <Text style={[styles.compValNome, { color: colors.textSecondary }, myStats.totalPontos > stats.totalPontos && { color: colors.primary, fontWeight: '800' }]}>Tu</Text>
+                <Text style={[styles.compValor, { color: colors.textPrimary }]}>{myStats.totalPontos}</Text>
               </View>
               <View style={styles.compValRow}>
-                <Text style={[styles.compValNome, parseFloat(myStats.totalCO2) > parseFloat(stats.totalCO2) && styles.compVencedor]}>Tu</Text>
-                <Text style={styles.compValor}>{myStats.totalCO2}</Text>
+                <Text style={[styles.compValNome, { color: colors.textSecondary }, parseFloat(myStats.totalCO2) > parseFloat(stats.totalCO2) && { color: colors.primary, fontWeight: '800' }]}>Tu</Text>
+                <Text style={[styles.compValor, { color: colors.textPrimary }]}>{myStats.totalCO2}</Text>
               </View>
             </View>
             <View style={styles.compSetaCol}>
@@ -250,20 +252,20 @@ export default function UserProfileScreen() {
             </View>
             <View style={styles.compValCol}>
               <View style={styles.compValRow}>
-                <Text style={styles.compValor}>{stats.totalReciclagens}</Text>
-                <Text style={[styles.compValNome, stats.totalReciclagens > myStats.totalReciclagens && styles.compVencedor]}>{userData?.nome || 'Amigo'}</Text>
+                <Text style={[styles.compValor, { color: colors.textPrimary }]}>{stats.totalReciclagens}</Text>
+                <Text style={[styles.compValNome, { color: colors.textSecondary }, stats.totalReciclagens > myStats.totalReciclagens && { color: colors.primary, fontWeight: '800' }]}>{userData?.nome || 'Amigo'}</Text>
               </View>
               <View style={styles.compValRow}>
-                <Text style={styles.compValor}>{stats.totalKg}</Text>
-                <Text style={[styles.compValNome, parseFloat(stats.totalKg) > parseFloat(myStats.totalKg) && styles.compVencedor]}>{userData?.nome || 'Amigo'}</Text>
+                <Text style={[styles.compValor, { color: colors.textPrimary }]}>{stats.totalKg}</Text>
+                <Text style={[styles.compValNome, { color: colors.textSecondary }, parseFloat(stats.totalKg) > parseFloat(myStats.totalKg) && { color: colors.primary, fontWeight: '800' }]}>{userData?.nome || 'Amigo'}</Text>
               </View>
               <View style={styles.compValRow}>
-                <Text style={styles.compValor}>{stats.totalPontos}</Text>
-                <Text style={[styles.compValNome, stats.totalPontos > myStats.totalPontos && styles.compVencedor]}>{userData?.nome || 'Amigo'}</Text>
+                <Text style={[styles.compValor, { color: colors.textPrimary }]}>{stats.totalPontos}</Text>
+                <Text style={[styles.compValNome, { color: colors.textSecondary }, stats.totalPontos > myStats.totalPontos && { color: colors.primary, fontWeight: '800' }]}>{userData?.nome || 'Amigo'}</Text>
               </View>
               <View style={styles.compValRow}>
-                <Text style={styles.compValor}>{stats.totalCO2}</Text>
-                <Text style={[styles.compValNome, parseFloat(stats.totalCO2) > parseFloat(myStats.totalCO2) && styles.compVencedor]}>{userData?.nome || 'Amigo'}</Text>
+                <Text style={[styles.compValor, { color: colors.textPrimary }]}>{stats.totalCO2}</Text>
+                <Text style={[styles.compValNome, { color: colors.textSecondary }, parseFloat(stats.totalCO2) > parseFloat(myStats.totalCO2) && { color: colors.primary, fontWeight: '800' }]}>{userData?.nome || 'Amigo'}</Text>
               </View>
             </View>
           </View>
@@ -271,23 +273,23 @@ export default function UserProfileScreen() {
           <View style={styles.compObjetivos}>
             {objetivosPartilhados.length > 0 ? (
               <>
-                <Text style={styles.secaoTitulo}>OBJETIVOS PARTILHADOS</Text>
+                <Text style={[styles.secaoTitulo, { color: colors.textMuted }]}>OBJETIVOS PARTILHADOS</Text>
                 {objetivosPartilhados.map(o => {
                   const meuProgresso = o.uid1 === auth.currentUser?.uid ? o.progressoUid1 : o.progressoUid2;
                   const progressoAmigo = o.uid1 === auth.currentUser?.uid ? o.progressoUid2 : o.progressoUid1;
                   return (
-                    <View key={o.id} style={styles.objCard}>
-                      <Text style={styles.objMaterial}>{o.material} · {o.metaKg} kg ({o.periodo})</Text>
+                    <View key={o.id} style={[styles.objCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                      <Text style={[styles.objMaterial, { color: colors.textPrimary }]}>{o.material} · {o.metaKg} kg ({o.periodo})</Text>
                       <View style={styles.barraComparacao}>
-                        <Text style={styles.barraLabel}>Tu: {meuProgresso.toFixed(1)} kg</Text>
-                        <View style={styles.barraFundo}>
-                          <View style={[styles.barraProgresso, { width: `${Math.min((meuProgresso / o.metaKg) * 100, 100)}%`, backgroundColor: '#1B4332' }]} />
+                        <Text style={[styles.barraLabel, { color: colors.textSecondary }]}>Tu: {meuProgresso.toFixed(1)} kg</Text>
+                        <View style={[styles.barraFundo, { backgroundColor: colors.border }]}>
+                          <View style={[styles.barraProgresso, { width: `${Math.min((meuProgresso / o.metaKg) * 100, 100)}%`, backgroundColor: colors.primary }]} />
                         </View>
                       </View>
                       <View style={styles.barraComparacao}>
-                        <Text style={styles.barraLabel}>{userData?.nome || 'Amigo'}: {progressoAmigo.toFixed(1)} kg</Text>
-                        <View style={styles.barraFundo}>
-                          <View style={[styles.barraProgresso, { width: `${Math.min((progressoAmigo / o.metaKg) * 100, 100)}%`, backgroundColor: '#639922' }]} />
+                        <Text style={[styles.barraLabel, { color: colors.textSecondary }]}>{userData?.nome || 'Amigo'}: {progressoAmigo.toFixed(1)} kg</Text>
+                        <View style={[styles.barraFundo, { backgroundColor: colors.border }]}>
+                          <View style={[styles.barraProgresso, { width: `${Math.min((progressoAmigo / o.metaKg) * 100, 100)}%`, backgroundColor: colors.secondary }]} />
                         </View>
                       </View>
                     </View>
@@ -296,7 +298,7 @@ export default function UserProfileScreen() {
               </>
             ) : (
               <View style={styles.semObjetivos}>
-                <Text style={{ fontSize: 14, color: '#aaa', textAlign: 'center', marginBottom: 12 }}>
+                <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: 12 }}>
                   Ainda não têm objetivos partilhados.
                 </Text>
               </View>

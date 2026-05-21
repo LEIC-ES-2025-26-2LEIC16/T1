@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Share, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getHistoricoReciclagem } from '@/services/firestore';
+import { getHistoricoReciclagem, getInfoReferral, gerarCodigoReferral } from '@/services/firestore';
 
 // Define the shape of our aggregated data
 type WrappedStats = {
@@ -19,6 +19,7 @@ export default function WrappedScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [wrappedData, setWrappedData] = useState<WrappedStats | null>(null);
+  const [referralInfo, setReferralInfo] = useState<any>(null);
   
   // Get the current year dynamically
   const anoAtual = new Date().getFullYear();
@@ -110,6 +111,17 @@ export default function WrappedScreen() {
           peakMonthItems,
         });
 
+        // 10. Load referral info in background
+        try {
+          let refInfo = await getInfoReferral();
+          if (!refInfo) {
+            refInfo = await gerarCodigoReferral();
+          }
+          setReferralInfo(refInfo);
+        } catch (err) {
+          console.error("Erro ao carregar referral info no Wrapped:", err);
+        }
+
       } catch (error) {
         console.error("Erro ao calcular Wrapped:", error);
       } finally {
@@ -123,8 +135,18 @@ export default function WrappedScreen() {
   const handleShare = async () => {
     if (!wrappedData) return;
     try {
+      let currentRefInfo = referralInfo;
+      if (!currentRefInfo) {
+        currentRefInfo = await getInfoReferral();
+        if (!currentRefInfo) {
+          currentRefInfo = await gerarCodigoReferral();
+        }
+        setReferralInfo(currentRefInfo);
+      }
+
+      const linkString = currentRefInfo?.link ? `\nUsa o meu link de convite: ${currentRefInfo.link}` : '';
       await Share.share({
-        message: `O meu ano em reciclagem! Poupei ${wrappedData.co2Saved}kg de CO2 no MyImpact. Junta-te a mim!`,
+        message: `O meu ano em reciclagem! Poupei ${wrappedData.co2Saved}kg de CO2 no MyImpact. Junta-te a mim!${linkString}`,
       });
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível partilhar.');

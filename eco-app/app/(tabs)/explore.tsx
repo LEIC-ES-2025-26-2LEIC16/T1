@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import MapLibreGL from '@maplibre/maplibre-react-native';
+import MapLibreGL, { type CameraRef } from '@maplibre/maplibre-react-native';
 import { type Ecoponto } from '@/constants/ecopontos';
 import { ouvirEcopontos } from '@/services/firestore';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
@@ -32,6 +32,7 @@ const CENTRO_PORTO = [-8.6291, 41.1579];
 
 export default function MapaScreen() {
   const router = useRouter();
+  const cameraRef = useRef<CameraRef>(null);
   const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
   const [ecopontoSelecionado, setEcopontoSelecionado] = useState<Ecoponto | null>(null);
   
@@ -42,6 +43,15 @@ export default function MapaScreen() {
     const unsubscribe = ouvirEcopontos(setEcopontos);
     return unsubscribe;
   }, []);
+
+  const selecionarEcoponto = (ecoponto: Ecoponto) => {
+    setEcopontoSelecionado(ecoponto);
+    // Fly camera to the selected bin
+    cameraRef.current?.flyTo(
+      [ecoponto.coordenadas.longitude, ecoponto.coordenadas.latitude],
+      400, // animation duration in ms
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -58,32 +68,37 @@ export default function MapaScreen() {
           onDidFinishLoadingMap={() => setIsMapReady(true)} // sets map as ready
         >
           <MapLibreGL.Camera
+            ref={cameraRef}
             zoomLevel={13}
             centerCoordinate={CENTRO_PORTO}
             animationDuration={0}
           />
 
           {/* only renders markers when map is fully ready to avoid index errors */}
-          {isMapReady && ecopontos.map((ecoponto) => (
-            <MapLibreGL.PointAnnotation
-              key={ecoponto.id}
-              id={ecoponto.id}
-              coordinate={[ecoponto.coordenadas.longitude, ecoponto.coordenadas.latitude]}
-              onSelected={() => setEcopontoSelecionado(ecoponto)}
-            >
-              <View style={[
-                styles.marcador,
-                ecoponto.estado === 'Cheio' && styles.marcadorCheio,
-                ecoponto.estado === 'Danificado' && styles.marcadorDanificado,
-                ecopontoSelecionado?.id === ecoponto.id && styles.marcadorSelecionado,
-              ]}>
-                <Text style={[
-                  styles.marcadorTexto,
-                  ecopontoSelecionado?.id === ecoponto.id && styles.marcadorTextoSelecionado,
-                ]}>♻</Text>
-              </View>
-            </MapLibreGL.PointAnnotation>
-          ))}
+          {isMapReady && ecopontos.map((ecoponto) => {
+            const selecionado = ecopontoSelecionado?.id === ecoponto.id;
+            return (
+              <MapLibreGL.PointAnnotation
+                key={ecoponto.id}
+                id={ecoponto.id}
+                coordinate={[ecoponto.coordenadas.longitude, ecoponto.coordenadas.latitude]}
+                onSelected={() => selecionarEcoponto(ecoponto)}
+              >
+                {/* Keep the outer View always the same dimensions so MapLibre
+                    never re-lays out the annotation (which shifts the icon). */}
+                <View style={styles.marcadorWrapper}>
+                  <View style={[
+                    styles.marcador,
+                    ecoponto.estado === 'Cheio' && styles.marcadorCheio,
+                    ecoponto.estado === 'Danificado' && styles.marcadorDanificado,
+                    selecionado && styles.marcadorSelecionado,
+                  ]}>
+                    <Text style={styles.marcadorTexto}>♻</Text>
+                  </View>
+                </View>
+              </MapLibreGL.PointAnnotation>
+            );
+          })}
         </MapLibreGL.MapView>
       )}
 
@@ -161,33 +176,39 @@ export default function MapaScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   mapa: { flex: 1 },
+  // Fixed-size wrapper — MapLibre measures this once and never re-lays it out,
+  // so the pin anchor stays correct even when the inner marker changes style.
+  marcadorWrapper: {
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   marcador: {
-    width: 44, 
-    height: 44, 
-    borderRadius: 22, 
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#279840',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2, 
+    borderWidth: 2,
     borderColor: '#fff',
-    elevation: 4, 
-    shadowColor: '#000', 
+    elevation: 4,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
   },
   marcadorCheio: { backgroundColor: '#D97706' },
   marcadorDanificado: { backgroundColor: '#DC2626' },
+  // Selection: only change border colour + shadow — NO width/height change
   marcadorSelecionado: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
     borderWidth: 3,
     borderColor: '#1B4332',
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
+    elevation: 8,
+    shadowOpacity: 0.55,
+    shadowRadius: 7,
   },
-  marcadorTextoSelecionado: { fontSize: 28 },
   marcadorTexto: { fontSize: 22 },
   card: {
     position: 'absolute',

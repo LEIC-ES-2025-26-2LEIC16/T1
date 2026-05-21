@@ -1,14 +1,14 @@
-import { useState, useCallback } from 'react';
-import { useFocusEffect, router } from 'expo-router';
+import { useState, useEffect } from 'react';
+import { router } from 'expo-router';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   ActivityIndicator, TextInput, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '@/services/firebase';
 import {
-  getAmigos, getPedidosRecebidos, enviarPedidoAmizade,
+  enviarPedidoAmizade,
   responderPedidoAmizade, removerAmigo, getSugestoesAmigos,
 } from '@/services/firestore';
 
@@ -21,34 +21,62 @@ export default function AmigosScreen() {
   const [resultados, setResultados] = useState<any[]>([]);
   const [pesquisando, setPesquisando] = useState(false);
 
-  const carregarDados = useCallback(async () => {
-    setLoading(true);
-    try {
-      const amigosList = await getAmigos();
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const qAmigos = query(
+      collection(db, 'amizades'),
+      where('usuarios', 'array-contains', user.uid),
+      where('status', '==', 'aceite')
+    );
+    const unsubAmigos = onSnapshot(qAmigos, async (snap) => {
+      const amigosData = snap.docs.map(d => {
+        const data = d.data();
+        const amigoUid = data.usuarios.find((u: string) => u !== user.uid);
+        return { id: d.id, uid: amigoUid };
+      });
       const perfis = await Promise.all(
-        amigosList.map(async a => {
+        amigosData.map(async a => {
+          if (!a.uid) return null;
           const snap = await getDoc(doc(db, 'utilizadores', a.uid));
           const d = snap.data() || {};
           return { ...a, nome: d.nome || d.username || 'Utilizador', username: d.username || '', avatarUrl: d.avatarUrl || '', totalPontos: d.totalPontos || 0 };
         })
       );
-      setAmigos(perfis);
+      setAmigos(perfis.filter(Boolean));
+      setLoading(false);
+    });
 
-      const pedidosList = await getPedidosRecebidos();
-      const perfisPedidos = await Promise.all(
-        pedidosList.map(async p => {
+    const qPedidos = query(
+      collection(db, 'amizades'),
+      where('usuarios', 'array-contains', user.uid),
+      where('status', '==', 'pendente')
+    );
+    const unsubPedidos = onSnapshot(qPedidos, async (snap) => {
+      const pedidosData = snap.docs
+        .map(d => {
+          const data = d.data();
+          if (data.accaoUid === user.uid) return null;
+          return { id: d.id, deUid: data.accaoUid };
+        })
+        .filter(Boolean) as { id: string; deUid: string }[];
+      const perfis = await Promise.all(
+        pedidosData.map(async p => {
           const snap = await getDoc(doc(db, 'utilizadores', p.deUid));
           const d = snap.data() || {};
           return { ...p, nome: d.nome || d.username || 'Utilizador' };
         })
       );
-      setPedidos(perfisPedidos);
-    } finally {
+      setPedidos(perfis);
       setLoading(false);
-    }
-  }, []);
+    });
 
-  useFocusEffect(useCallback(() => { carregarDados(); }, [carregarDados]));
+    return () => {
+      unsubAmigos();
+      unsubPedidos();
+    };
+  }, []);
 
   const handlePesquisa = async (texto: string) => {
     setPesquisa(texto);
@@ -71,13 +99,12 @@ export default function AmigosScreen() {
 
   const handleResponder = async (amizadeId: string, aceitar: boolean) => {
     await responderPedidoAmizade(amizadeId, aceitar);
-    carregarDados();
   };
 
   const handleRemover = (amigoUid: string, nome: string) => {
     Alert.alert('Remover amigo', `Remover ${nome} dos teus amigos?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Remover', style: 'destructive', onPress: async () => { await removerAmigo(amigoUid); carregarDados(); } },
+      { text: 'Remover', style: 'destructive', onPress: async () => { await removerAmigo(amigoUid); } },
     ]);
   };
 

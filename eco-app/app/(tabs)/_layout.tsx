@@ -32,10 +32,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="leaderboard"
-        options={{
-          title: 'Ranking',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="trophy.fill" color={color} />,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="history"
@@ -43,6 +40,10 @@ export default function TabLayout() {
           title: 'Histórico',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} />,
         }}
+      />
+      <Tabs.Screen
+        name="amigos"
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="objectives"

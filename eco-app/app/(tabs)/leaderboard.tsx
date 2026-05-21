@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/services/firebase';
 
 interface UserRank {
@@ -23,35 +23,47 @@ const getIniciais = (name: string) =>
 
 export default function LeaderboardScreen() {
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<UserRank[]>([]);
+  const [allUsers, setAllUsers] = useState<UserRank[]>([]);
+  const [pesquisa, setPesquisa] = useState('');
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      if (!auth.currentUser) {
-        setUsers([]);
-        setLoading(false);
-        return;
-      }
+    const fetchAll = async () => {
+      if (!auth.currentUser) { setLoading(false); return; }
       try {
-        const q = query(
-          collection(db, 'utilizadores'),
-          orderBy('totalPontos', 'desc'),
-          limit(10)
-        );
-        const querySnapshot = await getDocs(q);
-        const leaderboardData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as UserRank[];
-        setUsers(leaderboardData);
-      } catch (error) {
-        console.error("erro ao carregar ranking:", error);
-      } finally {
-        setLoading(false);
-      }
+        const [userSnap, registosSnap] = await Promise.all([
+          getDocs(collection(db, 'utilizadores')),
+          getDocs(collection(db, 'registos_reciclagem')),
+        ]);
+
+        const pontosPorUser: Record<string, number> = {};
+        registosSnap.docs.forEach(d => {
+          const data = d.data();
+          const uid = data.userId;
+          const pts = data.pontosAtribuidos || 0;
+          pontosPorUser[uid] = (pontosPorUser[uid] || 0) + pts;
+        });
+
+        const data = userSnap.docs.map(d => {
+          const data = d.data();
+          const pts = data.totalPontos || pontosPorUser[d.id] || 0;
+          return { id: d.id, name: data.nome || data.username || 'Utilizador', username: data.username || '', totalPontos: pts };
+        });
+
+        data.sort((a, b) => b.totalPontos - a.totalPontos);
+        setAllUsers(data);
+      } catch (e) { console.error('erro ao carregar ranking:', e); }
+      finally { setLoading(false); }
     };
-    fetchLeaderboard();
+    fetchAll();
   }, []);
+
+  const users = allUsers.filter(u => allUsers.indexOf(u) < 20);
+  const resultados = pesquisa.length >= 2
+    ? allUsers.filter(u =>
+        (u.name || '').toLowerCase().includes(pesquisa.toLowerCase()) ||
+        (u.username || '').toLowerCase().includes(pesquisa.toLowerCase())
+      )
+    : [];
 
   const renderItem = ({ item, index }: { item: UserRank, index: number }) => {
     const rankStyle = RANK_CORES[index];
@@ -93,15 +105,57 @@ export default function LeaderboardScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Ranking</Text>
-          <Text style={styles.subtitle}>Os melhores recicladores este mês</Text>
+          <Text style={styles.subtitle}>Os melhores recicladores</Text>
         </View>
-        <FlatList
-          data={users}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
+
+        <TextInput
+          style={styles.input}
+          placeholder="Procurar utilizador..."
+          placeholderTextColor="#bbb"
+          value={pesquisa}
+          onChangeText={setPesquisa}
         />
+
+        {pesquisa.length >= 2 ? (
+          <>
+            <Text style={styles.resultadosLabel}>
+              {resultados.length} resultado{resultados.length !== 1 ? 's' : ''} para "{pesquisa}"
+            </Text>
+            <FlatList
+              data={resultados}
+              renderItem={({ item }) => {
+                const pos = allUsers.findIndex(u => u.id === item.id) + 1;
+                return (
+                  <TouchableOpacity style={styles.card} activeOpacity={0.7}
+                    onPress={() => router.push(`/user-profile?userId=${item.id}`)}>
+                    <View style={[styles.rankBadge, pos <= 3 ? { backgroundColor: RANK_CORES[pos - 1]?.bg } : undefined]}>
+                      <Text style={[styles.rankText, pos <= 3 ? { color: RANK_CORES[pos - 1]?.text } : undefined]}>#{pos}</Text>
+                    </View>
+                    <View style={[styles.avatar, { backgroundColor: pos === 1 ? '#1B4332' : pos === 2 ? '#4B5563' : pos === 3 ? '#92400E' : '#E5E5E5' }]}>
+                      <Text style={styles.avatarText}>{getIniciais(item.name || item.username || 'U')}</Text>
+                    </View>
+                    <View style={styles.info}>
+                      <Text style={styles.name} numberOfLines={1}>{item.name || item.username || 'Utilizador'}</Text>
+                      {item.username && <Text style={styles.username}>@{item.username}</Text>}
+                    </View>
+                    <Text style={styles.points}>{(item.totalPontos || 0).toLocaleString()} pts</Text>
+                  </TouchableOpacity>
+                );
+              }}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.list}
+              showsVerticalScrollIndicator={false}
+            />
+          </>
+        ) : (
+          <FlatList
+            data={users}
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -140,4 +194,10 @@ const styles = StyleSheet.create({
   name:   { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
   username: { fontSize: 12, color: '#aaa', marginTop: 1 },
   points: { fontSize: 15, fontWeight: '700', color: '#1B4332' },
+  input: {
+    borderWidth: 1.5, borderColor: '#E5E5E5', borderRadius: 12,
+    padding: 12, fontSize: 15, color: '#1a1a1a', backgroundColor: '#fff',
+    marginBottom: 16,
+  },
+  resultadosLabel: { fontSize: 12, color: '#aaa', fontWeight: '600', marginBottom: 12 },
 });

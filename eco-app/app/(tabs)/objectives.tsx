@@ -5,9 +5,13 @@ import {
   ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { doc, getDoc } from 'firebase/firestore';
+import { db, auth } from '@/services/firebase';
 import {
   getObjetivos, criarObjetivo, eliminarObjetivo, getHistoricoReciclagem,
-  type Objetivo,
+  getObjetivosPartilhados, criarObjetivoPartilhado, eliminarObjetivoPartilhado,
+  getAmigos,
+  type Objetivo, type ObjetivoPartilhado,
 } from '@/services/firestore';
 import { tabelaPontos } from '@/utils/recyclingUtils';
 
@@ -81,15 +85,31 @@ export default function ObjectivesScreen() {
   const [selectedObjetivoId, setSelectedObjetivoId] = useState<string | null>(null);
 
   // new state for the tabs and challenges
-  const [currentTab, setCurrentTab] = useState<'pessoais' | 'desafios'>('pessoais');
+  const [currentTab, setCurrentTab] = useState<'pessoais' | 'partilhados' | 'desafios'>('pessoais');
+  const [objetivosPartilhados, setObjetivosPartilhados] = useState<(ObjetivoPartilhado & { progressoUid1: number; progressoUid2: number })[]>([]);
+  const [listaAmigos, setListaAmigos] = useState<{ uid: string; nome: string }[]>([]);
+  const [mostrarFormPartilhado, setMostrarFormPartilhado] = useState(false);
+  const [amigoSelecionado, setAmigoSelecionado] = useState<string | null>(null);
   const [isParticipatingNike, setIsParticipatingNike] = useState(false);
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [hasClaimedNikeReward, setHasClaimedNikeReward] = useState(false);
 
   useFocusEffect(useCallback(() => {
     setLoading(true);
-    Promise.all([getObjetivos(), getHistoricoReciclagem()])
-      .then(([obj, reg]) => { setObjetivos(obj); setRegistos(reg); })
+    Promise.all([getObjetivos(), getHistoricoReciclagem(), getObjetivosPartilhados(), getAmigos()])
+      .then(async ([obj, reg, part, amigos]) => {
+        setObjetivos(obj);
+        setRegistos(reg);
+        setObjetivosPartilhados(part);
+        const perfis = await Promise.all(
+          amigos.map(async a => {
+            const snap = await getDoc(doc(db, 'utilizadores', a.uid));
+            const d = snap.data() || {};
+            return { uid: a.uid, nome: d.nome || d.username || 'Amigo' };
+          })
+        );
+        setListaAmigos(perfis);
+      })
       .finally(() => setLoading(false));
   }, []));
 
@@ -170,10 +190,16 @@ export default function ObjectivesScreen() {
           <Text style={[styles.tabButtonText, currentTab === 'pessoais' && styles.tabButtonTextActive]}>Meus Objetivos</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tabButton, currentTab === 'partilhados' && styles.tabButtonActive]}
+          onPress={() => setCurrentTab('partilhados')}
+        >
+          <Text style={[styles.tabButtonText, currentTab === 'partilhados' && styles.tabButtonTextActive]}>Partilhados</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tabButton, currentTab === 'desafios' && styles.tabButtonActive]}
           onPress={() => setCurrentTab('desafios')}
         >
-          <Text style={[styles.tabButtonText, currentTab === 'desafios' && styles.tabButtonTextActive]}>Desafios de Marcas</Text>
+          <Text style={[styles.tabButtonText, currentTab === 'desafios' && styles.tabButtonTextActive]}>Desafios</Text>
         </TouchableOpacity>
       </View>
 
@@ -339,6 +365,148 @@ export default function ObjectivesScreen() {
               </View>
               );
             })
+          )}
+        </>
+      )}
+
+      {/* Shared Objectives Tab */}
+      {currentTab === 'partilhados' && (
+        <>
+          {mostrarFormPartilhado && (
+            <View style={styles.form}>
+              <Text style={styles.formTitulo}>Novo objetivo partilhado</Text>
+
+              <Text style={styles.fieldLabel}>COM AMIGO</Text>
+              <View style={styles.chips}>
+                {listaAmigos.map(a => (
+                  <TouchableOpacity
+                    key={a.uid}
+                    style={[styles.chip, amigoSelecionado === a.uid && { backgroundColor: '#1B4332', borderColor: '#1B4332' }]}
+                    onPress={() => setAmigoSelecionado(a.uid)}
+                  >
+                    <Text style={[styles.chipTexto, amigoSelecionado === a.uid && styles.chipTextoSelecionado]}>{a.nome}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.fieldLabel}>MATERIAL</Text>
+              <View style={styles.chips}>
+                {MATERIAIS.map(m => {
+                  const meta = MATERIAL_META[m];
+                  const sel = material === m;
+                  return (
+                    <TouchableOpacity
+                      key={m}
+                      style={[styles.chip, sel && { backgroundColor: meta.cor, borderColor: meta.cor }]}
+                      onPress={() => setMaterial(m)}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: meta.cor }}>{meta.iniciais}</Text>
+                      <Text style={[styles.chipTexto, sel && styles.chipTextoSelecionado]}>{m}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.fieldLabel}>META (KG)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="Ex: 10"
+                placeholderTextColor="#bbb"
+                value={metaKg}
+                onChangeText={setMetaKg}
+              />
+
+              <Text style={styles.fieldLabel}>PERÍODO</Text>
+              <View style={styles.chips}>
+                {PERIODOS.map(p => (
+                  <TouchableOpacity
+                    key={p.value}
+                    style={[styles.chip, styles.chipPeriodo, periodo === p.value && styles.chipSelecionado]}
+                    onPress={() => setPeriodo(p.value)}
+                  >
+                    <Text style={[styles.chipTexto, periodo === p.value && styles.chipTextoSelecionado]}>{p.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity style={styles.botaoGuardar} onPress={async () => {
+                if (!amigoSelecionado) { Alert.alert('Seleciona um amigo'); return; }
+                if (!metaKg || isNaN(Number(metaKg)) || Number(metaKg) <= 0) { Alert.alert('Meta inválida'); return; }
+                try {
+                  await criarObjetivoPartilhado(amigoSelecionado, material, Number(metaKg), periodo);
+                  setMostrarFormPartilhado(false);
+                  setAmigoSelecionado(null);
+                  setMetaKg('');
+                  const part = await getObjetivosPartilhados();
+                  setObjetivosPartilhados(part);
+                } catch (e: any) { Alert.alert('Erro', e.message); }
+              }} disabled={guardando}>
+                <Text style={styles.botaoGuardarTexto}>Criar objetivo partilhado</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {loading ? (
+            <ActivityIndicator color="#1B4332" style={{ marginTop: 48 }} />
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[styles.botaoNovo, { alignSelf: 'flex-end', marginBottom: 16 }]}
+                onPress={() => setMostrarFormPartilhado(v => !v)}
+              >
+                <Text style={styles.botaoNovoTexto}>{mostrarFormPartilhado ? '×' : '+'}</Text>
+              </TouchableOpacity>
+
+              {objetivosPartilhados.length === 0 ? (
+                <View style={styles.vazio}>
+                  <Text style={styles.vazioEmoji}>🤝</Text>
+                  <Text style={styles.vazioTexto}>Sem objetivos partilhados</Text>
+                  <Text style={styles.vazioSub}>Cria um objetivo com um amigo para compararem o progresso.</Text>
+                </View>
+              ) : (
+                objetivosPartilhados.map(o => {
+                  const meuUid = auth.currentUser?.uid || '';
+                  const amigoUid = o.uid1 === meuUid ? o.uid2 : o.uid1;
+                  const amigoNome = listaAmigos.find(a => a.uid === amigoUid)?.nome || 'Amigo';
+                  const meuProgresso = o.uid1 === meuUid ? o.progressoUid1 : o.progressoUid2;
+                  const progressoAmigo = o.uid1 === meuUid ? o.progressoUid2 : o.progressoUid1;
+                  const meta = MATERIAL_META[o.material] || MATERIAL_META['Todos'];
+
+                  return (
+                    <View key={o.id} style={[styles.card, { borderLeftColor: meta.cor }]}>
+                      <View style={styles.cardTopo}>
+                        <View style={[styles.iconCircle, { backgroundColor: meta.fundo }]}>
+                          <Text style={[styles.iconTexto, { color: meta.cor }]}>{meta.iniciais}</Text>
+                        </View>
+                        <View style={styles.cardInfo}>
+                          <Text style={styles.cardTitulo}>Partilhado com {amigoNome}</Text>
+                          <Text style={styles.cardSub}>{o.material} · meta {o.metaKg} kg ({o.periodo})</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => eliminarObjetivoPartilhado(o.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                          <Text style={styles.botaoEliminarTexto}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <View style={{ marginTop: 12 }}>
+                        <View style={styles.barraComparacao}>
+                          <Text style={styles.comparacaoLabel}>Tu: {meuProgresso.toFixed(1)} kg</Text>
+                          <View style={styles.barraFundoComparacao}>
+                            <View style={[styles.barraProgressoComparacao, { width: `${Math.min((meuProgresso / o.metaKg) * 100, 100)}%`, backgroundColor: '#1B4332' }]} />
+                          </View>
+                        </View>
+                        <View style={styles.barraComparacao}>
+                          <Text style={styles.comparacaoLabel}>{amigoNome}: {progressoAmigo.toFixed(1)} kg</Text>
+                          <View style={styles.barraFundoComparacao}>
+                            <View style={[styles.barraProgressoComparacao, { width: `${Math.min((progressoAmigo / o.metaKg) * 100, 100)}%`, backgroundColor: '#639922' }]} />
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </>
           )}
         </>
       )}
@@ -585,6 +753,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#b0b0b0',
   },
   expiredText: { color: '#999' },
+
+  // Comparison bar styles for shared objectives
+  barraComparacao: { marginBottom: 6 },
+  comparacaoLabel: { fontSize: 12, color: '#666', marginBottom: 3 },
+  barraFundoComparacao: { height: 8, backgroundColor: '#E5E5E5', borderRadius: 4, overflow: 'hidden' },
+  barraProgressoComparacao: { height: 8, borderRadius: 4 },
 
   // Modal Styles
   modalOverlay: {

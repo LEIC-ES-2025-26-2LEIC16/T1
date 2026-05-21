@@ -107,6 +107,13 @@ export async function guardarRegistoReciclagem(
     ...(ecopontoNome && { ecopontoNome }),
     criadoEm: serverTimestamp(),
   });
+
+  // Atualiza totalPontos no documento do utilizador para o ranking
+  await setDoc(
+    doc(db, 'utilizadores', user.uid),
+    { totalPontos: increment(pontos) },
+    { merge: true },
+  );
 }
 
 export type PerfilUtilizador = {
@@ -447,10 +454,9 @@ export async function processarReferral(codigoReferral: string): Promise<boolean
   });
 
   // Credita os mesmos pontos no documento principal do utilizador
-  // (o campo pontosReferral soma-se ao totalPontos no getEstatisticasUtilizador)
   await setDoc(
     doc(db, 'utilizadores', donoData.uid),
-    { pontosReferral: increment(PONTOS_REFERRAL) },
+    { pontosReferral: increment(PONTOS_REFERRAL), totalPontos: increment(PONTOS_REFERRAL) },
     { merge: true }
   );
 
@@ -463,4 +469,227 @@ export async function processarReferral(codigoReferral: string): Promise<boolean
   });
 
   return true;  // sinaliza que o bónus foi creditado — mostra notificação ao dono
+}
+
+// ── Amizades ─────────────────────────────────────────────────
+
+export type Amizade = {
+  id: string;
+  usuarios: string[];
+  accaoUid: string;
+  status: 'pendente' | 'aceite';
+  criadoEm: any;
+};
+
+function sortedUsuarios(uid1: string, uid2: string): string[] {
+  return [uid1, uid2].sort();
+}
+
+export async function enviarPedidoAmizade(paraUserId: string) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+  if (user.uid === paraUserId) throw new Error('Não podes adicionar-te a ti próprio.');
+
+  const usuarios = sortedUsuarios(user.uid, paraUserId);
+
+  // Verifica se já existe pedido
+  const q = query(
+    collection(db, 'amizades'),
+    where('usuarios', '==', usuarios)
+  );
+  const snap = await getDocs(q);
+  if (!snap.empty) throw new Error('Já existe um pedido ou amizade entre vocês.');
+
+  await addDoc(collection(db, 'amizades'), {
+    usuarios,
+    accaoUid: user.uid,
+    status: 'pendente',
+    criadoEm: serverTimestamp(),
+  });
+}
+
+export async function responderPedidoAmizade(amizadeId: string, aceitar: boolean) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+
+  if (aceitar) {
+    await updateDoc(doc(db, 'amizades', amizadeId), { status: 'aceite' });
+  } else {
+    await deleteDoc(doc(db, 'amizades', amizadeId));
+  }
+}
+
+export async function removerAmigo(amigoUserId: string) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+
+  const usuarios = sortedUsuarios(user.uid, amigoUserId);
+  const q = query(collection(db, 'amizades'), where('usuarios', '==', usuarios), where('status', '==', 'aceite'));
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    await deleteDoc(doc(db, 'amizades', snap.docs[0].id));
+  }
+}
+
+export async function getAmigos(): Promise<{ id: string; uid: string }[]> {
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  const q = query(collection(db, 'amizades'), where('usuarios', 'array-contains', user.uid), where('status', '==', 'aceite'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => {
+    const data = d.data();
+    const amigoUid = data.usuarios.find((u: string) => u !== user.uid);
+    return { id: d.id, uid: amigoUid };
+  });
+}
+
+export async function getPedidosRecebidos(): Promise<{ id: string; deUid: string }[]> {
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  const q = query(collection(db, 'amizades'), where('usuarios', 'array-contains', user.uid), where('status', '==', 'pendente'));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map(d => {
+      const data = d.data();
+      if (data.accaoUid === user.uid) return null; // pedidos enviados, não recebidos
+      return { id: d.id, deUid: data.accaoUid };
+    })
+    .filter(Boolean) as { id: string; deUid: string }[];
+}
+
+export async function getPedidosEnviados(): Promise<string[]> {
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  const q = query(collection(db, 'amizades'), where('usuarios', 'array-contains', user.uid), where('status', '==', 'pendente'));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map(d => {
+      const data = d.data();
+      if (data.accaoUid !== user.uid) return null;
+      return data.usuarios.find((u: string) => u !== user.uid);
+    })
+    .filter(Boolean) as string[];
+}
+
+export async function verificarAmizade(otherUserId: string): Promise<'nenhuma' | 'pendente' | 'aceite'> {
+  const user = auth.currentUser;
+  if (!user || user.uid === otherUserId) return 'nenhuma';
+
+  const usuarios = sortedUsuarios(user.uid, otherUserId);
+  const q = query(collection(db, 'amizades'), where('usuarios', '==', usuarios));
+  const snap = await getDocs(q);
+  if (snap.empty) return 'nenhuma';
+  return snap.docs[0].data().status as 'pendente' | 'aceite';
+}
+
+export async function getSugestoesAmigos(pesquisa: string): Promise<{ id: string; nome: string; username: string; avatarUrl: string; totalPontos: number }[]> {
+  // Pesquisa por nome (Firestore não suporta LIKE, fazemos query e filtramos)
+  const snap = await getDocs(collection(db, 'utilizadores'));
+  const termo = pesquisa.toLowerCase();
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as any))
+    .filter((u: any) =>
+      (u.nome?.toLowerCase().includes(termo) || u.username?.toLowerCase().includes(termo))
+    )
+    .map((u: any) => ({
+      id: u.id,
+      nome: u.nome || '',
+      username: u.username || '',
+      avatarUrl: u.avatarUrl || '',
+      totalPontos: u.totalPontos || 0,
+    }));
+}
+
+// ── Objetivos Partilhados ────────────────────────────────────
+
+export type ObjetivoPartilhado = {
+  id: string;
+  uid1: string;
+  uid2: string;
+  material: string;
+  metaKg: number;
+  periodo: 'semanal' | 'mensal';
+  criadoEm: any;
+};
+
+export async function criarObjetivoPartilhado(
+  amigoUserId: string,
+  material: string,
+  metaKg: number,
+  periodo: 'semanal' | 'mensal',
+) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Utilizador não autenticado.');
+
+  const usuarios = sortedUsuarios(user.uid, amigoUserId);
+  await addDoc(collection(db, 'objetivos_partilhados'), {
+    uid1: usuarios[0],
+    uid2: usuarios[1],
+    material,
+    metaKg,
+    periodo,
+    criadoEm: serverTimestamp(),
+  });
+}
+
+export async function getObjetivosPartilhados(): Promise<(ObjetivoPartilhado & { progressoUid1: number; progressoUid2: number })[]> {
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  const q = query(collection(db, 'objetivos_partilhados'), where('uid1', '==', user.uid));
+  const q2 = query(collection(db, 'objetivos_partilhados'), where('uid2', '==', user.uid));
+
+  const [snap1, snap2] = await Promise.all([getDocs(q), getDocs(q2)]);
+  const all = [...snap1.docs, ...snap2.docs];
+
+  const registos = await getDocs(collection(db, 'registos_reciclagem'));
+
+  return all.map(d => {
+    const data = d.data();
+    const o: ObjetivoPartilhado = {
+      id: d.id,
+      uid1: data.uid1,
+      uid2: data.uid2,
+      material: data.material,
+      metaKg: data.metaKg,
+      periodo: data.periodo,
+      criadoEm: data.criadoEm?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+    };
+
+    const inicio = (() => {
+      const hoje = new Date();
+      if (o.periodo === 'semanal') {
+        const d = new Date(hoje);
+        d.setDate(hoje.getDate() - hoje.getDay());
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+      return new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    })();
+
+    const calcular = (uid: string) => {
+      return registos.docs
+        .filter(r => {
+          const rd = r.data();
+          const ts = rd.criadoEm?.toDate?.();
+          return rd.userId === uid && ts && ts >= inicio && (o.material === 'Todos' || rd.material === o.material);
+        })
+        .reduce((s, r) => s + (parseFloat(r.data().quantidade) || 0), 0);
+    };
+
+    return {
+      ...o,
+      progressoUid1: calcular(o.uid1),
+      progressoUid2: calcular(o.uid2),
+    };
+  });
+}
+
+export async function eliminarObjetivoPartilhado(id: string) {
+  const user = auth.currentUser;
+  if (!user) return;
+  await deleteDoc(doc(db, 'objetivos_partilhados', id));
 }

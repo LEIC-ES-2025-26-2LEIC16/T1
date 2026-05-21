@@ -105,6 +105,9 @@ export default function ObjectivesScreen() {
   // state for the dynamic brand challenges
   const [brandChallenges, setBrandChallenges] = useState<any[]>([]);
 
+  // We'll use this state to control access to role-specific features
+  const [userRole, setUserRole] = useState<string>('user');
+
   // This function fetches the brand challenges from our 'challenges' collection in Firestore
   const fetchBrandChallenges = async () => {
     try {
@@ -116,9 +119,27 @@ export default function ObjectivesScreen() {
     }
   };
 
+  // This function will get the current user's role from their profile
+  const fetchUserRole = async () => {
+    if (auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'utilizadores', auth.currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          // We set the role from the document, or default to 'user' if it's not there
+          setUserRole(userData.role || 'user');
+        }
+      } catch (error) {
+        console.error("Error fetching user role: ", error);
+      }
+    }
+  };
+
   useFocusEffect(useCallback(() => {
     setLoading(true);
     fetchBrandChallenges(); // fetch brand challenges when the screen is focused
+    fetchUserRole(); // and also fetch the user's role
     Promise.all([getObjetivos(), getHistoricoReciclagem(), getObjetivosPartilhados(), getAmigos()])
       .then(async ([obj, reg, part, amigos]) => {
         setObjetivos(obj);
@@ -241,19 +262,22 @@ export default function ObjectivesScreen() {
           <Text style={styles.titulo}>Objetivos</Text>
           <Text style={styles.subtitulo}>Acompanha o teu progresso de reciclagem</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.botaoNovo, (mostrarForm || showCreateBrandModal) && styles.botaoNovoAtivo]}
-          onPress={() => {
-            if (currentTab === 'desafios') {
-              setShowCreateBrandModal(true);
-            } else {
-              setMostrarForm(v => !v);
-            }
-          }}
-          testID="objectives-add-button"
-        >
-          <Text style={styles.botaoNovoTexto}>{(mostrarForm || showCreateBrandModal) ? '×' : '+'}</Text>
-        </TouchableOpacity>
+        {/* We only show the '+' button on the challenges tab if the user has the 'company' role */}
+        {(currentTab === 'desafios' && userRole !== 'company') ? null : (
+          <TouchableOpacity
+            style={[styles.botaoNovo, (mostrarForm || showCreateBrandModal) && styles.botaoNovoAtivo]}
+            onPress={() => {
+              if (currentTab === 'desafios') {
+                setShowCreateBrandModal(true);
+              } else {
+                setMostrarForm(v => !v);
+              }
+            }}
+            testID="objectives-add-button"
+          >
+            <Text style={styles.botaoNovoTexto}>{(mostrarForm || showCreateBrandModal) ? '×' : '+'}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Tab Navigator */}
@@ -601,9 +625,11 @@ export default function ObjectivesScreen() {
                   Participa neste desafio exclusivo e sê recompensado.
                 </Text>
 
-                <Text style={{ fontSize: 12, color: '#e63946', marginTop: 8, fontWeight: 'bold' }}>
-                  ⏳ Termina a {challenge.deadline}
-                </Text>
+                {/* A nice little badge for the deadline */}
+                <View style={styles.deadlineBadge}>
+                  <Text>⏳</Text>
+                  <Text style={styles.deadlineText}>Termina a {challenge.deadline}</Text>
+                </View>
 
                 <TouchableOpacity
                   style={styles.challengeButton}
@@ -627,9 +653,12 @@ export default function ObjectivesScreen() {
               </Text>
 
               {/* Add deadline indicator so the user knows when the challenge ends */}
-              <Text style={{ fontSize: 12, color: '#e63946', marginTop: 8, fontWeight: 'bold' }}>
-                ⏳ Termina a 31 de Maio
-              </Text>
+              <View style={styles.deadlineBadge}>
+                <Text>⏳</Text>
+                <Text style={styles.deadlineText}>
+                  Termina a 31 de Maio
+                </Text>
+              </View>
 
               {isParticipatingNike ? (
                 <View style={styles.progressContainer}>
@@ -963,4 +992,22 @@ const styles = StyleSheet.create({
   botoesEdicao:     { flexDirection: 'row', gap: 10, width: '100%', marginTop: 10 },
   botaoCancelar:    { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 12, padding: 15, alignItems: 'center' },
   botaoCancelarTexto: { color: '#666', fontWeight: '600', fontSize: 16 },
+
+  // Styles for the deadline badge
+  deadlineBadge: {
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deadlineText: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 6
+  },
 });

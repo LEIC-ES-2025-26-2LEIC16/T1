@@ -23,6 +23,7 @@ export default function UserProfileScreen() {
   const [objetivosPartilhados, setObjetivosPartilhados] = useState<(ObjetivoPartilhado & { progressoUid1: number; progressoUid2: number })[]>([]);
   const [mostrarComparacao, setMostrarComparacao] = useState(false);
   const [rankPos, setRankPos] = useState<number | null>(null);
+  const [myStats, setMyStats] = useState({ totalReciclagens: 0, totalKg: '0.0', totalCO2: '0.0', totalPontos: 0 });
 
   const isOwnProfile = auth.currentUser?.uid === userId;
   const isLoggedIn = !!auth.currentUser;
@@ -69,6 +70,23 @@ export default function UserProfileScreen() {
         setRankPos(pos >= 0 ? pos + 1 : null);
 
         if (!isOwnProfile && isLoggedIn) {
+          const myUid = auth.currentUser!.uid;
+          const myRegistosQ = query(collection(db, 'registos_reciclagem'), where('userId', '==', myUid));
+          const myRegistosSnap = await getDocs(myRegistosQ);
+          let myKg = 0, myCO2 = 0, myPontos = 0;
+          myRegistosSnap.docs.forEach(d => {
+            const data = d.data();
+            myKg += parseFloat(data.quantidade) || 0;
+            myCO2 += parseFloat(data.impactoCO2) || 0;
+            myPontos += (data.pontosAtribuidos as number) || 0;
+          });
+          setMyStats({
+            totalReciclagens: myRegistosSnap.size,
+            totalKg: myKg.toFixed(1),
+            totalCO2: myCO2.toFixed(1),
+            totalPontos: myPontos,
+          });
+
           const status = await verificarAmizade(userId);
           setAmizadeStatus(status);
 
@@ -175,7 +193,7 @@ export default function UserProfileScreen() {
           {amizadeStatus === 'aceite' && (
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity style={[styles.botaoAmizade, { flex: 1 }]} onPress={() => setMostrarComparacao(v => !v)}>
-                <Text style={styles.botaoAmizadeTexto}>Comparar objetivos</Text>
+                <Text style={styles.botaoAmizadeTexto}>Comparar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.botaoAmizade, styles.botaoRemoverAmigo]} onPress={() => {
                 Alert.alert('Remover amigo', 'Tens a certeza?', [
@@ -192,69 +210,98 @@ export default function UserProfileScreen() {
 
       {mostrarComparacao && amizadeStatus === 'aceite' && (
         <View style={styles.comparacao}>
-          {objetivosPartilhados.length > 0 ? (
-            <>
-              <Text style={styles.secaoTitulo}>OBJETIVOS PARTILHADOS</Text>
-              {objetivosPartilhados.map(o => {
-                const meuProgresso = o.uid1 === auth.currentUser?.uid ? o.progressoUid1 : o.progressoUid2;
-                const progressoAmigo = o.uid1 === auth.currentUser?.uid ? o.progressoUid2 : o.progressoUid1;
+          <Text style={styles.secaoTitulo}>COMPARAÇÃO DE ESTATÍSTICAS</Text>
+
+          <View style={styles.compStatsRow}>
+            <View style={styles.compLabelCol}>
+              <Text style={styles.compLabel}>Reciclagens</Text>
+              <Text style={styles.compLabel}>Total kg</Text>
+              <Text style={styles.compLabel}>Pontos</Text>
+              <Text style={styles.compLabel}>CO₂ poupado</Text>
+            </View>
+            <View style={styles.compValCol}>
+              <View style={styles.compValRow}>
+                <Text style={[styles.compValNome, myStats.totalReciclagens > stats.totalReciclagens && styles.compVencedor]}>Tu</Text>
+                <Text style={styles.compValor}>{myStats.totalReciclagens}</Text>
+              </View>
+              <View style={styles.compValRow}>
+                <Text style={[styles.compValNome, parseFloat(myStats.totalKg) > parseFloat(stats.totalKg) && styles.compVencedor]}>Tu</Text>
+                <Text style={styles.compValor}>{myStats.totalKg}</Text>
+              </View>
+              <View style={styles.compValRow}>
+                <Text style={[styles.compValNome, myStats.totalPontos > stats.totalPontos && styles.compVencedor]}>Tu</Text>
+                <Text style={styles.compValor}>{myStats.totalPontos}</Text>
+              </View>
+              <View style={styles.compValRow}>
+                <Text style={[styles.compValNome, parseFloat(myStats.totalCO2) > parseFloat(stats.totalCO2) && styles.compVencedor]}>Tu</Text>
+                <Text style={styles.compValor}>{myStats.totalCO2}</Text>
+              </View>
+            </View>
+            <View style={styles.compSetaCol}>
+              {['Reciclagens', 'Total kg', 'Pontos', 'CO₂ poupado'].map((_, i) => {
+                const myVal = i === 0 ? myStats.totalReciclagens : i === 1 ? parseFloat(myStats.totalKg) : i === 2 ? myStats.totalPontos : parseFloat(myStats.totalCO2);
+                const friendVal = i === 0 ? stats.totalReciclagens : i === 1 ? parseFloat(stats.totalKg) : i === 2 ? stats.totalPontos : parseFloat(stats.totalCO2);
                 return (
-                  <View key={o.id} style={styles.objCard}>
-                    <Text style={styles.objMaterial}>{o.material} · {o.metaKg} kg ({o.periodo})</Text>
-                    <View style={styles.barraComparacao}>
-                      <Text style={styles.barraLabel}>Tu: {meuProgresso.toFixed(1)} kg</Text>
-                      <View style={styles.barraFundo}>
-                        <View style={[styles.barraProgresso, { width: `${Math.min((meuProgresso / o.metaKg) * 100, 100)}%`, backgroundColor: '#1B4332' }]} />
-                      </View>
-                    </View>
-                    <View style={styles.barraComparacao}>
-                      <Text style={styles.barraLabel}>{userData?.nome || 'Amigo'}: {progressoAmigo.toFixed(1)} kg</Text>
-                      <View style={styles.barraFundo}>
-                        <View style={[styles.barraProgresso, { width: `${Math.min((progressoAmigo / o.metaKg) * 100, 100)}%`, backgroundColor: '#639922' }]} />
-                      </View>
-                    </View>
-                  </View>
+                  <Text key={i} style={styles.compSeta}>
+                    {myVal > friendVal ? '🟢' : myVal < friendVal ? '🔴' : '⚪'}
+                  </Text>
                 );
               })}
-            </>
-          ) : (
-            <View style={styles.semObjetivos}>
-              <Text style={{ fontSize: 14, color: '#aaa', textAlign: 'center', marginBottom: 12 }}>
-                Ainda não têm objetivos partilhados.
-              </Text>
-              <TouchableOpacity style={styles.botaoCriarPartilhado} onPress={() => {
-                Alert.alert('Criar objetivo partilhado', 'Material (Todos/Plastico/Papel/Vidro/Metal):', [
-                  { text: 'Cancelar', style: 'cancel' },
-                  {
-                    text: 'Seguinte',
-                    onPress: () => {
-                      // Simple creation via prompt
-                      const materiais = ['Todos', 'Plastico', 'Papel', 'Vidro', 'Metal'];
-                      Alert.alert('Escolhe o material', '', [
-                        ...materiais.map(m => ({
-                          text: m,
-                          onPress: () => {
-                            Alert.alert('Meta (kg)', 'Quantos kg?', [
-                              { text: 'Cancelar', style: 'cancel' },
-                              {
-                                text: 'Criar',
-                                onPress: async () => {
-                                  // Will use a different approach - navigate to objetivos
-                                },
-                              },
-                            ]);
-                          },
-                        })),
-                        { text: 'Cancelar', style: 'cancel' },
-                      ]);
-                    },
-                  },
-                ]);
-              }}>
-                <Text style={styles.botaoCriarPartilhadoTexto}>Criar objetivo partilhado</Text>
-              </TouchableOpacity>
             </View>
-          )}
+            <View style={styles.compValCol}>
+              <View style={styles.compValRow}>
+                <Text style={styles.compValor}>{stats.totalReciclagens}</Text>
+                <Text style={[styles.compValNome, stats.totalReciclagens > myStats.totalReciclagens && styles.compVencedor]}>{userData?.nome || 'Amigo'}</Text>
+              </View>
+              <View style={styles.compValRow}>
+                <Text style={styles.compValor}>{stats.totalKg}</Text>
+                <Text style={[styles.compValNome, parseFloat(stats.totalKg) > parseFloat(myStats.totalKg) && styles.compVencedor]}>{userData?.nome || 'Amigo'}</Text>
+              </View>
+              <View style={styles.compValRow}>
+                <Text style={styles.compValor}>{stats.totalPontos}</Text>
+                <Text style={[styles.compValNome, stats.totalPontos > myStats.totalPontos && styles.compVencedor]}>{userData?.nome || 'Amigo'}</Text>
+              </View>
+              <View style={styles.compValRow}>
+                <Text style={styles.compValor}>{stats.totalCO2}</Text>
+                <Text style={[styles.compValNome, parseFloat(stats.totalCO2) > parseFloat(myStats.totalCO2) && styles.compVencedor]}>{userData?.nome || 'Amigo'}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.compObjetivos}>
+            {objetivosPartilhados.length > 0 ? (
+              <>
+                <Text style={styles.secaoTitulo}>OBJETIVOS PARTILHADOS</Text>
+                {objetivosPartilhados.map(o => {
+                  const meuProgresso = o.uid1 === auth.currentUser?.uid ? o.progressoUid1 : o.progressoUid2;
+                  const progressoAmigo = o.uid1 === auth.currentUser?.uid ? o.progressoUid2 : o.progressoUid1;
+                  return (
+                    <View key={o.id} style={styles.objCard}>
+                      <Text style={styles.objMaterial}>{o.material} · {o.metaKg} kg ({o.periodo})</Text>
+                      <View style={styles.barraComparacao}>
+                        <Text style={styles.barraLabel}>Tu: {meuProgresso.toFixed(1)} kg</Text>
+                        <View style={styles.barraFundo}>
+                          <View style={[styles.barraProgresso, { width: `${Math.min((meuProgresso / o.metaKg) * 100, 100)}%`, backgroundColor: '#1B4332' }]} />
+                        </View>
+                      </View>
+                      <View style={styles.barraComparacao}>
+                        <Text style={styles.barraLabel}>{userData?.nome || 'Amigo'}: {progressoAmigo.toFixed(1)} kg</Text>
+                        <View style={styles.barraFundo}>
+                          <View style={[styles.barraProgresso, { width: `${Math.min((progressoAmigo / o.metaKg) * 100, 100)}%`, backgroundColor: '#639922' }]} />
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+              </>
+            ) : (
+              <View style={styles.semObjetivos}>
+                <Text style={{ fontSize: 14, color: '#aaa', textAlign: 'center', marginBottom: 12 }}>
+                  Ainda não têm objetivos partilhados.
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       )}
     </ScrollView>
@@ -312,4 +359,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
   },
   rankBadgeTexto: { fontSize: 13, fontWeight: '700', color: '#999' },
+  compStatsRow: {
+    flexDirection: 'row', alignItems: 'stretch',
+    backgroundColor: '#f9f9f9', borderRadius: 12, padding: 12,
+    marginBottom: 20, borderWidth: 1, borderColor: '#efefef',
+  },
+  compLabelCol: { justifyContent: 'space-around', paddingRight: 8 },
+  compLabel: { fontSize: 11, color: '#999', fontWeight: '600', height: 32, textAlignVertical: 'center' },
+  compValCol: { flex: 1, justifyContent: 'space-around' },
+  compValRow: { flexDirection: 'row', alignItems: 'center', height: 32, gap: 4 },
+  compValNome: { fontSize: 11, color: '#888', fontWeight: '500' },
+  compVencedor: { fontWeight: '800', color: '#1B4332' },
+  compValor: { fontSize: 15, fontWeight: '700', color: '#1a1a1a', textAlign: 'center', flex: 1 },
+  compSetaCol: { justifyContent: 'space-around', paddingHorizontal: 6 },
+  compSeta: { fontSize: 14, height: 32, textAlignVertical: 'center' },
+  compObjetivos: { marginTop: 4 },
 });

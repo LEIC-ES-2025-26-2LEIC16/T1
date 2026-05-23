@@ -5,7 +5,7 @@ import {
   ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/services/firebase';
 import {
   getObjetivos, criarObjetivo, eliminarObjetivo, getHistoricoReciclagem,
@@ -94,8 +94,52 @@ export default function ObjectivesScreen() {
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [hasClaimedNikeReward, setHasClaimedNikeReward] = useState(false);
 
+  // new state for brand challenge creation modal
+  const [showCreateBrandModal, setShowCreateBrandModal] = useState(false);
+  const [challengeTitle, setChallengeTitle] = useState('');
+  const [challengeGoal, setChallengeGoal] = useState('');
+  const [challengeDeadline, setChallengeDeadline] = useState('');
+  const [challengeReward, setChallengeReward] = useState('');
+  const [isSavingChallenge, setIsSavingChallenge] = useState(false);
+
+  // state for the dynamic brand challenges
+  const [brandChallenges, setBrandChallenges] = useState<any[]>([]);
+
+  // We'll use this state to control access to role-specific features
+  const [userRole, setUserRole] = useState<string>('user');
+
+  // This function fetches the brand challenges from our 'challenges' collection in Firestore
+  const fetchBrandChallenges = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'challenges'));
+      const challenges = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setBrandChallenges(challenges);
+    } catch (error) {
+      console.error("Error fetching brand challenges: ", error);
+    }
+  };
+
+  // This function will get the current user's role from their profile
+  const fetchUserRole = async () => {
+    if (auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'utilizadores', auth.currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          // We set the role from the document, or default to 'user' if it's not there
+          setUserRole(userData.role || 'user');
+        }
+      } catch (error) {
+        console.error("Error fetching user role: ", error);
+      }
+    }
+  };
+
   useFocusEffect(useCallback(() => {
     setLoading(true);
+    fetchBrandChallenges(); // fetch brand challenges when the screen is focused
+    fetchUserRole(); // and also fetch the user's role
     Promise.all([getObjetivos(), getHistoricoReciclagem(), getObjetivosPartilhados(), getAmigos()])
       .then(async ([obj, reg, part, amigos]) => {
         setObjetivos(obj);
@@ -126,6 +170,52 @@ export default function ObjectivesScreen() {
       setShowRewardModal(true);
     }
   }, [isParticipatingNike, nikeProgress, hasClaimedNikeReward]);
+
+  const handleCreateBrandChallenge = async () => {
+    // First, let's validate that all fields are filled
+    if (!challengeTitle || !challengeGoal || !challengeDeadline || !challengeReward) {
+      Alert.alert('Campos em falta', 'Por favor, preenche todos os campos para criar o desafio.');
+      return;
+    }
+
+    setIsSavingChallenge(true);
+    try {
+      // Add the new challenge to the 'challenges' collection in Firestore
+      await addDoc(collection(db, 'challenges'), {
+        title: challengeTitle,
+        goal: Number(challengeGoal),
+        deadline: challengeDeadline,
+        rewardCode: challengeReward,
+        active: true,
+        createdAt: new Date(),
+      });
+
+      // Let the user know it was successful and reset the form
+      Alert.alert('Sucesso!', 'Desafio de marca criado com sucesso.');
+      setShowCreateBrandModal(false);
+      setChallengeTitle('');
+      setChallengeGoal('');
+      setChallengeDeadline('');
+      setChallengeReward('');
+
+      // And now, we refresh the list of challenges so the new one appears instantly
+      fetchBrandChallenges();
+    } catch (error) {
+      console.error("Error creating brand challenge: ", error);
+      Alert.alert('Erro', 'Ocorreu um erro ao criar o desafio. Tenta novamente.');
+    } finally {
+      setIsSavingChallenge(false);
+    }
+  };
+
+  const handleCancelCreateChallenge = () => {
+    setShowCreateBrandModal(false);
+    // Reset fields on cancel
+    setChallengeTitle('');
+    setChallengeGoal('');
+    setChallengeDeadline('');
+    setChallengeReward('');
+  };
 
   const guardar = async () => {
     if (!metaKg || isNaN(Number(metaKg)) || Number(metaKg) <= 0) {
@@ -172,13 +262,22 @@ export default function ObjectivesScreen() {
           <Text style={styles.titulo}>Objetivos</Text>
           <Text style={styles.subtitulo}>Acompanha o teu progresso de reciclagem</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.botaoNovo, mostrarForm && styles.botaoNovoAtivo]}
-          onPress={() => setMostrarForm(v => !v)}
-          testID="objectives-add-button"
-        >
-          <Text style={styles.botaoNovoTexto}>{mostrarForm ? '×' : '+'}</Text>
-        </TouchableOpacity>
+        {/* We only show the '+' button on the challenges tab if the user has the 'company' role */}
+        {(currentTab === 'desafios' && userRole !== 'company') ? null : (
+          <TouchableOpacity
+            style={[styles.botaoNovo, (mostrarForm || showCreateBrandModal) && styles.botaoNovoAtivo]}
+            onPress={() => {
+              if (currentTab === 'desafios') {
+                setShowCreateBrandModal(true);
+              } else {
+                setMostrarForm(v => !v);
+              }
+            }}
+            testID="objectives-add-button"
+          >
+            <Text style={styles.botaoNovoTexto}>{(mostrarForm || showCreateBrandModal) ? '×' : '+'}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Tab Navigator */}
@@ -514,6 +613,34 @@ export default function ObjectivesScreen() {
       {/* Brand Challenges Tab */}
       {currentTab === 'desafios' && (
         <View>
+          {/* Dynamically loaded brand challenges from Firestore */}
+          {brandChallenges.map(challenge => (
+            <View key={challenge.id} style={[styles.challengeCard, { marginBottom: 16 }]}>
+              <View style={styles.challengeHeader}>
+                <Text style={styles.challengeBrand}>{challenge.title.toUpperCase()}</Text>
+              </View>
+              <View style={styles.challengeBody}>
+                <Text style={styles.challengeTitle}>Meta de {challenge.goal}kg para ganhar um prémio!</Text>
+                <Text style={styles.challengeDescription}>
+                  Participa neste desafio exclusivo e sê recompensado.
+                </Text>
+
+                {/* A nice little badge for the deadline */}
+                <View style={styles.deadlineBadge}>
+                  <Text>⏳</Text>
+                  <Text style={styles.deadlineText}>Termina a {challenge.deadline}</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.challengeButton}
+                  onPress={() => Alert.alert("Disponível em breve!", "A funcionalidade de participação para este desafio será implementada na próxima sprint.")}
+                >
+                  <Text style={styles.challengeButtonText}>Participar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+
           {/* Mock Nike Challenge Card */}
           <View style={styles.challengeCard}>
             <View style={styles.challengeHeader}>
@@ -526,9 +653,12 @@ export default function ObjectivesScreen() {
               </Text>
 
               {/* Add deadline indicator so the user knows when the challenge ends */}
-              <Text style={{ fontSize: 12, color: '#e63946', marginTop: 8, fontWeight: 'bold' }}>
-                ⏳ Termina a 31 de Maio
-              </Text>
+              <View style={styles.deadlineBadge}>
+                <Text>⏳</Text>
+                <Text style={styles.deadlineText}>
+                  Termina a 31 de Maio
+                </Text>
+              </View>
 
               {isParticipatingNike ? (
                 <View style={styles.progressContainer}>
@@ -599,6 +729,63 @@ export default function ObjectivesScreen() {
             >
               <Text style={styles.modalButtonText}>Guardar na Carteira</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Brand Challenge Creation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showCreateBrandModal}
+        onRequestClose={handleCancelCreateChallenge}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Criar Desafio de Marca</Text>
+
+            <TextInput
+              placeholder="Título do Desafio"
+              placeholderTextColor="#bbb"
+              style={[styles.input, { width: '100%', marginBottom: 12, marginTop: 16 }]}
+              value={challengeTitle}
+              onChangeText={setChallengeTitle}
+            />
+            <TextInput
+              placeholder="Meta (kg)"
+              placeholderTextColor="#bbb"
+              style={[styles.input, { width: '100%', marginBottom: 12 }]}
+              keyboardType="numeric"
+              value={challengeGoal}
+              onChangeText={setChallengeGoal}
+            />
+            <TextInput
+              placeholder="Data Limite (ex: 30 de Junho)"
+              placeholderTextColor="#bbb"
+              style={[styles.input, { width: '100%', marginBottom: 12 }]}
+              value={challengeDeadline}
+              onChangeText={setChallengeDeadline}
+            />
+            <TextInput
+              placeholder="Código de Recompensa"
+              placeholderTextColor="#bbb"
+              style={[styles.input, { width: '100%', marginBottom: 20 }]}
+              value={challengeReward}
+              onChangeText={setChallengeReward}
+            />
+
+            <View style={styles.botoesEdicao}>
+              <TouchableOpacity style={styles.botaoCancelar} onPress={handleCancelCreateChallenge}>
+                <Text style={styles.botaoCancelarTexto}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, { flex: 1, width: 'auto' }]} onPress={handleCreateBrandChallenge} disabled={isSavingChallenge}>
+                {isSavingChallenge ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.modalButtonText}>Criar Desafio</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -800,4 +987,27 @@ const styles = StyleSheet.create({
   rewardCodeText: { fontSize: 18, fontWeight: '700', color: '#1B4332', letterSpacing: 1 },
   modalButton: { backgroundColor: '#1B4332', borderRadius: 12, padding: 15, alignItems: 'center', width: '100%' },
   modalButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+
+  // Styles for the new modal's buttons
+  botoesEdicao:     { flexDirection: 'row', gap: 10, width: '100%', marginTop: 10 },
+  botaoCancelar:    { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 12, padding: 15, alignItems: 'center' },
+  botaoCancelarTexto: { color: '#666', fontWeight: '600', fontSize: 16 },
+
+  // Styles for the deadline badge
+  deadlineBadge: {
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deadlineText: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 6
+  },
 });

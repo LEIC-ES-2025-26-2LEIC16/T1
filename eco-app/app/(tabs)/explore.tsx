@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import MapLibreGL, { type CameraRef } from '@maplibre/maplibre-react-native';
 import { type Ecoponto } from '@/constants/ecopontos';
 import { ouvirEcopontos } from '@/services/firestore';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { Colors } from '@/constants/theme';
 
 // checking if we are using expo go or the real dev client
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
@@ -38,6 +39,9 @@ export default function MapaScreen() {
   
   // new state to prevent crashing before map is loaded
   const [isMapReady, setIsMapReady] = useState(false);
+
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
 
   useEffect(() => {
     const unsubscribe = ouvirEcopontos(setEcopontos);
@@ -104,7 +108,7 @@ export default function MapaScreen() {
 
       {/* info card for selected bins */}
       {ecopontoSelecionado && (
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: theme.background }]}>
           <TouchableOpacity
             style={styles.cardHeader}
             activeOpacity={0.7}
@@ -124,21 +128,22 @@ export default function MapaScreen() {
             }
           >
             <View>
-              <Text style={styles.cardNome}>{ecopontoSelecionado.nome}</Text>
+              <Text style={[styles.cardNome, { color: theme.text }]}>{ecopontoSelecionado.nome}</Text>
               <Text style={styles.cardMorada}>{ecopontoSelecionado.morada}</Text>
             </View>
             <View style={[
                 styles.estadoBadge,
                 ecopontoSelecionado.estado === 'Cheio' && styles.estadoCheio,
                 ecopontoSelecionado.estado === 'Danificado' && styles.estadoDanificado,
+                colorScheme === 'dark' && { backgroundColor: '#334155' }
               ]}>
-              <Text style={styles.estadoTexto}>{ecopontoSelecionado.estado}</Text>
+              <Text style={[styles.estadoTexto, colorScheme === 'dark' && { color: '#86EFAC' }]}>{ecopontoSelecionado.estado}</Text>
             </View>
           </TouchableOpacity>
           
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity
-              style={[styles.botao, { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#1B4332' }]}
+              style={[styles.botao, { flex: 1, backgroundColor: colorScheme === 'dark' ? '#1E293B' : '#fff', borderWidth: 1, borderColor: colorScheme === 'dark' ? '#334155' : '#1B4332' }]}
               onPress={() =>
                 router.push({
                   pathname: '/review-bin',
@@ -149,7 +154,7 @@ export default function MapaScreen() {
                 } as any)
               }
             >
-              <Text style={[styles.botaoTexto, { color: '#1B4332' }]}>avaliar</Text>
+              <Text style={[styles.botaoTexto, { color: colorScheme === 'dark' ? '#86EFAC' : '#1B4332' }]}>avaliar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

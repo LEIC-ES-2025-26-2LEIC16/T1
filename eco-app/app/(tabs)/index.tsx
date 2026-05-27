@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, useColorScheme
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Colors } from '@/constants/theme';
 import { collection, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/services/firebase';
 import {
@@ -112,9 +113,12 @@ export default function HomeScreen() {
   const kgEmFalta = objective ? Math.max(0, objective.metaKg - Number(kgFeitos)).toFixed(1) : '0';
   const nomeMes = new Date().toLocaleString('pt-PT', { month: 'long' });
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
+
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
@@ -122,8 +126,8 @@ export default function HomeScreen() {
 
   if (error) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Não foi possível carregar os dados.</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <Text style={[styles.errorText, { color: theme.text }]}>Não foi possível carregar os dados.</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
           <Text style={styles.retryButtonText}>Tentar novamente</Text>
         </TouchableOpacity>
@@ -133,7 +137,7 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={{ paddingBottom: 40 }}
       showsVerticalScrollIndicator={false}
     >
@@ -146,22 +150,22 @@ export default function HomeScreen() {
 
       {/* Saudação */}
       <View style={styles.header}>
-        <Text style={styles.greetingLabel}>{getGreeting()},</Text>
-        <Text style={styles.greetingName}>{nome}</Text>
+        <Text style={[styles.greetingLabel, { color: theme.text }]}>{getGreeting()},</Text>
+        <Text style={[styles.greetingName, { color: theme.text }]}>{nome}</Text>
       </View>
 
       {/* Ver todos os ecopontos */}
-      <TouchableOpacity style={styles.botaoLista} onPress={() => router.push('/ecopontos' as any)}>
+      <TouchableOpacity style={[styles.botaoLista, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]} onPress={() => router.push('/ecopontos' as any)}>
         <View style={styles.botaoListaEsq}>
-          <View style={styles.botaoListaIconeWrap}>
+          <View style={[styles.botaoListaIconeWrap, colorScheme === 'dark' && { backgroundColor: '#334155' }]}>
             <Text style={styles.botaoListaIcone}>♻</Text>
           </View>
           <View>
-            <Text style={styles.botaoListaTitulo}>Ver todos os ecopontos</Text>
-            <Text style={styles.botaoListaSub}>Pesquisar, adicionar e favoritar</Text>
+            <Text style={[styles.botaoListaTitulo, colorScheme === 'dark' && { color: '#fff' }]}>Ver todos os ecopontos</Text>
+            <Text style={[styles.botaoListaSub, colorScheme === 'dark' && { color: '#86EFAC' }]}>Pesquisar, adicionar e favoritar</Text>
           </View>
         </View>
-        <Text style={styles.botaoListaSeta}>›</Text>
+        <Text style={[styles.botaoListaSeta, colorScheme === 'dark' && { color: '#fff' }]}>›</Text>
       </TouchableOpacity>
 
       {/* Impacto este mês */}
@@ -187,30 +191,30 @@ export default function HomeScreen() {
 
       {/* Favoritos */}
       <View style={styles.secaoHeader}>
-        <Text style={styles.secaoTitulo}>Favoritos</Text>
+        <Text style={[styles.secaoTitulo, { color: theme.text }]}>Favoritos</Text>
         <TouchableOpacity onPress={() => router.push({ pathname: '/ecopontos', params: { apenasFavoritos: '1' } } as any)}>
-          <Text style={styles.verTodos}>ver todos</Text>
+          <Text style={[styles.verTodos, colorScheme === 'dark' && { color: '#86EFAC' }]}>ver todos</Text>
         </TouchableOpacity>
       </View>
 
       {ecopontosFav.length === 0 ? (
         <View style={styles.favVazio}>
-          <Text style={styles.favVazioTexto}>Ainda não tens favoritos</Text>
+          <Text style={[styles.favVazioTexto, { color: theme.text }]}>Ainda não tens favoritos</Text>
           <Text style={styles.favVazioSub}>Vai à lista de ecopontos e adiciona aos favoritos.</Text>
         </View>
       ) : (
         ecopontosFav.map(e => (
           <TouchableOpacity
             key={e.id}
-            style={styles.favCard}
+            style={[styles.favCard, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}
             activeOpacity={0.7}
             onPress={() => router.push({ pathname: '/ecoponto-detail', params: { ecopontoId: e.id, ecopontoNome: e.nome, ecopontoMorada: e.morada, ecopontoEstado: e.estado } } as any)}
           >
-            <View style={styles.favIconeWrap}>
+            <View style={[styles.favIconeWrap, colorScheme === 'dark' && { backgroundColor: '#334155' }]}>
               <Text style={styles.favIcone}>♻</Text>
             </View>
             <View style={styles.favInfo}>
-              <Text style={styles.favNome}>{e.nome}</Text>
+              <Text style={[styles.favNome, { color: theme.text }]}>{e.nome}</Text>
               <Text style={[styles.favEstado, { color: ESTADO_COR[e.estado] ?? '#aaa' }]}>
                 {ESTADO_LABEL[e.estado] ?? e.estado}
               </Text>
@@ -222,46 +226,46 @@ export default function HomeScreen() {
 
       {/* Ranking */}
       <View style={styles.secaoHeader}>
-        <Text style={styles.secaoTitulo}>Ranking</Text>
+        <Text style={[styles.secaoTitulo, { color: theme.text }]}>Ranking</Text>
         <TouchableOpacity onPress={() => router.push('/(tabs)/leaderboard' as any)}>
-          <Text style={styles.verTodos}>ver tudo</Text>
+          <Text style={[styles.verTodos, colorScheme === 'dark' && { color: '#86EFAC' }]}>ver tudo</Text>
         </TouchableOpacity>
       </View>
       {ranking.map((u, i) => (
-        <TouchableOpacity key={u.id} style={styles.rankCard} activeOpacity={0.7}
+        <TouchableOpacity key={u.id} style={[styles.rankCard, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]} activeOpacity={0.7}
           onPress={() => router.push({ pathname: '/user-profile', params: { userId: u.id } } as any)}>
-          <View style={[styles.rankPos, i < 3 && { backgroundColor: i === 0 ? '#FEF3C7' : i === 1 ? '#F3F4F6' : '#FEF2F2' }]}>
-            <Text style={[styles.rankPosTexto, i < 3 && { color: i === 0 ? '#92400E' : i === 1 ? '#4B5563' : '#991B1B' }]}>{i + 1}</Text>
+          <View style={[styles.rankPos, i < 3 && { backgroundColor: i === 0 ? '#FEF3C7' : i === 1 ? '#F3F4F6' : '#FEF2F2' }, colorScheme === 'dark' && { backgroundColor: '#334155' }]}>
+            <Text style={[styles.rankPosTexto, i < 3 && { color: i === 0 ? '#92400E' : i === 1 ? '#4B5563' : '#991B1B' }, colorScheme === 'dark' && { color: '#fff' }]}>{i + 1}</Text>
           </View>
           <View style={[styles.rankAvatar, { backgroundColor: i === 0 ? '#1B4332' : i === 1 ? '#4B5563' : i === 2 ? '#92400E' : '#E5E5E5' }]}>
             <Text style={styles.rankAvatarTexto}>{getIniciais(u.nome)}</Text>
           </View>
           <View style={styles.rankInfo}>
-            <Text style={styles.rankNome} numberOfLines={1}>{u.nome}</Text>
+            <Text style={[styles.rankNome, { color: theme.text }]} numberOfLines={1}>{u.nome}</Text>
             {u.username ? <Text style={styles.rankUsername}>@{u.username}</Text> : null}
           </View>
-          <Text style={styles.rankPontos}>{(u.totalPontos || 0).toLocaleString()} pts</Text>
+          <Text style={[styles.rankPontos, colorScheme === 'dark' && { color: '#86EFAC' }]}>{(u.totalPontos || 0).toLocaleString()} pts</Text>
         </TouchableOpacity>
       ))}
 
       {/* Objetivo do mês */}
       {objective && (
         <>
-          <Text style={styles.secaoTituloObjetivo}>Objetivo do mês</Text>
-          <TouchableOpacity style={styles.objetivoCard} activeOpacity={0.8} onPress={() => router.push('/(tabs)/objectives' as any)}>
-            <Text style={styles.objetivoTitulo}>
+          <Text style={[styles.secaoTituloObjetivo, { color: theme.text }]}>Objetivo do mês</Text>
+          <TouchableOpacity style={[styles.objetivoCard, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]} activeOpacity={0.8} onPress={() => router.push('/(tabs)/objectives' as any)}>
+            <Text style={[styles.objetivoTitulo, { color: theme.text }]}>
               Reciclar {objective.metaKg}kg em {nomeMes}
             </Text>
             <View style={styles.objetivoProgressoRow}>
-              <View style={styles.barraFundo}>
-                <View style={[styles.barraProgresso, { width: `${percentagem}%` }]} />
+              <View style={[styles.barraFundo, colorScheme === 'dark' && { backgroundColor: '#334155' }]}>
+                <View style={[styles.barraProgresso, { width: `${percentagem}%` }, colorScheme === 'dark' && { backgroundColor: '#86EFAC' }]} />
               </View>
-              <Text style={styles.objetivoKg}>{kgFeitos} / {objective.metaKg}kg</Text>
+              <Text style={[styles.objetivoKg, colorScheme === 'dark' && { color: '#86EFAC' }]}>{kgFeitos} / {objective.metaKg}kg</Text>
             </View>
             {progresso >= 1 ? (
-              <Text style={styles.objetivoSub}>Objetivo concluído! Parabéns</Text>
+              <Text style={[styles.objetivoSub, colorScheme === 'dark' && { color: '#86EFAC' }]}>Objetivo concluído! Parabéns</Text>
             ) : (
-              <Text style={styles.objetivoSub}>Faltam {kgEmFalta}kg para atingires o objetivo</Text>
+              <Text style={[styles.objetivoSub, colorScheme === 'dark' && { color: '#86EFAC' }]}>Faltam {kgEmFalta}kg para atingires o objetivo</Text>
             )}
           </TouchableOpacity>
         </>

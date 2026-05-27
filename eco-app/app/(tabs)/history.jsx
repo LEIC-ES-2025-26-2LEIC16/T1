@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { StyleSheet, ScrollView, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, ScrollView, View, ActivityIndicator, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { getHistoricoReciclagem } from '@/services/firestore';
+import { Colors } from '@/constants/theme';
 
 const formatDate = (date) =>
   new Date(date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' });
@@ -52,6 +53,9 @@ export default function HistoryScreen() {
   const [registos, setRegistos] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
+
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
@@ -65,7 +69,7 @@ export default function HistoryScreen() {
   const totalCO2 = registos.reduce((s, i) => s + (parseFloat(i.impact) || 0), 0).toFixed(1);
 
   const renderCard = (item) => (
-    <View key={item.id} style={styles.card}>
+    <View key={item.id} style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1E293B' : '#fff' }]}>
       <View style={[styles.cardIndicator, { backgroundColor: materialColor(item.type) }]} />
       <View style={styles.cardBody}>
         <View style={styles.cardRow}>
@@ -74,11 +78,11 @@ export default function HistoryScreen() {
               {materialLabel(item.type)}
             </ThemedText>
           </View>
-          <ThemedText style={styles.cardAmount}>{parseFloat(item.amount || 0).toFixed(2)} kg</ThemedText>
+          <ThemedText style={[styles.cardAmount, { color: theme.text }]}>{parseFloat(item.amount || 0).toFixed(2)} kg</ThemedText>
         </View>
         <View style={styles.cardRow}>
           <ThemedText style={styles.cardDate}>{formatDate(item.date)}</ThemedText>
-          <ThemedText style={styles.cardImpact}>-{parseFloat(item.impact || 0).toFixed(2)} kg CO₂</ThemedText>
+          <ThemedText style={[styles.cardImpact, colorScheme === 'dark' && { color: '#86EFAC' }]}>-{parseFloat(item.impact || 0).toFixed(2)} kg CO₂</ThemedText>
         </View>
         {item.ecopontoNome ? (
           <ThemedText style={styles.cardEcoponto}>📍 {item.ecopontoNome}</ThemedText>
@@ -88,22 +92,22 @@ export default function HistoryScreen() {
   );
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ThemedView style={styles.container}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+      <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.headerRow}>
-          <ThemedText style={styles.titulo}>Histórico</ThemedText>
+          <ThemedText style={[styles.titulo, { color: theme.text }]}>Histórico</ThemedText>
           <ThemedText style={styles.totalRegistos}>{registos.length} registos</ThemedText>
         </View>
 
         <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, { borderLeftColor: CORES.verde }]}>
+          <View style={[styles.summaryCard, { borderLeftColor: CORES.verde, backgroundColor: colorScheme === 'dark' ? '#1E293B' : '#fff' }]}>
             <View style={styles.summaryValueRow}>
               <ThemedText style={styles.summaryValue}>{totalKg}</ThemedText>
               <ThemedText style={styles.summaryUnit}> kg</ThemedText>
             </View>
             <ThemedText style={styles.summaryLabel}>reciclados</ThemedText>
           </View>
-          <View style={[styles.summaryCard, { borderLeftColor: CORES.verdeClaro }]}>
+          <View style={[styles.summaryCard, { borderLeftColor: CORES.verdeClaro, backgroundColor: colorScheme === 'dark' ? '#1E293B' : '#fff' }]}>
             <View style={styles.summaryValueRow}>
               <ThemedText style={[styles.summaryValue, { color: CORES.verdeClaro }]}>{totalCO2}</ThemedText>
               <ThemedText style={styles.summaryUnit}> kg</ThemedText>

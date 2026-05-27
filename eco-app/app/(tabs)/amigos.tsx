@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  ActivityIndicator, TextInput, Alert,
+  ActivityIndicator, TextInput, Alert, useColorScheme
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -11,6 +11,7 @@ import {
   enviarPedidoAmizade,
   responderPedidoAmizade, removerAmigo, getSugestoesAmigos,
 } from '@/services/firestore';
+import { Colors } from '@/constants/theme';
 
 export default function AmigosScreen() {
   const [tab, setTab] = useState<'amigos' | 'pedidos' | 'procurar'>('amigos');
@@ -20,6 +21,9 @@ export default function AmigosScreen() {
   const [pesquisa, setPesquisa] = useState('');
   const [resultados, setResultados] = useState<any[]>([]);
   const [pesquisando, setPesquisando] = useState(false);
+
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -44,7 +48,7 @@ export default function AmigosScreen() {
           return { ...a, nome: d.nome || d.username || 'Utilizador', username: d.username || '', avatarUrl: d.avatarUrl || '', totalPontos: d.totalPontos || 0 };
         })
       );
-      setAmigos(perfis.filter(Boolean));
+      setAmigos(perfis.filter((p): p is NonNullable<typeof p> => Boolean(p)) as any);
       setLoading(false);
     });
 
@@ -112,17 +116,17 @@ export default function AmigosScreen() {
     nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.titulo}>Amigos</Text>
+          <Text style={[styles.titulo, { color: theme.text }]}>Amigos</Text>
           <Text style={styles.subtitulo}>Conecta-te e compara objetivos</Text>
         </View>
 
-        <View style={styles.tabContainer}>
+        <View style={[styles.tabContainer, colorScheme === 'dark' && { backgroundColor: '#1E293B' }]}>
           {(['amigos', 'pedidos', 'procurar'] as const).map(t => (
-            <TouchableOpacity key={t} style={[styles.tabButton, tab === t && styles.tabButtonActive]} onPress={() => setTab(t)}>
-              <Text style={[styles.tabButtonText, tab === t && styles.tabButtonTextActive]}>
+            <TouchableOpacity key={t} style={[styles.tabButton, tab === t && styles.tabButtonActive, tab === t && colorScheme === 'dark' && { backgroundColor: '#334155' }]} onPress={() => setTab(t)}>
+              <Text style={[styles.tabButtonText, tab === t && styles.tabButtonTextActive, tab === t && colorScheme === 'dark' && { color: '#86EFAC' }]}>
                 {t === 'amigos' ? 'Amigos' : t === 'pedidos' ? `Pedidos${pedidos.length > 0 ? ` (${pedidos.length})` : ''}` : 'Procurar'}
               </Text>
             </TouchableOpacity>
@@ -139,7 +143,7 @@ export default function AmigosScreen() {
             </View>
           ) : (
             amigos.map(a => (
-              <TouchableOpacity key={a.uid} style={styles.card} activeOpacity={0.7}
+              <TouchableOpacity key={a.uid} style={[styles.card, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]} activeOpacity={0.7}
                 onPress={() => router.push(`/user-profile?userId=${a.uid}`)}>
                 <View style={styles.avatar}>
                   {a.avatarUrl ? (
@@ -149,9 +153,9 @@ export default function AmigosScreen() {
                   )}
                 </View>
                 <View style={styles.cardInfo}>
-                  <Text style={styles.cardNome}>{a.nome}</Text>
+                  <Text style={[styles.cardNome, { color: theme.text }]}>{a.nome}</Text>
                   {a.username ? <Text style={styles.cardUsername}>@{a.username}</Text> : null}
-                  <Text style={styles.cardPontos}>{a.totalPontos} pts</Text>
+                  <Text style={[styles.cardPontos, colorScheme === 'dark' && { color: '#86EFAC' }]}>{a.totalPontos} pts</Text>
                 </View>
                 <TouchableOpacity style={styles.botaoRemover} onPress={() => handleRemover(a.uid, a.nome)}>
                   <Text style={styles.botaoRemoverTexto}>Remover</Text>
@@ -170,12 +174,12 @@ export default function AmigosScreen() {
             </View>
           ) : (
             pedidos.map(p => (
-              <View key={p.id} style={styles.card}>
+              <View key={p.id} style={[styles.card, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}>
                 <View style={styles.avatar}>
                   <Text style={styles.avatarTexto}>{iniciais(p.nome)}</Text>
                 </View>
                 <View style={styles.cardInfo}>
-                  <Text style={styles.cardNome}>{p.nome}</Text>
+                  <Text style={[styles.cardNome, { color: theme.text }]}>{p.nome}</Text>
                   <Text style={styles.cardUsername}>Quer ser teu amigo</Text>
                 </View>
                 <View style={styles.acoes}>
@@ -194,7 +198,7 @@ export default function AmigosScreen() {
         {tab === 'procurar' && (
           <View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155', color: '#fff' }]}
               placeholder="Pesquisar por nome ou username..."
               placeholderTextColor="#bbb"
               value={pesquisa}
@@ -202,15 +206,15 @@ export default function AmigosScreen() {
             />
             {pesquisando && <ActivityIndicator color="#1B4332" style={{ marginTop: 12 }} />}
             {resultados.map(r => (
-              <TouchableOpacity key={r.id} style={styles.card} activeOpacity={0.7}
+              <TouchableOpacity key={r.id} style={[styles.card, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]} activeOpacity={0.7}
                 onPress={() => router.push(`/user-profile?userId=${r.id}`)}>
                 <View style={styles.avatar}>
                   <Text style={styles.avatarTexto}>{iniciais(r.nome || r.username)}</Text>
                 </View>
                 <View style={styles.cardInfo}>
-                  <Text style={styles.cardNome}>{r.nome || r.username || 'Utilizador'}</Text>
+                  <Text style={[styles.cardNome, { color: theme.text }]}>{r.nome || r.username || 'Utilizador'}</Text>
                   {r.username ? <Text style={styles.cardUsername}>@{r.username}</Text> : null}
-                  <Text style={styles.cardPontos}>{r.totalPontos || 0} pts</Text>
+                  <Text style={[styles.cardPontos, colorScheme === 'dark' && { color: '#86EFAC' }]}>{r.totalPontos || 0} pts</Text>
                 </View>
                 <TouchableOpacity style={styles.botaoAdicionar} onPress={() => handleAdicionar(r.id)}>
                   <Text style={styles.botaoAdicionarTexto}>+</Text>

@@ -28,13 +28,10 @@ describe('Recycling Utilities', () => {
 
   describe('calcularPoupancaCO2()', () => {
     it('deve calcular corretamente a poupança para materiais válidos', () => {
-      // O teu teste original incluído aqui
       expect(calcularPoupancaCO2(10, 'Vidro')).toBe("3.00");
-      
-      // Testes adicionais para cobrir os outros cálculos
-      expect(calcularPoupancaCO2(2, 'Plástico')).toBe("3.00"); // 2 * 1.5
-      expect(calcularPoupancaCO2(5, 'Papel')).toBe("4.50");    // 5 * 0.9
-      expect(calcularPoupancaCO2(1.5, 'Metal')).toBe("3.75");  // 1.5 * 2.5
+      expect(calcularPoupancaCO2(2, 'Plástico')).toBe("3.00");
+      expect(calcularPoupancaCO2(5, 'Papel')).toBe("4.50");
+      expect(calcularPoupancaCO2(1.5, 'Metal')).toBe("3.75");
     });
 
     it('deve retornar "0.00" para materiais desconhecidos (edge case)', () => {
@@ -45,5 +42,4 @@ describe('Recycling Utilities', () => {
       expect(calcularPoupancaCO2(0, 'Plástico')).toBe("0.00");
     });
   });
-
 });

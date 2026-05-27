@@ -6,10 +6,30 @@ import LoginScreen from '../login';
 const mockPush = jest.fn();
 const mockAlert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(),
+  getApps: jest.fn(() => []),
+  getApp: jest.fn(),
+}));
+
+jest.mock('firebase/auth', () => ({
+  signInWithEmailAndPassword: jest.fn(),
+  getAuth: jest.fn(() => ({})),
+  initializeAuth: jest.fn(),
+}));
+
+jest.mock('@firebase/auth', () => ({
+  getReactNativePersistence: jest.fn(),
+}));
+
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn() }),
   useLocalSearchParams: () => ({}),
   Link: 'Link',
+}));
+
+jest.mock('@/services/firebase', () => ({
+  auth: {},
 }));
 
 beforeEach(() => {

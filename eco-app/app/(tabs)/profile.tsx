@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
-  ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform, Share, Modal,
+  ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform, Share, Modal, useColorScheme
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -21,6 +21,7 @@ import {
   getAmigos, getPedidosRecebidos, getSugestoesAmigos,
   enviarPedidoAmizade, responderPedidoAmizade, removerAmigo,
 } from '@/services/firestore';
+import { Colors } from '@/constants/theme';
 
 type Estatisticas = {
   totalReciclagens: number;
@@ -67,6 +68,9 @@ export default function ProfileScreen() {
   const [resultadosAmigos, setResultadosAmigos] = useState<any[]>([]);
   const [pesquisandoAmigos, setPesquisandoAmigos] = useState(false);
   const [abaAmigos, setAbaAmigos] = useState<'amigos' | 'pedidos' | 'procurar'>('amigos');
+
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
 
   const carregarAmigos = async () => {
     const amigos = await getAmigos();
@@ -119,7 +123,7 @@ export default function ProfileScreen() {
       const mensagem =
         `Junta-te a mim no MyImpact e vamos reciclar juntos! 🌱\n\n` +
         `Usa o meu link de convite:\n${info.link}\n\nCódigo: ${info.codigo}`;
-      await Share.share({ message: mensagem, url: info.link });
+      await Share.share({ message: mensagem });
     } catch (err: any) {
       if (err?.message !== 'User did not share')
         Alert.alert('Erro', 'Não foi possível abrir o menu de partilha.');
@@ -171,7 +175,7 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
@@ -181,8 +185,8 @@ export default function ProfileScreen() {
   const bannerSource = editando ? rascunho.bannerUrl : perfil.bannerUrl;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* Banner */}
         <View style={{ paddingTop: insets.top, backgroundColor: '#1B4332' }}>
@@ -254,7 +258,7 @@ export default function ProfileScreen() {
               <Text style={styles.fieldLabel}>Nome</Text>
               <TextInput
                 testID="profile-name-input"
-                style={styles.input}
+                style={[styles.input, colorScheme === 'dark' && { backgroundColor: '#1E293B', color: '#fff', borderColor: '#334155' }]}
                 value={rascunho.nome}
                 onChangeText={v => setRascunho(r => ({ ...r, nome: v }))}
                 placeholder="O teu nome"
@@ -264,7 +268,7 @@ export default function ProfileScreen() {
               <Text style={styles.fieldLabel}>Nome de utilizador</Text>
               <TextInput
                 testID="profile-username-input"
-                style={styles.input}
+                style={[styles.input, colorScheme === 'dark' && { backgroundColor: '#1E293B', color: '#fff', borderColor: '#334155' }]}
                 value={rascunho.username}
                 onChangeText={v => setRascunho(r => ({ ...r, username: v.replace(/\s/g, '') }))}
                 placeholder="@username"
@@ -275,7 +279,7 @@ export default function ProfileScreen() {
               <Text style={styles.fieldLabel}>Bio</Text>
               <TextInput
                 testID="profile-bio-input"
-                style={[styles.input, styles.inputBio]}
+                style={[styles.input, styles.inputBio, colorScheme === 'dark' && { backgroundColor: '#1E293B', color: '#fff', borderColor: '#334155' }]}
                 value={rascunho.bio}
                 onChangeText={v => setRascunho(r => ({ ...r, bio: v }))}
                 placeholder="Conta um pouco sobre ti..."
@@ -305,7 +309,7 @@ export default function ProfileScreen() {
             </>
           ) : (
             <>
-              <Text style={styles.nome}>{perfil.nome || 'Sem nome'}</Text>
+              <Text style={[styles.nome, { color: theme.text }]}>{perfil.nome || 'Sem nome'}</Text>
               {!!perfil.username && (
                 <Text style={styles.username}>@{perfil.username}</Text>
               )}
@@ -323,21 +327,21 @@ export default function ProfileScreen() {
         {/* Stats */}
         <Text style={styles.secaoTitulo}>O MEU IMPACTO</Text>
         <View style={styles.grelha}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValor}>{stats?.totalReciclagens ?? 0}</Text>
+          <View style={[styles.statCard, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}>
+            <Text style={[styles.statValor, { color: theme.text }]}>{stats?.totalReciclagens ?? 0}</Text>
             <Text style={styles.statLabel}>reciclagens</Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValor}>{stats?.totalPontos ?? 0}</Text>
+          <View style={[styles.statCard, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}>
+            <Text style={[styles.statValor, { color: theme.text }]}>{stats?.totalPontos ?? 0}</Text>
             <Text style={styles.statLabel}>pontos</Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValor}>{stats?.totalKg ?? '0.0'} kg</Text>
+          <View style={[styles.statCard, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}>
+            <Text style={[styles.statValor, { color: theme.text }]}>{stats?.totalKg ?? '0.0'} kg</Text>
             <Text style={styles.statLabel}>reciclado</Text>
           </View>
-          <View style={[styles.statCard, styles.statCardVerde]}>
-            <Text style={[styles.statValor, { color: '#1B4332' }]}>{stats?.totalCO2 ?? '0.0'} kg</Text>
-            <Text style={[styles.statLabel, { color: '#1B4332' }]}>CO2 poupado</Text>
+          <View style={[styles.statCard, styles.statCardVerde, colorScheme === 'dark' && { backgroundColor: '#334155', borderColor: '#475569' }]}>
+            <Text style={[styles.statValor, { color: colorScheme === 'dark' ? '#86EFAC' : '#1B4332' }]}>{stats?.totalCO2 ?? '0.0'} kg</Text>
+            <Text style={[styles.statLabel, { color: colorScheme === 'dark' ? '#86EFAC' : '#1B4332' }]}>CO2 poupado</Text>
           </View>
         </View>
       <TouchableOpacity 
@@ -435,7 +439,7 @@ export default function ProfileScreen() {
               />
               {pesquisandoAmigos && <ActivityIndicator color="#1B4332" style={{ marginTop: 8 }} />}
               {resultadosAmigos.map(r => (
-                <TouchableOpacity key={r.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }}
+                <TouchableOpacity key={r.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colorScheme === 'dark' ? '#334155' : '#f0f0f0' }}
                   onPress={() => router.push({ pathname: '/user-profile', params: { userId: r.id } } as any)}>
                   <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#639922', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
                     <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>
@@ -443,7 +447,7 @@ export default function ProfileScreen() {
                     </Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#1a1a1a' }}>{r.nome || r.username || 'Utilizador'}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>{r.nome || r.username || 'Utilizador'}</Text>
                     {r.username ? <Text style={{ fontSize: 11, color: '#aaa' }}>@{r.username}</Text> : null}
                     <Text style={{ fontSize: 11, color: '#639922', fontWeight: '600' }}>{r.totalPontos || 0} pts</Text>
                   </View>
@@ -470,16 +474,16 @@ export default function ProfileScreen() {
 
         {/* ── Painel Convidar Amigos ── */}
         <Text style={styles.secaoTitulo}>CONVIDAR AMIGOS</Text>
-        <View style={styles.referralCard}>
+        <View style={[styles.referralCard, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}>
           <View style={styles.referralCabecalho}>
-            <View style={styles.referralIcone}>
+            <View style={[styles.referralIcone, colorScheme === 'dark' && { backgroundColor: '#334155' }]}>
               <Text style={styles.referralIconeTexto}>🌱</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.referralTitulo}>Convida e ganha EcoCoins</Text>
+              <Text style={[styles.referralTitulo, { color: theme.text }]}>Convida e ganha EcoCoins</Text>
               <Text style={styles.referralSub}>
                 Cada amigo que se registar com o teu link vale{' '}
-                <Text style={{ color: '#1B4332', fontWeight: '700' }}>50 EcoCoins</Text> para ti.
+                <Text style={{ color: colorScheme === 'dark' ? '#86EFAC' : '#1B4332', fontWeight: '700' }}>50 EcoCoins</Text> para ti.
               </Text>
             </View>
           </View>

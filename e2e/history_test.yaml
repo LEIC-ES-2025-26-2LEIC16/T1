@@ -1,31 +1,28 @@
 appId: com.myimpact.app
 ---
 - launchApp:
-    clearState: false
-    stopApp: false
+    clearState: true
 
 - extendedWaitUntil:
-    visible: "Entra na tua conta|O TEU IMPACTO ESTE MÊS"
+    visible: "Entra na tua conta"
     timeout: 30000
 
-- runFlow:
-    when:
-      visible: "Entra na tua conta"
-    commands:
-      - tapOn:
-          id: "autofill-login"
-      - tapOn: "Entrar"
-      - extendedWaitUntil:
-          visible: "O TEU IMPACTO ESTE MÊS"
-          timeout: 20000
+- tapOn:
+    id: "autofill-login"
+
+- tapOn: "Entrar"
+
+- extendedWaitUntil:
+    visible: "O TEU IMPACTO ESTE MÊS"
+    timeout: 30000
 
 - tapOn: "O TEU IMPACTO ESTE MÊS"
 
 - waitForAnimationToEnd
 
 - extendedWaitUntil:
-    visible: "Histórico de Reciclagem|Sem histórico"
+    visible: "Histórico|Ainda não tens registos"
     timeout: 10000
 
-- assertVisible: "Data"
-- assertVisible: "Local"
+- assertVisible: "reciclados"
+- assertVisible: "CO2 poupado"

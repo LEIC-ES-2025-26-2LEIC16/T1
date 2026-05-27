@@ -29,7 +29,17 @@ Este documento descreve os passos necessários para configurar o ambiente de des
    *(Isto irá compilar a aplicação nativa e instalar o Dev Client no telemóvel).*
 
 ## Testes Automatizados
-Para garantir a qualidade do código e verificar a lógica de negócio, executa os testes unitários:
+Para garantir a qualidade do código e verificar a lógica de negócio, executa os testes unitários (Jest):
    ```bash
    npm test
+   ```
+
+Para correres os testes End-to-End (E2E) que simulam ações reais do utilizador:
+1. Instala o Maestro na tua máquina (`curl -Ls "https://get.maestro.mobile.dev" | bash` em Mac/Linux ou via WSL no Windows).
+2. Liga o teu Emulador Android.
+3. Inicia a app (`npm run android`).
+4. Corre os testes E2E localizados na pasta `e2e/`:
+   ```bash
+   maestro test e2e/amigos_test.yaml
+   maestro test e2e/history_test.yaml
    ```

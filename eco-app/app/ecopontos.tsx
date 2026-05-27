@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, useColorScheme } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ecoponto } from '@/constants/ecopontos';
 import { ouvirEcopontos, getFavoritos, toggleFavorito } from '@/services/firestore';
+import { Colors } from '@/constants/theme';
 import { useEffect } from 'react';
 
 const ESTADO_STYLE: Record<string, object> = {
@@ -11,6 +12,9 @@ const ESTADO_STYLE: Record<string, object> = {
 };
 
 export default function EcopontosScreen() {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
+
   const router = useRouter();
   const { apenasFavoritos } = useLocalSearchParams<{ apenasFavoritos?: string }>();
   const [ecopontos, setEcopontos] = useState<Ecoponto[]>([]);
@@ -39,20 +43,20 @@ export default function EcopontosScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.titulo}>{apenasFavoritos === '1' ? 'Favoritos' : 'Ecopontos'}</Text>
+        <Text style={[styles.titulo, { color: theme.text }]}>{apenasFavoritos === '1' ? 'Favoritos' : 'Ecopontos'}</Text>
         <TouchableOpacity style={styles.botaoAdicionar} onPress={() => router.push('/add-ecoponto' as any)}>
           <Text style={styles.botaoAdicionarTexto}>+ Adicionar</Text>
         </TouchableOpacity>
       </View>
 
       {/* Pesquisa */}
-      <View style={styles.pesquisaContainer}>
+      <View style={[styles.pesquisaContainer, colorScheme === 'dark' && { backgroundColor: '#1E293B' }]}>
         <Text style={styles.pesquisaIcone}>🔎</Text>
         <TextInput
-          style={styles.pesquisaInput}
+          style={[styles.pesquisaInput, { color: theme.text }]}
           placeholder="Pesquisar por nome ou morada..."
           placeholderTextColor="#bbb"
           value={pesquisa}
@@ -76,14 +80,14 @@ export default function EcopontosScreen() {
           const isFav = favoritos.includes(e.id);
           return (
             <TouchableOpacity
-              style={styles.card}
+              style={[styles.card, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}
               testID="recycling-bin-marker"
               activeOpacity={0.7}
               onPress={() => router.push({ pathname: '/ecoponto-detail', params: { ecopontoId: e.id, ecopontoNome: e.nome, ecopontoMorada: e.morada, ecopontoEstado: e.estado } } as any)}
             >
               <View style={styles.cardTopo}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.cardNome}>{e.nome}</Text>
+                  <Text style={[styles.cardNome, { color: theme.text }]}>{e.nome}</Text>
                   <Text style={styles.cardMorada}>{e.morada}</Text>
                 </View>
                 <View style={styles.cardTopoDireita}>
@@ -95,7 +99,7 @@ export default function EcopontosScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-              <Text style={styles.verDetalhe}>Ver detalhes e ações →</Text>
+              <Text style={[styles.verDetalhe, colorScheme === 'dark' && { color: '#86EFAC' }]}>Ver detalhes e ações →</Text>
             </TouchableOpacity>
           );
         }}

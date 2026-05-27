@@ -27,4 +27,18 @@ Este projeto utilizou ferramentas de Inteligência Artificial para acelerar o de
    * *Prompt/Objetivo:* Estruturar o repositório de acordo com as métricas de avaliação do Sprint 1, incluindo o ciclo de vida de resolução de defeitos e documentação do Sprint.
    * *Resultado:* Criação do Issue Tracker modelado para reportar bugs (câmara), gestão de labels (`MisterAI`, `Task`, `Bug`) e estruturação do documento `sprint1_retrospective.md`.
 
-**Nota:** As PBI's com intervenção de IA estão marcadas com a label `MisterAI` no GitHub.
+## Aplicações Práticas (Sprint 3)
+
+Neste último sprint, a intervenção de IA foi mínima e focada apenas em revisões rápidas e correção de sintaxe, servindo como um pequeno auxiliar pontual:
+
+1. **Revisão de Sintaxe UML (Mermaid):**
+   * Usámos IA apenas para validar e corrigir pequenos erros de formatação no código Markdown/Mermaid no `README.md` (ex: colocação de aspas nas etiquetas das setas).
+
+2. **Apoio Estrutural em Testes (Jest/Maestro):**
+   * *Prompt/Objetivo:* Sugestão de *boilerplate* para os blocos de testes unitários do Firebase e ajuda na sintaxe yaml dos testes E2E.
+   * *Resultado:* Código gerado adaptado e refatorado inteiramente pela equipa.
+
+3. **Otimização Rápida no CI/CD:**
+   * Sugestão de correção para evitar que o GitHub Actions compilasse o APK desnecessariamente em cada commit.
+
+**Nota:** As poucas tarefas onde a IA deu sugestões estão marcadas com a label `MisterAI` no GitHub.

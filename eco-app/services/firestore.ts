@@ -334,7 +334,7 @@ try {
 
 
 const PONTOS_REFERRAL = 50;      // EcoCoins por amigo convidado
-const DEEP_LINK_BASE = 'ecoapp://auth/register';
+const DEEP_LINK_BASE = 'https://myimpact.vercel.app/invite';
 
 // ── Tipos ────────────────────────────────────────────────────
 

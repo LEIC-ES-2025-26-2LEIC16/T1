@@ -27,18 +27,23 @@
       "package": "com.myimpact.app",
 
       "intentFilters": [
-    {
-      "action": "VIEW",
-      "autoVerify": false,
-      "data": [
         {
-          "scheme": "ecoapp",
-          "host": "auth"
+          "action": "VIEW",
+          "autoVerify": false,
+          "data": [
+            {
+              "scheme": "ecoapp",
+              "host": "auth"
+            },
+            {
+              "scheme": "https",
+              "host": "myimpact.vercel.app",
+              "pathPrefix": "/invite"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
         }
-      ],
-      "category": ["BROWSABLE", "DEFAULT"]
-    }
-  ]
+      ]
     },
     "web": {
       "output": "static",

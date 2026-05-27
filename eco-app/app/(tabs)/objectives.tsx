@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  ActivityIndicator, Alert, TextInput, Modal,
+  ActivityIndicator, Alert, TextInput, Modal, useColorScheme
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { doc, getDoc, collection, addDoc, getDocs } from 'firebase/firestore';
@@ -14,6 +14,7 @@ import {
   type Objetivo, type ObjetivoPartilhado,
 } from '@/services/firestore';
 import { tabelaPontos } from '@/utils/recyclingUtils';
+import { Colors } from '@/constants/theme';
 
 const MATERIAL_META: Record<string, { cor: string; fundo: string; iniciais: string }> = {
   'Todos':    { cor: '#1B4332', fundo: '#EAF3DE', iniciais: 'Td' },
@@ -74,6 +75,9 @@ const materialLabel = (type: string) => {
 };
 
 export default function ObjectivesScreen() {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
+
   const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
   const [registos, setRegistos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,12 +258,12 @@ export default function ObjectivesScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
 
       <View style={styles.header}>
         <View>
-          <Text style={styles.titulo}>Objetivos</Text>
+          <Text style={[styles.titulo, { color: theme.text }]}>Objetivos</Text>
           <Text style={styles.subtitulo}>Acompanha o teu progresso de reciclagem</Text>
         </View>
         {/* We only show the '+' button on the challenges tab if the user has the 'company' role */}
@@ -307,8 +311,8 @@ export default function ObjectivesScreen() {
         <>
           {/* Formulário */}
           {mostrarForm && (
-            <View style={styles.form}>
-              <Text style={styles.formTitulo}>Novo objetivo</Text>
+            <View style={[styles.form, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}>
+              <Text style={[styles.formTitulo, { color: theme.text }]}>Novo objetivo</Text>
 
               <Text style={styles.fieldLabel}>MATERIAL</Text>
               <View style={styles.chips}>
@@ -398,7 +402,7 @@ export default function ObjectivesScreen() {
               return (
               <View key={obj.id}>
               <TouchableOpacity
-                style={[styles.card, { borderLeftColor: meta.cor }, selectedObjetivoId === obj.id && styles.cardSelecionado]}
+                style={[styles.card, { borderLeftColor: meta.cor }, selectedObjetivoId === obj.id && styles.cardSelecionado, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}
                 activeOpacity={0.7}
                 onPress={() => setSelectedObjetivoId(selectedObjetivoId === obj.id ? null : obj.id)}
               >
@@ -409,7 +413,7 @@ export default function ObjectivesScreen() {
                   </View>
 
                   <View style={styles.cardInfo}>
-                    <Text style={styles.cardTitulo}>{obj.material === 'Todos' ? 'Todos os materiais' : obj.material}</Text>
+                    <Text style={[styles.cardTitulo, { color: theme.text }]}>{obj.material === 'Todos' ? 'Todos os materiais' : obj.material}</Text>
                     <Text style={styles.cardSub}>
                       {obj.periodo === 'semanal' ? 'Esta semana' : 'Este mês'} · meta {obj.metaKg} kg
                     </Text>
@@ -588,13 +592,13 @@ export default function ObjectivesScreen() {
                   const meta = MATERIAL_META[o.material] || MATERIAL_META['Todos'];
 
                   return (
-                    <View key={o.id} style={[styles.card, { borderLeftColor: meta.cor }]}>
+                    <View key={o.id} style={[styles.card, { borderLeftColor: meta.cor }, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}>
                       <View style={styles.cardTopo}>
                         <View style={[styles.iconCircle, { backgroundColor: meta.fundo }]}>
                           <Text style={[styles.iconTexto, { color: meta.cor }]}>{meta.iniciais}</Text>
                         </View>
                         <View style={styles.cardInfo}>
-                          <Text style={styles.cardTitulo}>Partilhado com {amigoNome}</Text>
+                          <Text style={[styles.cardTitulo, { color: theme.text }]}>Partilhado com {amigoNome}</Text>
                           <Text style={styles.cardSub}>{o.material} · meta {o.metaKg} kg ({o.periodo})</Text>
                         </View>
                         <TouchableOpacity onPress={() => eliminarObjetivoPartilhado(o.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -628,11 +632,17 @@ export default function ObjectivesScreen() {
       {/* Brand Challenges Tab */}
       {currentTab === 'desafios' && (
         <View>
-          {/* Dynamically loaded brand challenges from Firestore */}
+          {/* Brand Challenges rendering */}
           {brandChallenges.map(challenge => (
-            <View key={challenge.id} style={[styles.challengeCard, { marginBottom: 16 }]}>
+            <View key={challenge.id} style={[styles.challengeCard, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}>
+              {/* Card Header with Brand Logo/Icon and Title */}
               <View style={styles.challengeHeader}>
-                <Text style={styles.challengeBrand}>{challenge.title.toUpperCase()}</Text>
+                <View style={styles.brandIconContainer}>
+                  <Text style={styles.brandIconText}>B</Text>
+                </View>
+                <View style={styles.challengeInfo}>
+                  <Text style={[styles.challengeTitle, { color: theme.text }]}>{challenge.title}</Text>
+                </View>
               </View>
               <View style={styles.challengeBody}>
                 <Text style={styles.challengeTitle}>Meta de {challenge.goal}kg para ganhar um prémio!</Text>

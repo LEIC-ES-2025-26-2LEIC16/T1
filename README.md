@@ -194,48 +194,42 @@ classDiagram
 The logical architecture separates the presentation layer (mobile app) from the core business logic and external APIs, ensuring modularity and easier testing.
 
 ```mermaid
-flowchart TD
-    %% Client side logic
-    subgraph ClientLayer ["Client Layer"]
-        UI["User Interface Components"]
-        State["Local State & Cache"]
-    end
+classDiagram
+    namespace ClientLayer {
+        class UserInterfaceComponents
+        class LocalStateAndCache
+    }
 
-    %% Backend business modules
-    subgraph BusinessLogicLayer ["Business Logic Layer"]
-        Gateway["API Gateway / Request Router"]
-        
-        AuthModule["Account & Auth Module"]
-        RecyclingModule["Recycling Operations Module"]
-        GamificationModule["Points & Leaderboard Module"]
-        MapModule["Mapping & Eco-bins Module"]
-    end
+    namespace BusinessLogicLayer {
+        class APIGateway
+        class AuthModule
+        class RecyclingModule
+        class GamificationModule
+        class MapModule
+    }
 
-    %% Data management components
-    subgraph DataLayer ["Data Layer"]
-        UserDB[("User & Profile Data")]
-        ImpactDB[("Recycling & Points Data")]
-        BlobData[("Photo Verification Data")]
-    end
+    namespace DataLayer {
+        class UserProfileData
+        class RecyclingPointsData
+        class PhotoVerificationData
+    }
 
-    %% External logical services
-    ExternalMap["External Maps API"]
+    class ExternalMapsAPI
 
-    %% Flow of data and requests
-    UI --> State
-    State -->|API Calls| Gateway
+    UserInterfaceComponents --> LocalStateAndCache
+    LocalStateAndCache --> APIGateway : API Calls
     
-    Gateway --> AuthModule
-    Gateway --> RecyclingModule
-    Gateway --> GamificationModule
-    Gateway --> MapModule
+    APIGateway --> AuthModule
+    APIGateway --> RecyclingModule
+    APIGateway --> GamificationModule
+    APIGateway --> MapModule
     
-    AuthModule --> UserDB
-    RecyclingModule --> ImpactDB
-    RecyclingModule --> BlobData
-    GamificationModule --> ImpactDB
+    AuthModule --> UserProfileData
+    RecyclingModule --> RecyclingPointsData
+    RecyclingModule --> PhotoVerificationData
+    GamificationModule --> RecyclingPointsData
     
-    MapModule --> ExternalMap
+    MapModule --> ExternalMapsAPI
 ```
 
 

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { Colors } from '@/constants/theme';
 import { getFavoritos, toggleFavorito } from '@/services/firestore';
 
 const ESTADO: Record<string, { cor: string; fundo: string; heroCor: string; label: string }> = {
@@ -10,6 +11,9 @@ const ESTADO: Record<string, { cor: string; fundo: string; heroCor: string; labe
 };
 
 export default function EcopontoDetailScreen() {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
+
   const router = useRouter();
   // Grab the params passed from the previous screen
   const { ecopontoId, ecopontoNome, ecopontoMorada, ecopontoEstado, ultimaRecolha, proximaRecolha } = useLocalSearchParams<{
@@ -35,7 +39,7 @@ export default function EcopontoDetailScreen() {
   const estadoInfo = ESTADO[ecopontoEstado] ?? ESTADO['Operacional'];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
 
       {/* Hero section with the big icon and favorite button */}
       <View style={[styles.hero, { backgroundColor: estadoInfo.heroCor }]}>
@@ -54,7 +58,7 @@ export default function EcopontoDetailScreen() {
       {/* Basic info about the recycling bin */}
       <View style={styles.infoSection}>
         <View style={styles.infoTopo}>
-          <Text style={styles.nome}>{ecopontoNome}</Text>
+          <Text style={[styles.nome, { color: theme.text }]}>{ecopontoNome}</Text>
           <View style={[styles.estadoBadge, { backgroundColor: estadoInfo.fundo }]}>
             <Text style={[styles.estadoTexto, { color: estadoInfo.cor }]}>{estadoInfo.label}</Text>
           </View>

@@ -332,6 +332,155 @@ The team adopted Maestro Studio to debug and fine-tune the flaky tests. Using Ma
 
 ### Sprint 3
 
-### Sprint 4
+### Sprint Review🚀
+
+
+**1.Sprint Planning Summary** 
+
+Maintaining the strong working rhythm established in previous sprints, the team continued to push the app forward with a new set of meaningful features. Sprint 3 was focused on expanding the social and engagement dimensions of the app, while also reinforcing core functionality. The new features planned for this sprint were:
+
+*Recycling Challenges from Brands/Companies
+*Add an Ecopoint Using Current Location
+*Search Other Users to Form Friendships
+*Send an Invite via Link to New Users
+*View the Maintenance History of an Eco-Bin
+
+
+**2.Product Increment Status (Definition of Done)**
+
+We successfully delivered:
+
+✅ Recycling Challenges from Brands/Companies: Users can now participate in recycling challenges sponsored by brands and companies, adding a gamified and community-driven dimension to their eco-friendly habits and increasing engagement with the platform.
+✅ Add an Ecopoint Using Current Location: Users can now contribute to the app's map by submitting a new ecopoint directly from their current location, allowing the community to grow and maintain an up-to-date network of recycling points.
+✅ Search Other Users to Form Friendships: A user search feature has been implemented, enabling users to find and connect with others on the platform, fostering a social recycling community and enabling friendly competition.
+✅ Send an Invite via Link to New Users: Users can now generate and share an invite link, making it easy to bring friends and family into the app and grow the platform's user base organically.
+✅ View the Maintenance History of an Eco-Bin: Users can access a dedicated screen showing the maintenance history of any eco-bin, increasing transparency and trust in the recycling infrastructure available near them.
+
+**3. Flow Management and Velocity**
+
+### Work in Progress (WiP):
+Strong control over workflow was maintained throughout the sprint, ensuring no more than 3 Pull Requests (PRs) were open simultaneously, in line with the team's policy of avoiding paused or scattered work. This discipline proved especially important given the higher volume of bugs encountered during this sprint.
+
+
+### Velocity vs. Delivery:
+This sprint totalled 52 story points — a significant increase compared to previous sprints. The higher point count reflects not only the scope of new features but also the above-average number of bugs that emerged and required resolution. The team deliberately invested time in ensuring the quality and stability of already-delivered features, as we felt it was important to consolidate a solid foundation before moving forward. Despite the added pressure, all planned work was completed within the sprint window, demonstrating the team's commitment and resilience.
+
+**4.Sprint Retrospective (Critical Reflection)**
+
+
+### Problem Identification:
+The defining challenge of this sprint was the unusually high number of bugs that surfaced across different areas of the app. From UI rendering issues in dark mode to logic conflicts in the objectives system, the team faced a broader set of technical problems than in previous sprints. Regardless, the team tackled each issue systematically and independently, resolving all reported bugs before the end of the sprint. It was a demanding sprint, but one that ultimately left the app in a significantly more stable and polished state.
+A
+
+### Analysis:
+WiP was well controlled, as was the availability of team members during this sprint. The team's ability to coordinate effectively — even under increased pressure — was a clear indicator of improved maturity in our workflow.
+
+
+### Improvement Point:
+Establish a more structured code review checklist to catch UI and dark mode compatibility issues before they reach production.
+
+
+
+**5.Metrics Status (Dashboard)**
+
+Estimates: Completed — 52 total story points defined during Planning, including feature development and bug resolution.
+
+WiP Control: ✅ Excellent — Maximum of 3 active PRs maintained across all sprint members.
+
+Stakeholder Review: ✅ Completed — Demonstration of recycling challenges, user search and friendship system, ecopoint submission, invite link feature, and eco-bin maintenance history.
+
+Product Increment: ✅ Completed — All features planned for this sprint were successfully implemented and delivered, and all reported bugs were resolved.
+
+**6.🐞 Bug Report & Technical Impediments**
+
+1. Dark Mode UI — Fields Disappearing or Not Adapting {(Theme Compatibility Issue)}
+
+Several UI components and input fields were not correctly adapting to the device's dark mode setting, causing text and elements to become invisible or poorly contrasted — effectively disappearing from view for users with dark mode enabled.
+
+### Impact:
+Users running the app in dark mode experienced broken screens and unreadable content, significantly degrading the user experience and making parts of the app unusable.
+
+
+### Proposed Solution:
+All affected components were audited and updated to use theme-aware colour tokens that respond dynamically to the system's light/dark mode. Hard-coded colour values were replaced with adaptive references, ensuring full visual compatibility across both modes.
+
+2. App Sharing Link Not Functioning Correctly {(Deep Link / Share Issue)}
+
+The invite link feature was generating or resolving links incorrectly, preventing recipients from being properly redirected to the app or the intended onboarding flow.
+
+### Impact:
+New users invited via link were unable to seamlessly join the app, creating friction in the onboarding process and reducing the effectiveness of the referral feature.
+
+
+### Proposed Solution:
+The deep link configuration was reviewed and corrected, ensuring that invite links correctly encode the necessary parameters and redirect users to the appropriate screen within the app upon installation or opening.
+
+3. Wrapped Feature Requiring Location Unnecessarily {(Permissions Issue)}
+
+The MyImpact Wrapped / Recycling Summary feature was triggering a location permission request even though location data is not required for its functionality.
+
+
+### Impact:
+Users were unexpectedly prompted for location access when viewing their recycling summary, raising unnecessary privacy concerns and creating confusion about why the feature needed their location.
+
+
+### Proposed Solution:
+The location dependency was identified and removed from the Wrapped feature's logic. The component was refactored to operate solely on stored recycling data, eliminating the unnecessary permission request entirely.
+
+4. Recycling History Not Displaying {(Data Rendering Issue)}
+
+The recycling history screen was failing to display past recycling entries, showing an empty state even when the user had previously logged recycling activity.
+
+
+### Impact:
+Users were unable to review their past recycling actions, undermining one of the core tracking features of the app and reducing trust in data persistence.
+
+
+### Proposed Solution:
+The data fetching logic for the history screen was debugged and corrected. The issue stemmed from an incorrect query that prevented existing entries from being retrieved and rendered. After the fix, the history screen correctly loads and displays all past recycling records.
+
+5. Map Always Centering on Rotunda da Boavista {(Map Default Position Issue)}
+
+Every time a user selected a bin on the map, the camera was resetting and centring on the Rotunda da Boavista instead of maintaining focus on the selected bin's location.
+
+
+### Impact:
+Users experienced a disorienting map behaviour that disrupted navigation, making it difficult to interact with bins located away from the default centre point.
+
+
+### Proposed Solution:
+The map's camera logic was corrected to prevent unintended resets. The default centre coordinate was removed from the bin selection handler, ensuring the map now focuses correctly on the selected bin's coordinates without overriding the user's current view.
+
+6. Selected Bin Icon Getting Disrupted on Map {(UI/Map Rendering Issue)}
+
+
+When a bin was selected on the map, its icon was rendering incorrectly — becoming distorted or visually broken compared to its default unselected state.
+
+
+### Impact:
+The visual disruption reduced the clarity of the map interface and made it harder for users to identify which bin was currently selected.
+
+
+### Proposed Solution:
+The selected state styling for map markers was reviewed and corrected. Icon size, anchor points, and z-index properties were adjusted to ensure a clean and consistent visual change when a bin is selected, without disrupting the surrounding markers.
+
+7. Only Shared Objectives Appearing — Personal Ones Missing {(Objectives Filter Conflict)}
+
+The objectives screen was only displaying shared objectives, while personal objectives created by the user were not appearing. This was identified as a logic conflict in the filtering mechanism.
+
+
+### Impact:
+Users were unable to see or manage their personal recycling goals, making the objectives feature feel incomplete and reducing motivation to set individual targets.
+
+
+### Proposed Solution:
+The filtering logic for the objectives list was investigated and a conflict between the shared and personal objective queries was identified. The queries were separated and correctly scoped so that users can now view both their personal objectives and shared ones independently, with no overlap or omission.
+
+
+**Beggining of the Sprint 3**
+
+
+**Ending of the Sprint 3**
+
 
 ### Final Release

@@ -1,0 +1,38 @@
+appId: com.myimpact.app
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+
+- extendedWaitUntil:
+    visible: "Entra na tua conta|Procurar"
+    timeout: 30000
+
+- runFlow:
+    when:
+      visible: "Entra na tua conta"
+    commands:
+      - tapOn:
+          id: "autofill-login"
+      - tapOn: "Entrar"
+      - extendedWaitUntil:
+          visible: "Ver todos os ecopontos"
+          timeout: 20000
+
+- tapOn: "Perfil"
+
+- waitForAnimationToEnd
+
+- tapOn: "Ver Amigos"
+
+- waitForAnimationToEnd
+
+- assertVisible: "Amigos"
+
+- tapOn: "Procurar"
+
+- assertVisible: "Procurar por username"
+
+- tapOn: "Pedidos"
+
+- assertVisible: "Pedidos"

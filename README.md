@@ -97,7 +97,89 @@ To provide a clear understanding of the MyImpact ecosystem, our domain model is 
 * **Feedback & Support (Yellow):** `Report` (community tickets regarding bin issues) and `Review` (user ratings).
 * **Gamification & Business (Purple):** `Goal`, `Company`, and `YearlyWrap` managing targets, corporate subscriptions, and annual metrics.
 
-![Diagrama UML do Modelo de Domínio](umls/domain_model.png)
+```mermaid
+classDiagram
+    %% Identity & Access
+    class User {
+        +String uid
+        +String email
+    }
+    class Profile {
+        +String id
+        +String nome
+        +String username
+        +String bio
+        +int totalPoints
+        +String avatarUrl
+    }
+    class Friendship {
+        +String id
+        +List~String~ usuarios
+        +String status
+        +Date criadoEm
+    }
+    
+    %% Core Operations
+    class EcoPoint {
+        +String id
+        +String nome
+        +Object coordenadas
+        +String estado
+    }
+    class RecyclingAction {
+        +String id
+        +double amount
+        +double impact
+        +Date date
+        +String type
+    }
+    
+    %% Feedback & Support
+    class Report {
+        +String id
+        +String description
+        +String status
+        +Date criadoEm
+    }
+    class Review {
+        +String id
+        +int rating
+        +String comment
+        +Date data
+    }
+    
+    %% Gamification & Business
+    class Goal {
+        +String id
+        +double metaKg
+        +double progresso
+        +String periodo
+    }
+    class Company {
+        +String id
+        +String name
+        +String subscription
+    }
+    class YearlyWrap {
+        +String id
+        +int year
+        +String topMaterial
+        +double totalRecycled
+    }
+
+    User "1" -- "1" Profile : has
+    User "1" -- "*" Friendship : requests/accepts
+    User "1" -- "*" RecyclingAction : performs
+    User "1" -- "*" Report : submits
+    User "1" -- "*" Review : writes
+    User "1" -- "*" Goal : sets
+    User "1" -- "*" YearlyWrap : receives
+
+    RecyclingAction "*" -- "1" EcoPoint : at
+    Report "*" -- "1" EcoPoint : regarding
+    Review "*" -- "1" EcoPoint : evaluates
+    Company "1" -- "*" Goal : sponsors
+```
 
 ## Architecture and Design
 
@@ -155,7 +237,30 @@ flowchart TD
 
 The physical architecture outlines the deployment of the MyImpact system nodes and communication protocols.
 
-![Physical Architecture Diagram](umls/physical_architecture.png)
+```mermaid
+flowchart TD
+    %% Nodes
+    subgraph MobileDevice ["Mobile Device (Client Node)"]
+        App["MyImpact App (React Native/Expo)"]
+    end
+    
+    subgraph FirebaseCloud ["Firebase Cloud (Server Node)"]
+        Auth["Firebase Authentication"]
+        DB[("Firestore NoSQL")]
+        Storage[("Cloud Storage")]
+        Functions["Cloud Functions (Serverless)"]
+    end
+    
+    subgraph ThirdParty ["Third-Party Services"]
+        Maps["Mapbox API (Maps/Navigation)"]
+    end
+    
+    %% Connections
+    App <-->|HTTPS / WebSockets (Realtime)| Auth
+    App <-->|HTTPS / WebSockets (Realtime)| DB
+    App <-->|HTTPS / WebSockets| Storage
+    App -->|HTTPS| Maps
+```
 
 ### Functional prototype
 

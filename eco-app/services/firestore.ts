@@ -334,7 +334,7 @@ try {
 
 
 const PONTOS_REFERRAL = 50;      // EcoCoins por amigo convidado
-const DEEP_LINK_BASE = 'ecoapp://register';
+const DEEP_LINK_BASE = 'ecoapp://auth/register';
 
 // ── Tipos ────────────────────────────────────────────────────
 

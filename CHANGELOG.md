@@ -62,3 +62,37 @@
 📦 Documentation
 
     Updated.
+
+
+[v4.0.0] - Sprint 3 (2026-05-28)
+🚀 New Features (Added)
+    Recycling Challenges from Brands/Companies: Users can now participate in recycling challenges sponsored by brands and companies, adding a gamified and community-driven dimension to their eco-friendly habits and increasing engagement with the platform.
+
+    Add an Ecopoint Using Current Location: Users can now contribute to the app's map by submitting a new ecopoint directly from their current location, allowing the community to grow and maintain an up-to-date network of recycling points.
+
+    Search Other Users to Form Friendships: A user search feature has been implemented, enabling users to find and connect with others on the platform, fostering a social recycling community and enabling friendly competition.
+    
+    Send an Invite via Link to New Users: Users can now generate and share an invite link, making it easy to bring friends and family into the app and grow the platform's user base organically.
+    
+    View the Maintenance History of an Eco-Bin: Users can access a dedicated screen showing the maintenance history of any eco-bin, increasing transparency and trust in the recycling infrastructure available near them.
+
+🛠️ Technical Improvements (Changed)
+
+    Dark Mode Theme Overhaul: All UI components and input fields have been updated to use theme-aware colour tokens that respond dynamically to the system's light/dark mode setting, replacing previously hard-coded colour values and ensuring full visual consistency across both themes.
+
+🐛 Known Issues / Bugs (Fixed/Known Issues)
+
+    App Sharing Link Not Functioning Correctly: The invite link feature was generating or resolving links incorrectly, preventing recipients from being properly redirected to the app. The deep link configuration was reviewed and corrected, ensuring links now encode the necessary parameters and redirect users to the appropriate onboarding screen.
+
+    Wrapped Feature Requiring Location Unnecessarily: The MyImpact Wrapped feature was triggering a location permission request despite not requiring location data. The dependency was identified and removed, and the component was refactored to operate solely on stored recycling data.
+
+    Recycling History Not Displaying: The recycling history screen was showing an empty state even when the user had previously logged activity. The data fetching logic was debugged and corrected — the screen now loads and displays all past recycling records as expected.
+
+    Map Always Centering on Rotunda da Boavista: Every time a bin was selected on the map, the camera was resetting to the Rotunda da Boavista instead of focusing on the selected bin. The default centre coordinate was removed from the bin selection handler, resolving the behaviour.
+
+    Selected Bin Icon Getting Disrupted on Map: Selecting a bin on the map was causing its icon to become distorted or visually broken. Icon size, anchor points, and z-index properties were adjusted to ensure a clean and consistent selected state.
+
+    Only Shared Objectives Appearing — Personal Ones Missing: The objectives screen was only displaying shared objectives due to a conflict in the filtering logic. The queries were separated and correctly scoped so that both personal and shared objectives now appear independently without overlap or omission.
+
+📦 Documentation
+    Updated.    

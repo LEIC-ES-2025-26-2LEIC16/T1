@@ -33,7 +33,7 @@
       "data": [
         {
           "scheme": "ecoapp",
-          "host": "register"
+          "host": "auth"
         }
       ],
       "category": ["BROWSABLE", "DEFAULT"]

@@ -25,6 +25,15 @@ import {
   criarObjetivo,
   eliminarObjetivo,
   guardarReview,
+  getHistoricoReciclagem,
+  getAmigos,
+  enviarPedidoAmizade,
+  responderPedidoAmizade,
+  removerAmigo,
+  getPedidosRecebidos,
+  getSugestoesAmigos,
+  gerarCodigoReferral,
+  getInfoReferral
 } from '../firestore';
 
 const mockGetDocs = jest.fn();
@@ -66,6 +75,7 @@ const createDocSnapshot = (id: string, data: any) => ({
 const createDocsSnapshot = (docs: any[]) => ({
   docs,
   size: docs.length,
+  empty: docs.length === 0,
   forEach: (cb: any) => docs.forEach(cb),
 });
 
@@ -369,5 +379,88 @@ describe('guardarReview', () => {
   it('deve relançar erro se guardar falhar', async () => {
     mockAddDoc.mockRejectedValue(new Error('Erro de rede'));
     await expect(guardarReview('eco-1', 4, '')).rejects.toThrow('Erro de rede');
+  });
+});
+
+describe('Sprint 3 - Historico e Amigos', () => {
+  it('deve retornar historico de reciclagem do user', async () => {
+    (auth as any).currentUser = { uid: 'user-1' };
+    mockQuery.mockReturnValue('query-historico');
+    mockGetDocs.mockResolvedValueOnce(createDocsSnapshot([
+      createDocSnapshot('reg1', { quantidade: 2, impactoCO2: 1.5, material: 'Plástico' })
+    ]));
+
+    const result = await getHistoricoReciclagem();
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe('Plástico');
+  });
+
+  it('deve retornar a lista de amigos e converter para id e uid', async () => {
+    (auth as any).currentUser = { uid: 'user-1' };
+    mockQuery.mockReturnValue('query-amigos');
+    mockGetDocs.mockResolvedValueOnce(createDocsSnapshot([
+      createDocSnapshot('amizade1', { status: 'aceite', usuarios: ['user-1', 'amigo-2'] })
+    ]));
+
+    const result = await getAmigos();
+    expect(result).toHaveLength(1);
+    expect(result[0].uid).toBe('amigo-2');
+  });
+
+  it('deve enviar pedido de amizade', async () => {
+    (auth as any).currentUser = { uid: 'user-1' };
+    mockCollection.mockReturnValue('collection-amizades');
+    mockGetDocs.mockResolvedValueOnce(createDocsSnapshot([])); // Sem pedido existente
+    mockAddDoc.mockResolvedValueOnce('doc-amizade'); // Prevent mock leakage
+    
+    await enviarPedidoAmizade('amigo-2');
+
+    expect(mockAddDoc).toHaveBeenCalledWith('collection-amizades', {
+      usuarios: ['amigo-2', 'user-1'].sort(),
+      status: 'pendente',
+      accaoUid: 'user-1',
+      criadoEm: 'mock-ts'
+    });
+  });
+
+  it('deve remover amigo existente', async () => {
+    (auth as any).currentUser = { uid: 'user-1' };
+    mockQuery.mockReturnValue('query-amizade');
+    mockGetDocs.mockResolvedValueOnce(createDocsSnapshot([
+      createDocSnapshot('amizade1', { status: 'aceite', usuarios: ['user-1', 'amigo-2'] })
+    ]));
+    mockDoc.mockReturnValue('doc-amizade-1');
+
+    await removerAmigo('amigo-2');
+
+    expect(mockDeleteDoc).toHaveBeenCalledWith('doc-amizade-1');
+  });
+});
+
+describe('Sprint 3 - Referrals', () => {
+  it('deve gerar novo codigo referral com primeiros 8 chars', async () => {
+    (auth as any).currentUser = { uid: 'USER-123456789' };
+    mockDoc.mockReturnValue('doc-ref');
+    mockGetDoc.mockResolvedValueOnce({ exists: () => false }); // Nao existe ainda
+
+    const result = await gerarCodigoReferral();
+
+    expect(result.codigo).toBe('USER-123');
+    expect(mockSetDoc).toHaveBeenCalledWith('doc-ref', {
+      codigo: 'USER-123',
+      uid: 'USER-123456789',
+      totalConvidados: 0,
+      pontosGanhos: 0,
+      criadoEm: 'mock-ts'
+    });
+  });
+
+  it('deve retornar null se codigo nao existir em getInfoReferral', async () => {
+    (auth as any).currentUser = { uid: 'user-1' };
+    mockDoc.mockReturnValue('doc-ref');
+    mockGetDoc.mockResolvedValueOnce({ exists: () => false });
+
+    const result = await getInfoReferral();
+    expect(result).toBeNull();
   });
 });

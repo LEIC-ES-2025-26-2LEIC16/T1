@@ -105,7 +105,6 @@ classDiagram
         +String email
     }
     class Profile {
-        +String id
         +String nome
         +String username
         +String bio
@@ -113,21 +112,24 @@ classDiagram
         +String avatarUrl
     }
     class Friendship {
-        +String id
-        +List~String~ usuarios
         +String status
         +Date criadoEm
+    }
+    class Referral {
+        +String code
+        +Date dataUtilizacao
     }
     
     %% Core Operations
     class EcoPoint {
-        +String id
         +String nome
-        +Object coordenadas
         +String estado
     }
+    class Coordinates {
+        +double latitude
+        +double longitude
+    }
     class RecyclingAction {
-        +String id
         +double amount
         +double impact
         +Date date
@@ -136,13 +138,11 @@ classDiagram
     
     %% Feedback & Support
     class Report {
-        +String id
         +String description
         +String status
         +Date criadoEm
     }
     class Review {
-        +String id
         +int rating
         +String comment
         +Date data
@@ -150,35 +150,41 @@ classDiagram
     
     %% Gamification & Business
     class Goal {
-        +String id
         +double metaKg
         +double progresso
         +String periodo
     }
     class Company {
-        +String id
         +String name
         +String subscription
     }
     class YearlyWrap {
-        +String id
         +int year
         +String topMaterial
         +double totalRecycled
     }
 
-    User "1" -- "1" Profile : has
-    User "1" -- "*" Friendship : requests/accepts
-    User "1" -- "*" RecyclingAction : performs
-    User "1" -- "*" Report : submits
-    User "1" -- "*" Review : writes
-    User "1" -- "*" Goal : sets
-    User "1" -- "*" YearlyWrap : receives
+    %% Relationships - Identity
+    User "1" -- "1" Profile : possui
+    User "1" -- "*" Friendship : envia pedido
+    User "1" -- "*" Friendship : recebe pedido
+    User "1" -- "*" Referral : convida
+    User "1" -- "1" Referral : é convidado por
 
-    RecyclingAction "*" -- "1" EcoPoint : at
-    Report "*" -- "1" EcoPoint : regarding
-    Review "*" -- "1" EcoPoint : evaluates
-    Company "1" -- "*" Goal : sponsors
+    %% Relationships - Operations & Feedback
+    User "1" -- "*" RecyclingAction : realiza
+    User "1" -- "*" Report : submete
+    User "1" -- "*" Review : escreve
+    
+    RecyclingAction "*" -- "1" EcoPoint : ocorre no
+    Report "*" -- "1" EcoPoint : reporta problema no
+    Review "*" -- "1" EcoPoint : avalia o
+    EcoPoint *-- "1" Coordinates : localizado em
+
+    %% Relationships - Gamification
+    User "*" -- "*" Goal : participa em
+    Company "1" -- "*" Goal : patrocina
+    User "1" -- "*" YearlyWrap : recebe
 ```
 
 ## Architecture and Design

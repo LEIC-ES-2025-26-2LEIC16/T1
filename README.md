@@ -256,10 +256,10 @@ flowchart TD
     end
     
     %% Connections
-    App <-->|HTTPS / WebSockets (Realtime)| Auth
-    App <-->|HTTPS / WebSockets (Realtime)| DB
-    App <-->|HTTPS / WebSockets| Storage
-    App -->|HTTPS| Maps
+    App <-->|"HTTPS / WebSockets (Realtime)"| Auth
+    App <-->|"HTTPS / WebSockets (Realtime)"| DB
+    App <-->|"HTTPS / WebSockets"| Storage
+    App -->|"HTTPS"| Maps
 ```
 
 ### Functional prototype

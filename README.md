@@ -111,6 +111,8 @@ classDiagram
         +int totalPoints
         +String avatarUrl
     }
+    
+    %% Association Classes (Conceptual)
     class Friendship {
         +String status
         +Date criadoEm
@@ -148,11 +150,23 @@ classDiagram
         +Date data
     }
     
-    %% Gamification & Business
+    %% Gamification & Business (with Inheritance)
     class Goal {
+        <<abstract>>
+        +String material
         +double metaKg
-        +double progresso
         +String periodo
+    }
+    class PersonalGoal {
+        +double progresso
+    }
+    class SharedGoal {
+        +double progressoUser1
+        +double progressoUser2
+    }
+    class BrandChallenge {
+        +String title
+        +String description
     }
     class Company {
         +String name
@@ -164,27 +178,35 @@ classDiagram
         +double totalRecycled
     }
 
+    %% Inheritance
+    Goal <|-- PersonalGoal
+    Goal <|-- SharedGoal
+    Goal <|-- BrandChallenge
+
     %% Relationships - Identity
-    User "1" -- "1" Profile : possui
-    User "1" -- "*" Friendship : envia pedido
-    User "1" -- "*" Friendship : recebe pedido
-    User "1" -- "*" Referral : convida
-    User "1" -- "1" Referral : é convidado por
+    User "1" *-- "1" Profile : possui
+    User "1" --> "*" Friendship : envia (Requester)
+    Friendship "*" <-- "1" User : recebe (Addressee)
+    
+    User "1" --> "*" Referral : gera (Inviter)
+    Referral "0..1" <-- "1" User : usa (Invitee)
 
     %% Relationships - Operations & Feedback
-    User "1" -- "*" RecyclingAction : realiza
-    User "1" -- "*" Report : submete
-    User "1" -- "*" Review : escreve
+    User "1" --> "*" RecyclingAction : realiza
+    User "1" --> "*" Report : submete
+    User "1" --> "*" Review : escreve
     
-    RecyclingAction "*" -- "1" EcoPoint : ocorre no
-    Report "*" -- "1" EcoPoint : reporta problema no
-    Review "*" -- "1" EcoPoint : avalia o
+    RecyclingAction "*" --> "1" EcoPoint : ocorre no
+    Report "*" --> "1" EcoPoint : reporta problema no
+    Review "*" --> "1" EcoPoint : avalia o
     EcoPoint *-- "1" Coordinates : localizado em
 
     %% Relationships - Gamification
-    User "*" -- "*" Goal : participa em
-    Company "1" -- "*" Goal : patrocina
-    User "1" -- "*" YearlyWrap : recebe
+    User "1" --> "*" PersonalGoal : define
+    User "1" --> "*" SharedGoal : participa
+    User "1" --> "*" YearlyWrap : recebe
+    
+    Company "1" --> "*" BrandChallenge : patrocina
 ```
 
 ## Architecture and Design
@@ -216,8 +238,8 @@ classDiagram
 
     class ExternalMapsAPI
 
-    UserInterfaceComponents --> LocalStateAndCache
-    LocalStateAndCache --> APIGateway : API Calls
+    UserInterfaceComponents ..> LocalStateAndCache
+    LocalStateAndCache ..> APIGateway : API Calls
     
     APIGateway --> AuthModule
     APIGateway --> RecyclingModule
@@ -229,7 +251,7 @@ classDiagram
     RecyclingModule --> PhotoVerificationData
     GamificationModule --> RecyclingPointsData
     
-    MapModule --> ExternalMapsAPI
+    MapModule ..> ExternalMapsAPI
 ```
 
 

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput, useColorScheme } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/services/firebase';
+import { Colors } from '@/constants/theme';
 
 interface UserRank {
   id: string;
@@ -25,6 +26,9 @@ export default function LeaderboardScreen() {
   const [loading, setLoading] = useState(true);
   const [allUsers, setAllUsers] = useState<UserRank[]>([]);
   const [pesquisa, setPesquisa] = useState('');
+  
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -69,12 +73,12 @@ export default function LeaderboardScreen() {
     const rankStyle = RANK_CORES[index];
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[styles.card, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]}
         activeOpacity={0.7}
         onPress={() => router.push(`/user-profile?userId=${item.id}`)}
       >
-        <View style={[styles.rankBadge, rankStyle ? { backgroundColor: rankStyle.bg } : undefined]}>
-          <Text style={[styles.rankText, rankStyle ? { color: rankStyle.text } : undefined]}>
+        <View style={[styles.rankBadge, rankStyle ? { backgroundColor: rankStyle.bg } : undefined, colorScheme === 'dark' && { backgroundColor: '#334155' }]}>
+          <Text style={[styles.rankText, rankStyle ? { color: rankStyle.text } : undefined, colorScheme === 'dark' && { color: '#fff' }]}>
             {index + 1}
           </Text>
         </View>
@@ -82,18 +86,18 @@ export default function LeaderboardScreen() {
           <Text style={styles.avatarText}>{getIniciais(item.name || item.username || 'U')}</Text>
         </View>
         <View style={styles.info}>
-          <Text style={styles.name} numberOfLines={1}>{item.name || item.username || 'Utilizador'}</Text>
+          <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{item.name || item.username || 'Utilizador'}</Text>
           {item.username && <Text style={styles.username}>@{item.username}</Text>}
         </View>
-        <Text style={styles.points}>{(item.totalPontos || 0).toLocaleString()} pts</Text>
+        <Text style={[styles.points, colorScheme === 'dark' && { color: '#86EFAC' }]}>{(item.totalPontos || 0).toLocaleString()} pts</Text>
       </TouchableOpacity>
     );
   };
 
   if (loading) {
     return (
-      <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
-        <View style={[styles.container, styles.loadingContainer]}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+        <View style={[styles.container, styles.loadingContainer, { backgroundColor: theme.background }]}>
           <ActivityIndicator size="large" color="#1B4332" />
         </View>
       </SafeAreaView>
@@ -101,15 +105,15 @@ export default function LeaderboardScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={styles.container}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Ranking</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Ranking</Text>
           <Text style={styles.subtitle}>Os melhores recicladores</Text>
         </View>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155', color: '#fff' }]}
           placeholder="Procurar utilizador..."
           placeholderTextColor="#bbb"
           value={pesquisa}
@@ -126,19 +130,19 @@ export default function LeaderboardScreen() {
               renderItem={({ item }) => {
                 const pos = allUsers.findIndex(u => u.id === item.id) + 1;
                 return (
-                  <TouchableOpacity style={styles.card} activeOpacity={0.7}
+                  <TouchableOpacity style={[styles.card, colorScheme === 'dark' && { backgroundColor: '#1E293B', borderColor: '#334155' }]} activeOpacity={0.7}
                     onPress={() => router.push(`/user-profile?userId=${item.id}`)}>
-                    <View style={[styles.rankBadge, pos <= 3 ? { backgroundColor: RANK_CORES[pos - 1]?.bg } : undefined]}>
-                      <Text style={[styles.rankText, pos <= 3 ? { color: RANK_CORES[pos - 1]?.text } : undefined]}>#{pos}</Text>
+                    <View style={[styles.rankBadge, pos <= 3 ? { backgroundColor: RANK_CORES[pos - 1]?.bg } : undefined, colorScheme === 'dark' && { backgroundColor: '#334155' }]}>
+                      <Text style={[styles.rankText, pos <= 3 ? { color: RANK_CORES[pos - 1]?.text } : undefined, colorScheme === 'dark' && { color: '#fff' }]}>#{pos}</Text>
                     </View>
                     <View style={[styles.avatar, { backgroundColor: pos === 1 ? '#1B4332' : pos === 2 ? '#4B5563' : pos === 3 ? '#92400E' : '#E5E5E5' }]}>
                       <Text style={styles.avatarText}>{getIniciais(item.name || item.username || 'U')}</Text>
                     </View>
                     <View style={styles.info}>
-                      <Text style={styles.name} numberOfLines={1}>{item.name || item.username || 'Utilizador'}</Text>
+                      <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{item.name || item.username || 'Utilizador'}</Text>
                       {item.username && <Text style={styles.username}>@{item.username}</Text>}
                     </View>
-                    <Text style={styles.points}>{(item.totalPontos || 0).toLocaleString()} pts</Text>
+                    <Text style={[styles.points, colorScheme === 'dark' && { color: '#86EFAC' }]}>{(item.totalPontos || 0).toLocaleString()} pts</Text>
                   </TouchableOpacity>
                 );
               }}

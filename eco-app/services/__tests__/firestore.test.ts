@@ -1,4 +1,16 @@
 import { collection } from 'firebase/firestore';
+
+jest.mock('../firebase', () => ({
+  auth: { currentUser: null },
+  db: {}
+}));
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(),
+  getItem: jest.fn(),
+  removeItem: jest.fn(),
+}));
+
 import { auth } from '../firebase';
 
 import {
@@ -120,12 +132,14 @@ describe('getPerfilUtilizador', () => {
       nome: 'João Silva',
       username: 'joao123',
       bio: 'Amante da natureza',
+      avatarUrl: '',
+      bannerUrl: '',
     });
   });
 
   it('deve retornar valores vazios quando utilizador não está autenticado', async () => {
     const result = await getPerfilUtilizador();
-    expect(result).toEqual({ nome: '', username: '', bio: '' });
+    expect(result).toEqual({ nome: '', username: '', bio: '', avatarUrl: '', bannerUrl: '' });
   });
 
   it('deve retornar displayName quando doc não existe no Firestore', async () => {
@@ -136,6 +150,8 @@ describe('getPerfilUtilizador', () => {
     const result = await getPerfilUtilizador();
     expect(result.nome).toBe('Maria');
     expect(result.username).toBe('');
+    expect(result.avatarUrl).toBe('');
+    expect(result.bannerUrl).toBe('');
   });
 
   it('deve retornar valores vazios em caso de erro', async () => {
@@ -143,7 +159,7 @@ describe('getPerfilUtilizador', () => {
     mockGetDoc.mockRejectedValue(new Error('Erro de rede'));
 
     const result = await getPerfilUtilizador();
-    expect(result).toEqual({ nome: '', username: '', bio: '' });
+    expect(result).toEqual({ nome: '', username: '', bio: '', avatarUrl: '', bannerUrl: '' });
   });
 });
 
@@ -152,17 +168,17 @@ describe('guardarPerfilUtilizador', () => {
     (auth as any).currentUser = { uid: 'user-1' };
     mockDoc.mockReturnValue('doc-ref');
 
-    await guardarPerfilUtilizador({ nome: 'Ana', username: 'ana', bio: 'Eco warrior' });
+    await guardarPerfilUtilizador({ nome: 'Ana', username: 'ana', bio: 'Eco warrior', avatarUrl: '', bannerUrl: '' });
 
     expect(mockSetDoc).toHaveBeenCalledWith(
       'doc-ref',
-      { uid: 'user-1', nome: 'Ana', username: 'ana', bio: 'Eco warrior' },
+      { uid: 'user-1', nome: 'Ana', username: 'ana', bio: 'Eco warrior', avatarUrl: '', bannerUrl: '' },
       { merge: true }
     );
   });
 
   it('deve lançar erro se não autenticado', async () => {
-    await expect(guardarPerfilUtilizador({ nome: '', username: '', bio: '' })).rejects.toThrow(
+    await expect(guardarPerfilUtilizador({ nome: '', username: '', bio: '', avatarUrl: '', bannerUrl: '' })).rejects.toThrow(
       'Utilizador não autenticado.'
     );
   });

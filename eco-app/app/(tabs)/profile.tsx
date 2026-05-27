@@ -1,19 +1,25 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
-  ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform,
+  ScrollView, Alert, TextInput, KeyboardAvoidingView, Platform, Share, Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { auth } from '@/services/firebase';
+import { auth, db } from '@/services/firebase';
 import {
   getEstatisticasUtilizador,
   getPerfilUtilizador,
   guardarPerfilUtilizador,
   type PerfilUtilizador,
+  gerarCodigoReferral,
+  getInfoReferral,
+  type InfoReferral,
+  getAmigos, getPedidosRecebidos, getSugestoesAmigos,
+  enviarPedidoAmizade, responderPedidoAmizade, removerAmigo,
 } from '@/services/firestore';
 
 type Estatisticas = {
@@ -48,11 +54,81 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
+    // Referral
+  const [referral,          setReferral]          = useState<InfoReferral | null>(null);
+  const [loadingReferral,   setLoadingReferral]   = useState(false);
+  const [partilhando,       setPartilhando]       = useState(false);
+  const [mostrarBonusModal, setMostrarBonusModal] = useState(false);
+
+  // Amigos
+  const [amigosLista, setAmigosLista] = useState<{ uid: string; nome: string; username: string }[]>([]);
+  const [pedidosLista, setPedidosLista] = useState<{ id: string; deUid: string; nome: string }[]>([]);
+  const [pesquisaAmigos, setPesquisaAmigos] = useState('');
+  const [resultadosAmigos, setResultadosAmigos] = useState<any[]>([]);
+  const [pesquisandoAmigos, setPesquisandoAmigos] = useState(false);
+  const [abaAmigos, setAbaAmigos] = useState<'amigos' | 'pedidos' | 'procurar'>('amigos');
+
+  const carregarAmigos = async () => {
+    const amigos = await getAmigos();
+    const perfis = await Promise.all(amigos.map(async a => {
+      const snap = await getDoc(doc(db, 'utilizadores', a.uid));
+      const d = snap.data() || {};
+      return { uid: a.uid, nome: d.nome || d.username || 'Amigo', username: d.username || '' };
+    }));
+    setAmigosLista(perfis);
+    const pedidos = await getPedidosRecebidos();
+    const perfisP = await Promise.all(pedidos.map(async p => {
+      const snap = await getDoc(doc(db, 'utilizadores', p.deUid));
+      const d = snap.data() || {};
+      return { ...p, nome: d.nome || d.username || 'Utilizador' };
+    }));
+    setPedidosLista(perfisP);
+  };
+
   useEffect(() => {
-    Promise.all([getEstatisticasUtilizador(), getPerfilUtilizador()])
-      .then(([s, p]) => { setStats(s); setPerfil(p); })
+    Promise.all([getEstatisticasUtilizador(), getPerfilUtilizador(), getInfoReferral(), carregarAmigos()])
+      .then(([s, p, r]) => { setStats(s); setPerfil(p); setReferral(r); })
       .finally(() => setLoading(false));
   }, []);
+
+
+
+   // Polling: deteta quando um novo amigo se regista
+  useEffect(() => {
+    if (!referral) return;
+    const interval = setInterval(async () => {
+      const info = await getInfoReferral();
+      if (info && referral && info.totalConvidados > referral.totalConvidados) {
+        setMostrarBonusModal(true);
+        setReferral(info);
+      }
+    }, 15_000);
+    return () => clearInterval(interval);
+  }, [referral]);
+
+  const partilharConvite = async () => {
+    setPartilhando(true);
+    try {
+      let info = referral;
+      if (!info) {
+        setLoadingReferral(true);
+        info = await gerarCodigoReferral();
+        setReferral(info);
+        setLoadingReferral(false);
+      }
+      const mensagem =
+        `Junta-te a mim no MyImpact e vamos reciclar juntos! 🌱\n\n` +
+        `Usa o meu link de convite:\n${info.link}\n\nCódigo: ${info.codigo}`;
+      await Share.share({ message: mensagem, url: info.link });
+    } catch (err: any) {
+      if (err?.message !== 'User did not share')
+        Alert.alert('Erro', 'Não foi possível abrir o menu de partilha.');
+    } finally {
+      setPartilhando(false);
+      setLoadingReferral(false);
+    }
+  };
+
 
   const iniciais = perfil.nome
     ? perfil.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -109,15 +185,16 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* Banner */}
+        <View style={{ paddingTop: insets.top, backgroundColor: '#1B4332' }}>
         <TouchableOpacity
           activeOpacity={editando ? 0.7 : 1}
           onPress={editando ? escolherBanner : undefined}
-          style={[styles.bannerWrapper, { height: BANNER_HEIGHT + insets.top }]}
+          style={styles.bannerWrapper}
         >
           {bannerSource ? (
             <Image source={{ uri: bannerSource }} style={styles.bannerImage} contentFit="cover" />
           ) : (
-            <View style={[styles.banner, { height: BANNER_HEIGHT + insets.top }]} />
+            <View style={styles.banner} />
           )}
           {editando && (
             <View style={styles.editOverlay}>
@@ -125,6 +202,7 @@ export default function ProfileScreen() {
             </View>
           )}
         </TouchableOpacity>
+        </View>
 
         {/* Avatar + botão editar */}
         <View style={styles.avatarRow}>
@@ -206,6 +284,14 @@ export default function ProfileScreen() {
                 numberOfLines={3}
               />
 
+              {__DEV__ && (
+                <TouchableOpacity 
+                  testID="autofill-profile" 
+                  onPress={() => setRascunho(r => ({ ...r, nome: 'Joao', username: 'jo', bio: 'test' }))}
+                  style={{ width: 1, height: 1 }}
+                />
+              )}
+
               <View style={styles.botoesEdicao}>
                 <TouchableOpacity style={styles.botaoCancelar} onPress={() => setEditando(false)} testID="profile-cancel-button">
                   <Text style={styles.botaoCancelarTexto}>Cancelar</Text>
@@ -262,12 +348,206 @@ export default function ProfileScreen() {
         <Text style={styles.botaoWrappedTexto}>Ver o meu Wrapped 2026</Text>
       </TouchableOpacity>
 
+        <View style={styles.separador} />
+
+        {/* ── Amigos ── */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 12 }}>
+          <Text style={styles.secaoTitulo}>AMIGOS</Text>
+
+          <View style={{ flexDirection: 'row', backgroundColor: '#f0f0f0', borderRadius: 10, padding: 4, marginBottom: 16 }}>
+            {(['amigos', 'pedidos', 'procurar'] as const).map(t => (
+              <TouchableOpacity key={t} style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: abaAmigos === t ? '#fff' : 'transparent' }}
+                onPress={() => setAbaAmigos(t)}>
+                <Text style={{ textAlign: 'center', color: abaAmigos === t ? '#1B4332' : '#666', fontWeight: '600', fontSize: 12 }}>
+                  {t === 'amigos' ? `Amigos (${amigosLista.length})` : t === 'pedidos' ? `Pedidos (${pedidosLista.length})` : 'Procurar'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {abaAmigos === 'amigos' && (
+            amigosLista.length === 0 ? (
+              <Text style={{ color: '#aaa', textAlign: 'center', paddingVertical: 12, fontSize: 13 }}>Sem amigos ainda.</Text>
+            ) : (
+              amigosLista.map(a => (
+                <TouchableOpacity key={a.uid} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }}
+                  onPress={() => router.push({ pathname: '/user-profile', params: { userId: a.uid } } as any)}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#639922', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>
+                      {a.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#1a1a1a' }}>{a.nome}</Text>
+                    {a.username ? <Text style={{ fontSize: 11, color: '#aaa' }}>@{a.username}</Text> : null}
+                  </View>
+                </TouchableOpacity>
+              ))
+            )
+          )}
+
+          {abaAmigos === 'pedidos' && (
+            pedidosLista.length === 0 ? (
+              <Text style={{ color: '#aaa', textAlign: 'center', paddingVertical: 12, fontSize: 13 }}>Sem pedidos pendentes.</Text>
+            ) : (
+              pedidosLista.map(p => (
+                <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#639922', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>
+                      {p.nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#1a1a1a' }}>{p.nome}</Text>
+                    <Text style={{ fontSize: 11, color: '#aaa' }}>Quer ser teu amigo</Text>
+                  </View>
+                  <TouchableOpacity style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#EAF3DE', justifyContent: 'center', alignItems: 'center', marginRight: 6 }}
+                    onPress={async () => { await responderPedidoAmizade(p.id, true); carregarAmigos(); }}>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#1B4332' }}>✓</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#FEE2E2', justifyContent: 'center', alignItems: 'center' }}
+                    onPress={async () => { await responderPedidoAmizade(p.id, false); carregarAmigos(); }}>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#DC2626' }}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              ))
+            )
+          )}
+
+          {abaAmigos === 'procurar' && (
+            <View>
+              <TextInput
+                style={{
+                  borderWidth: 1.5, borderColor: '#E5E5E5', borderRadius: 12,
+                  padding: 12, fontSize: 14, color: '#1a1a1a', backgroundColor: '#fff',
+                }}
+                placeholder="Pesquisar por nome ou username..."
+                placeholderTextColor="#bbb"
+                value={pesquisaAmigos}
+                onChangeText={async (v) => {
+                  setPesquisaAmigos(v);
+                  if (v.length < 2) { setResultadosAmigos([]); return; }
+                  setPesquisandoAmigos(true);
+                  const res = await getSugestoesAmigos(v);
+                  setResultadosAmigos(res.filter(r => r.id !== auth.currentUser?.uid));
+                  setPesquisandoAmigos(false);
+                }}
+              />
+              {pesquisandoAmigos && <ActivityIndicator color="#1B4332" style={{ marginTop: 8 }} />}
+              {resultadosAmigos.map(r => (
+                <TouchableOpacity key={r.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }}
+                  onPress={() => router.push({ pathname: '/user-profile', params: { userId: r.id } } as any)}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#639922', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>
+                      {(r.nome || r.username || 'U').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#1a1a1a' }}>{r.nome || r.username || 'Utilizador'}</Text>
+                    {r.username ? <Text style={{ fontSize: 11, color: '#aaa' }}>@{r.username}</Text> : null}
+                    <Text style={{ fontSize: 11, color: '#639922', fontWeight: '600' }}>{r.totalPontos || 0} pts</Text>
+                  </View>
+                  <TouchableOpacity style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#1B4332', justifyContent: 'center', alignItems: 'center' }}
+                    onPress={async () => {
+                      try {
+                        await enviarPedidoAmizade(r.id);
+                        Alert.alert('Pedido enviado');
+                        setResultadosAmigos(prev => prev.filter(x => x.id !== r.id));
+                      } catch (e: any) { Alert.alert('Erro', e.message); }
+                    }}>
+                    <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff' }}>+</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
+              {pesquisaAmigos.length >= 2 && !pesquisandoAmigos && resultadosAmigos.length === 0 && (
+                <Text style={{ textAlign: 'center', color: '#aaa', marginTop: 16, fontSize: 13 }}>Nenhum utilizador encontrado.</Text>
+              )}
+            </View>
+          )}
+        </View>
+
+        <View style={styles.separador} />
+
+        {/* ── Painel Convidar Amigos ── */}
+        <Text style={styles.secaoTitulo}>CONVIDAR AMIGOS</Text>
+        <View style={styles.referralCard}>
+          <View style={styles.referralCabecalho}>
+            <View style={styles.referralIcone}>
+              <Text style={styles.referralIconeTexto}>🌱</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.referralTitulo}>Convida e ganha EcoCoins</Text>
+              <Text style={styles.referralSub}>
+                Cada amigo que se registar com o teu link vale{' '}
+                <Text style={{ color: '#1B4332', fontWeight: '700' }}>50 EcoCoins</Text> para ti.
+              </Text>
+            </View>
+          </View>
+
+          {referral && (
+            <View style={styles.referralStats}>
+              <View style={styles.referralStatItem}>
+                <Text style={styles.referralStatValor}>{referral.totalConvidados}</Text>
+                <Text style={styles.referralStatLabel}>amigos{'\n'}convidados</Text>
+              </View>
+              <View style={styles.referralStatDivider} />
+              <View style={styles.referralStatItem}>
+                <Text style={styles.referralStatValor}>{referral.pontosGanhos}</Text>
+                <Text style={styles.referralStatLabel}>EcoCoins{'\n'}ganhos</Text>
+              </View>
+              <View style={styles.referralStatDivider} />
+              <View style={styles.referralStatItem}>
+                <Text style={[styles.referralStatValor, { fontSize: 13, letterSpacing: 1 }]}>
+                  {referral.codigo}
+                </Text>
+                <Text style={styles.referralStatLabel}>o teu{'\n'}código</Text>
+              </View>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.botaoPartilhar}
+            onPress={partilharConvite}
+            disabled={partilhando || loadingReferral}
+            testID="profile-share-invite-button"
+          >
+            {partilhando || loadingReferral
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={styles.botaoPartilharTexto}>↗ Partilhar link de convite</Text>
+            }
+          </TouchableOpacity>
+
+          <Text style={styles.referralNota}>
+            O bónus só é creditado após o teu amigo completar o registo.
+          </Text>
+        </View>
+
+        <View style={styles.separador} />
+
         <TouchableOpacity style={styles.botaoSair} onPress={handleLogout}>
           <Text style={styles.botaoSairTexto}>Terminar sessão</Text>
         </TouchableOpacity>
 
-  
-    </ScrollView>
+      </ScrollView>
+
+      {/* Modal bónus */}
+      <Modal animationType="slide" transparent visible={mostrarBonusModal}
+        onRequestClose={() => setMostrarBonusModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalEmoji}>🎉</Text>
+            <Text style={styles.modalTitulo}>O teu amigo juntou-se!</Text>
+            <Text style={styles.modalTexto}>
+              Registou-se no MyImpact através do teu convite.{'\n'}
+              Ganhaste <Text style={{ color: '#1B4332', fontWeight: '700' }}>50 EcoCoins</Text>!
+            </Text>
+            <TouchableOpacity style={styles.modalBotao} onPress={() => setMostrarBonusModal(false)}>
+              <Text style={styles.modalBotaoTexto}>Ótimo!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </KeyboardAvoidingView>
   );
 }
@@ -276,7 +556,7 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   container:        { backgroundColor: '#fff', paddingBottom: 48 },
 
-  bannerWrapper: { overflow: 'hidden' },
+  bannerWrapper: { overflow: 'hidden', height: BANNER_HEIGHT },
   banner: {
     height: BANNER_HEIGHT,
     backgroundColor: '#1B4332',
@@ -375,4 +655,30 @@ const styles = StyleSheet.create({
   botaoSairTexto: { color: '#DC2626', fontWeight: '700', fontSize: 15 },
   botaoWrapped: { marginHorizontal: 20, backgroundColor: '#1B4332', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 20, shadowColor: '#1B4332', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4},
   botaoWrappedTexto: { color: '#fff', fontWeight: '700', fontSize: 16,},
+
+
+  referralCard: {
+    marginHorizontal: 20, marginBottom: 8, backgroundColor: '#FAFAFA',
+    borderRadius: 16, borderWidth: 1, borderColor: '#EFEFEF', padding: 20,
+  },
+  referralCabecalho:  { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 16 },
+  referralIcone:      { width: 44, height: 44, borderRadius: 12, backgroundColor: '#EAF3DE', justifyContent: 'center', alignItems: 'center' },
+  referralIconeTexto: { fontSize: 22 },
+  referralTitulo:     { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 3 },
+  referralSub:        { fontSize: 13, color: '#666', lineHeight: 18 },
+  referralStats:      { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#EFEFEF', marginBottom: 16, overflow: 'hidden' },
+  referralStatItem:   { flex: 1, alignItems: 'center', paddingVertical: 14 },
+  referralStatDivider:{ width: 1, backgroundColor: '#EFEFEF' },
+  referralStatValor:  { fontSize: 18, fontWeight: '800', color: '#1B4332', marginBottom: 3 },
+  referralStatLabel:  { fontSize: 10, color: '#aaa', textAlign: 'center', lineHeight: 14 },
+  botaoPartilhar:     { backgroundColor: '#1B4332', borderRadius: 12, padding: 15, alignItems: 'center' },
+  botaoPartilharTexto:{ color: '#fff', fontWeight: '700', fontSize: 15 },
+  referralNota:       { fontSize: 11, color: '#bbb', textAlign: 'center', marginTop: 12, lineHeight: 16 },
+  modalOverlay:       { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalContent:       { width: '82%', backgroundColor: '#fff', borderRadius: 20, padding: 28, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 },
+  modalEmoji:         { fontSize: 52, marginBottom: 12 },
+  modalTitulo:        { fontSize: 20, fontWeight: '800', color: '#1a1a1a', marginBottom: 8 },
+  modalTexto:         { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  modalBotao:         { backgroundColor: '#1B4332', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 40 },
+  modalBotaoTexto:    { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

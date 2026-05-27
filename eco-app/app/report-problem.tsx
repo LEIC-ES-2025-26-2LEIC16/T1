@@ -77,6 +77,14 @@ export default function ReportProblemScreen() {
         onChangeText={setDescricao}
       />
 
+      {__DEV__ && (
+        <TouchableOpacity 
+          testID="autofill-report" 
+          onPress={() => { setDescricao('O ecoponto amarelo esta a transbordar e tem sacos no chao.'); setTipSelecionado('cheio'); }}
+          style={{ width: 1, height: 1 }}
+        />
+      )}
+
       {/* Botão enviar */}
       <TouchableOpacity
         style={[styles.botaoEnviar, (!tipoSelecionado || enviando) && styles.botaoDesativado]}

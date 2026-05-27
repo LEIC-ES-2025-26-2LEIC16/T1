@@ -4,8 +4,19 @@ appId: com.myimpact.app
     clearState: false
 
 - extendedWaitUntil:
-    visible: "Ver todos os ecopontos"
+    visible: "Entra na tua conta|Ver todos os ecopontos"
     timeout: 30000
+
+- runFlow:
+    when:
+      visible: "Entra na tua conta"
+    commands:
+      - tapOn:
+          id: "autofill-login"
+      - tapOn: "Entrar"
+      - extendedWaitUntil:
+          visible: "Ver todos os ecopontos"
+          timeout: 20000
 
 - tapOn:
     id: "profile-avatar-button"

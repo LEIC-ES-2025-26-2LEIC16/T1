@@ -96,7 +96,7 @@ export default function EcopontoDetailScreen() {
       <TouchableOpacity
         style={styles.acaoCard}
         activeOpacity={0.85}
-        onPress={() => router.push('/log-recycling' as any)}
+        onPress={() => router.push({ pathname: '/log-recycling', params: { ecopontoId, ecopontoNome } } as any)}
       >
         <View style={[styles.acaoIconeWrap, { backgroundColor: '#D1FAE5' }]}>
           <Text style={styles.acaoIcone}>♻</Text>

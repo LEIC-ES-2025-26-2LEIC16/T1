@@ -3,16 +3,37 @@ appId: com.myimpact.app
 - launchApp:
     clearState: false
 
-# a nossa app vai abrir já com o login feito, logo procuramos o mapa
+- extendedWaitUntil:
+    visible: "Entra na tua conta|Ver todos os ecopontos"
+    timeout: 30000
+
+- runFlow:
+    when:
+      visible: "Entra na tua conta"
+    commands:
+      - tapOn:
+          id: "autofill-login"
+      - tapOn: "Entrar"
+      - extendedWaitUntil:
+          visible: "Ver todos os ecopontos"
+          timeout: 20000
+
+- tapOn: "Ver todos os ecopontos"
+
 - extendedWaitUntil:
     visible: "Ecopontos"
     timeout: 10000
 
-# fluxo de reciclagem
-- tapOn: "Registar Reciclagem"
-- tapOn: "Ex: 2.5"
-- inputText: "2"
+- tapOn:
+    id: "recycling-bin-marker"
+    index: 0
+
+- extendedWaitUntil:
+    visible: "O QUE QUERES FAZER\\?"
+    timeout: 10000
+
+- tapOn: "Registar reciclagem"
+- tapOn:
+    id: "autofill-log"
 - tapOn: "Plástico"
-- hideKeyboard
-- tapOn: "Abrir Câmara"
-- tapOn: "Submeter (+10 pts)"
+- tapOn: "Submeter.*"

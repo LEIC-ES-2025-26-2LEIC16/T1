@@ -64,6 +64,14 @@ export default function PasswordRecoveryScreen() {
         )}
       </TouchableOpacity>
 
+      {__DEV__ && (
+        <TouchableOpacity 
+          testID="autofill-recovery" 
+          onPress={() => setEmail('teste@exemplo.com')}
+          style={{ width: 1, height: 1 }}
+        />
+      )}
+
       <TouchableOpacity onPress={() => router.back()}>
         <Text style={styles.linkVoltar}>Voltar para o Login</Text>
       </TouchableOpacity>

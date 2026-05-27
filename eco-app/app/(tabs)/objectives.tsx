@@ -5,9 +5,13 @@ import {
   ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { doc, getDoc, collection, addDoc, getDocs } from 'firebase/firestore';
+import { db, auth } from '@/services/firebase';
 import {
   getObjetivos, criarObjetivo, eliminarObjetivo, getHistoricoReciclagem,
-  type Objetivo,
+  getObjetivosPartilhados, criarObjetivoPartilhado, eliminarObjetivoPartilhado,
+  getAmigos,
+  type Objetivo, type ObjetivoPartilhado,
 } from '@/services/firestore';
 import { tabelaPontos } from '@/utils/recyclingUtils';
 
@@ -81,15 +85,75 @@ export default function ObjectivesScreen() {
   const [selectedObjetivoId, setSelectedObjetivoId] = useState<string | null>(null);
 
   // new state for the tabs and challenges
-  const [currentTab, setCurrentTab] = useState<'pessoais' | 'desafios'>('pessoais');
+  const [currentTab, setCurrentTab] = useState<'pessoais' | 'partilhados' | 'desafios'>('pessoais');
+  const [objetivosPartilhados, setObjetivosPartilhados] = useState<(ObjetivoPartilhado & { progressoUid1: number; progressoUid2: number })[]>([]);
+  const [listaAmigos, setListaAmigos] = useState<{ uid: string; nome: string }[]>([]);
+  const [mostrarFormPartilhado, setMostrarFormPartilhado] = useState(false);
+  const [amigoSelecionado, setAmigoSelecionado] = useState<string | null>(null);
   const [isParticipatingNike, setIsParticipatingNike] = useState(false);
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [hasClaimedNikeReward, setHasClaimedNikeReward] = useState(false);
 
+  // new state for brand challenge creation modal
+  const [showCreateBrandModal, setShowCreateBrandModal] = useState(false);
+  const [challengeTitle, setChallengeTitle] = useState('');
+  const [challengeGoal, setChallengeGoal] = useState('');
+  const [challengeDeadline, setChallengeDeadline] = useState('');
+  const [challengeReward, setChallengeReward] = useState('');
+  const [isSavingChallenge, setIsSavingChallenge] = useState(false);
+
+  // state for the dynamic brand challenges
+  const [brandChallenges, setBrandChallenges] = useState<any[]>([]);
+
+  // We'll use this state to control access to role-specific features
+  const [userRole, setUserRole] = useState<string>('user');
+
+  // This function fetches the brand challenges from our 'challenges' collection in Firestore
+  const fetchBrandChallenges = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'challenges'));
+      const challenges = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setBrandChallenges(challenges);
+    } catch (error) {
+      console.error("Error fetching brand challenges: ", error);
+    }
+  };
+
+  // This function will get the current user's role from their profile
+  const fetchUserRole = async () => {
+    if (auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'utilizadores', auth.currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          // We set the role from the document, or default to 'user' if it's not there
+          setUserRole(userData.role || 'user');
+        }
+      } catch (error) {
+        console.error("Error fetching user role: ", error);
+      }
+    }
+  };
+
   useFocusEffect(useCallback(() => {
     setLoading(true);
-    Promise.all([getObjetivos(), getHistoricoReciclagem()])
-      .then(([obj, reg]) => { setObjetivos(obj); setRegistos(reg); })
+    fetchBrandChallenges(); // fetch brand challenges when the screen is focused
+    fetchUserRole(); // and also fetch the user's role
+    Promise.all([getObjetivos(), getHistoricoReciclagem(), getObjetivosPartilhados(), getAmigos()])
+      .then(async ([obj, reg, part, amigos]) => {
+        setObjetivos(obj);
+        setRegistos(reg);
+        setObjetivosPartilhados(part);
+        const perfis = await Promise.all(
+          amigos.map(async a => {
+            const snap = await getDoc(doc(db, 'utilizadores', a.uid));
+            const d = snap.data() || {};
+            return { uid: a.uid, nome: d.nome || d.username || 'Amigo' };
+          })
+        );
+        setListaAmigos(perfis);
+      })
       .finally(() => setLoading(false));
   }, []));
 
@@ -106,6 +170,52 @@ export default function ObjectivesScreen() {
       setShowRewardModal(true);
     }
   }, [isParticipatingNike, nikeProgress, hasClaimedNikeReward]);
+
+  const handleCreateBrandChallenge = async () => {
+    // First, let's validate that all fields are filled
+    if (!challengeTitle || !challengeGoal || !challengeDeadline || !challengeReward) {
+      Alert.alert('Campos em falta', 'Por favor, preenche todos os campos para criar o desafio.');
+      return;
+    }
+
+    setIsSavingChallenge(true);
+    try {
+      // Add the new challenge to the 'challenges' collection in Firestore
+      await addDoc(collection(db, 'challenges'), {
+        title: challengeTitle,
+        goal: Number(challengeGoal),
+        deadline: challengeDeadline,
+        rewardCode: challengeReward,
+        active: true,
+        createdAt: new Date(),
+      });
+
+      // Let the user know it was successful and reset the form
+      Alert.alert('Sucesso!', 'Desafio de marca criado com sucesso.');
+      setShowCreateBrandModal(false);
+      setChallengeTitle('');
+      setChallengeGoal('');
+      setChallengeDeadline('');
+      setChallengeReward('');
+
+      // And now, we refresh the list of challenges so the new one appears instantly
+      fetchBrandChallenges();
+    } catch (error) {
+      console.error("Error creating brand challenge: ", error);
+      Alert.alert('Erro', 'Ocorreu um erro ao criar o desafio. Tenta novamente.');
+    } finally {
+      setIsSavingChallenge(false);
+    }
+  };
+
+  const handleCancelCreateChallenge = () => {
+    setShowCreateBrandModal(false);
+    // Reset fields on cancel
+    setChallengeTitle('');
+    setChallengeGoal('');
+    setChallengeDeadline('');
+    setChallengeReward('');
+  };
 
   const guardar = async () => {
     if (!metaKg || isNaN(Number(metaKg)) || Number(metaKg) <= 0) {
@@ -152,13 +262,22 @@ export default function ObjectivesScreen() {
           <Text style={styles.titulo}>Objetivos</Text>
           <Text style={styles.subtitulo}>Acompanha o teu progresso de reciclagem</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.botaoNovo, mostrarForm && styles.botaoNovoAtivo]}
-          onPress={() => setMostrarForm(v => !v)}
-          testID="objectives-add-button"
-        >
-          <Text style={styles.botaoNovoTexto}>{mostrarForm ? '×' : '+'}</Text>
-        </TouchableOpacity>
+        {/* We only show the '+' button on the challenges tab if the user has the 'company' role */}
+        {(currentTab === 'desafios' && userRole !== 'company') ? null : (
+          <TouchableOpacity
+            style={[styles.botaoNovo, (mostrarForm || showCreateBrandModal) && styles.botaoNovoAtivo]}
+            onPress={() => {
+              if (currentTab === 'desafios') {
+                setShowCreateBrandModal(true);
+              } else {
+                setMostrarForm(v => !v);
+              }
+            }}
+            testID="objectives-add-button"
+          >
+            <Text style={styles.botaoNovoTexto}>{(mostrarForm || showCreateBrandModal) ? '×' : '+'}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Tab Navigator */}
@@ -170,10 +289,16 @@ export default function ObjectivesScreen() {
           <Text style={[styles.tabButtonText, currentTab === 'pessoais' && styles.tabButtonTextActive]}>Meus Objetivos</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tabButton, currentTab === 'partilhados' && styles.tabButtonActive]}
+          onPress={() => setCurrentTab('partilhados')}
+        >
+          <Text style={[styles.tabButtonText, currentTab === 'partilhados' && styles.tabButtonTextActive]}>Partilhados</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tabButton, currentTab === 'desafios' && styles.tabButtonActive]}
           onPress={() => setCurrentTab('desafios')}
         >
-          <Text style={[styles.tabButtonText, currentTab === 'desafios' && styles.tabButtonTextActive]}>Desafios de Marcas</Text>
+          <Text style={[styles.tabButtonText, currentTab === 'desafios' && styles.tabButtonTextActive]}>Desafios</Text>
         </TouchableOpacity>
       </View>
 
@@ -213,6 +338,21 @@ export default function ObjectivesScreen() {
                 value={metaKg}
                 onChangeText={setMetaKg}
               />
+              
+              {__DEV__ && (
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity 
+                    testID="autofill-obj-10" 
+                    onPress={() => setMetaKg('10')}
+                    style={{ width: 1, height: 1 }}
+                  />
+                  <TouchableOpacity 
+                    testID="autofill-obj-20" 
+                    onPress={() => setMetaKg('20')}
+                    style={{ width: 1, height: 1 }}
+                  />
+                </View>
+              )}
 
               <Text style={styles.fieldLabel}>PERÍODO</Text>
               <View style={styles.chips}>
@@ -343,9 +483,179 @@ export default function ObjectivesScreen() {
         </>
       )}
 
+      {/* Shared Objectives Tab */}
+      {currentTab === 'partilhados' && (
+        <>
+          {mostrarFormPartilhado && (
+            <View style={styles.form}>
+              <Text style={styles.formTitulo}>Novo objetivo partilhado</Text>
+
+              <Text style={styles.fieldLabel}>COM AMIGO</Text>
+              <View style={styles.chips}>
+                {listaAmigos.map(a => (
+                  <TouchableOpacity
+                    key={a.uid}
+                    style={[styles.chip, amigoSelecionado === a.uid && { backgroundColor: '#1B4332', borderColor: '#1B4332' }]}
+                    onPress={() => setAmigoSelecionado(a.uid)}
+                  >
+                    <Text style={[styles.chipTexto, amigoSelecionado === a.uid && styles.chipTextoSelecionado]}>{a.nome}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.fieldLabel}>MATERIAL</Text>
+              <View style={styles.chips}>
+                {MATERIAIS.map(m => {
+                  const meta = MATERIAL_META[m];
+                  const sel = material === m;
+                  return (
+                    <TouchableOpacity
+                      key={m}
+                      style={[styles.chip, sel && { backgroundColor: meta.cor, borderColor: meta.cor }]}
+                      onPress={() => setMaterial(m)}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: meta.cor }}>{meta.iniciais}</Text>
+                      <Text style={[styles.chipTexto, sel && styles.chipTextoSelecionado]}>{m}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.fieldLabel}>META (KG)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="Ex: 10"
+                placeholderTextColor="#bbb"
+                value={metaKg}
+                onChangeText={setMetaKg}
+              />
+
+              <Text style={styles.fieldLabel}>PERÍODO</Text>
+              <View style={styles.chips}>
+                {PERIODOS.map(p => (
+                  <TouchableOpacity
+                    key={p.value}
+                    style={[styles.chip, styles.chipPeriodo, periodo === p.value && styles.chipSelecionado]}
+                    onPress={() => setPeriodo(p.value)}
+                  >
+                    <Text style={[styles.chipTexto, periodo === p.value && styles.chipTextoSelecionado]}>{p.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity style={styles.botaoGuardar} onPress={async () => {
+                if (!amigoSelecionado) { Alert.alert('Seleciona um amigo'); return; }
+                if (!metaKg || isNaN(Number(metaKg)) || Number(metaKg) <= 0) { Alert.alert('Meta inválida'); return; }
+                try {
+                  await criarObjetivoPartilhado(amigoSelecionado, material, Number(metaKg), periodo);
+                  setMostrarFormPartilhado(false);
+                  setAmigoSelecionado(null);
+                  setMetaKg('');
+                  const part = await getObjetivosPartilhados();
+                  setObjetivosPartilhados(part);
+                } catch (e: any) { Alert.alert('Erro', e.message); }
+              }} disabled={guardando}>
+                <Text style={styles.botaoGuardarTexto}>Criar objetivo partilhado</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {loading ? (
+            <ActivityIndicator color="#1B4332" style={{ marginTop: 48 }} />
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[styles.botaoNovo, { alignSelf: 'flex-end', marginBottom: 16 }]}
+                onPress={() => setMostrarFormPartilhado(v => !v)}
+              >
+                <Text style={styles.botaoNovoTexto}>{mostrarFormPartilhado ? '×' : '+'}</Text>
+              </TouchableOpacity>
+
+              {objetivosPartilhados.length === 0 ? (
+                <View style={styles.vazio}>
+                  <Text style={styles.vazioEmoji}>🤝</Text>
+                  <Text style={styles.vazioTexto}>Sem objetivos partilhados</Text>
+                  <Text style={styles.vazioSub}>Cria um objetivo com um amigo para compararem o progresso.</Text>
+                </View>
+              ) : (
+                objetivosPartilhados.map(o => {
+                  const meuUid = auth.currentUser?.uid || '';
+                  const amigoUid = o.uid1 === meuUid ? o.uid2 : o.uid1;
+                  const amigoNome = listaAmigos.find(a => a.uid === amigoUid)?.nome || 'Amigo';
+                  const meuProgresso = o.uid1 === meuUid ? o.progressoUid1 : o.progressoUid2;
+                  const progressoAmigo = o.uid1 === meuUid ? o.progressoUid2 : o.progressoUid1;
+                  const meta = MATERIAL_META[o.material] || MATERIAL_META['Todos'];
+
+                  return (
+                    <View key={o.id} style={[styles.card, { borderLeftColor: meta.cor }]}>
+                      <View style={styles.cardTopo}>
+                        <View style={[styles.iconCircle, { backgroundColor: meta.fundo }]}>
+                          <Text style={[styles.iconTexto, { color: meta.cor }]}>{meta.iniciais}</Text>
+                        </View>
+                        <View style={styles.cardInfo}>
+                          <Text style={styles.cardTitulo}>Partilhado com {amigoNome}</Text>
+                          <Text style={styles.cardSub}>{o.material} · meta {o.metaKg} kg ({o.periodo})</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => eliminarObjetivoPartilhado(o.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                          <Text style={styles.botaoEliminarTexto}>×</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <View style={{ marginTop: 12 }}>
+                        <View style={styles.barraComparacao}>
+                          <Text style={styles.comparacaoLabel}>Tu: {meuProgresso.toFixed(1)} kg</Text>
+                          <View style={styles.barraFundoComparacao}>
+                            <View style={[styles.barraProgressoComparacao, { width: `${Math.min((meuProgresso / o.metaKg) * 100, 100)}%`, backgroundColor: '#1B4332' }]} />
+                          </View>
+                        </View>
+                        <View style={styles.barraComparacao}>
+                          <Text style={styles.comparacaoLabel}>{amigoNome}: {progressoAmigo.toFixed(1)} kg</Text>
+                          <View style={styles.barraFundoComparacao}>
+                            <View style={[styles.barraProgressoComparacao, { width: `${Math.min((progressoAmigo / o.metaKg) * 100, 100)}%`, backgroundColor: '#639922' }]} />
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </>
+          )}
+        </>
+      )}
+
       {/* Brand Challenges Tab */}
       {currentTab === 'desafios' && (
         <View>
+          {/* Dynamically loaded brand challenges from Firestore */}
+          {brandChallenges.map(challenge => (
+            <View key={challenge.id} style={[styles.challengeCard, { marginBottom: 16 }]}>
+              <View style={styles.challengeHeader}>
+                <Text style={styles.challengeBrand}>{challenge.title.toUpperCase()}</Text>
+              </View>
+              <View style={styles.challengeBody}>
+                <Text style={styles.challengeTitle}>Meta de {challenge.goal}kg para ganhar um prémio!</Text>
+                <Text style={styles.challengeDescription}>
+                  Participa neste desafio exclusivo e sê recompensado.
+                </Text>
+
+                {/* A nice little badge for the deadline */}
+                <View style={styles.deadlineBadge}>
+                  <Text>⏳</Text>
+                  <Text style={styles.deadlineText}>Termina a {challenge.deadline}</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.challengeButton}
+                  onPress={() => Alert.alert("Disponível em breve!", "A funcionalidade de participação para este desafio será implementada na próxima sprint.")}
+                >
+                  <Text style={styles.challengeButtonText}>Participar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+
           {/* Mock Nike Challenge Card */}
           <View style={styles.challengeCard}>
             <View style={styles.challengeHeader}>
@@ -358,9 +668,12 @@ export default function ObjectivesScreen() {
               </Text>
 
               {/* Add deadline indicator so the user knows when the challenge ends */}
-              <Text style={{ fontSize: 12, color: '#e63946', marginTop: 8, fontWeight: 'bold' }}>
-                ⏳ Termina a 31 de Maio
-              </Text>
+              <View style={styles.deadlineBadge}>
+                <Text>⏳</Text>
+                <Text style={styles.deadlineText}>
+                  Termina a 31 de Maio
+                </Text>
+              </View>
 
               {isParticipatingNike ? (
                 <View style={styles.progressContainer}>
@@ -431,6 +744,63 @@ export default function ObjectivesScreen() {
             >
               <Text style={styles.modalButtonText}>Guardar na Carteira</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Brand Challenge Creation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showCreateBrandModal}
+        onRequestClose={handleCancelCreateChallenge}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Criar Desafio de Marca</Text>
+
+            <TextInput
+              placeholder="Título do Desafio"
+              placeholderTextColor="#bbb"
+              style={[styles.input, { width: '100%', marginBottom: 12, marginTop: 16 }]}
+              value={challengeTitle}
+              onChangeText={setChallengeTitle}
+            />
+            <TextInput
+              placeholder="Meta (kg)"
+              placeholderTextColor="#bbb"
+              style={[styles.input, { width: '100%', marginBottom: 12 }]}
+              keyboardType="numeric"
+              value={challengeGoal}
+              onChangeText={setChallengeGoal}
+            />
+            <TextInput
+              placeholder="Data Limite (ex: 30 de Junho)"
+              placeholderTextColor="#bbb"
+              style={[styles.input, { width: '100%', marginBottom: 12 }]}
+              value={challengeDeadline}
+              onChangeText={setChallengeDeadline}
+            />
+            <TextInput
+              placeholder="Código de Recompensa"
+              placeholderTextColor="#bbb"
+              style={[styles.input, { width: '100%', marginBottom: 20 }]}
+              value={challengeReward}
+              onChangeText={setChallengeReward}
+            />
+
+            <View style={styles.botoesEdicao}>
+              <TouchableOpacity style={styles.botaoCancelar} onPress={handleCancelCreateChallenge}>
+                <Text style={styles.botaoCancelarTexto}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, { flex: 1, width: 'auto' }]} onPress={handleCreateBrandChallenge} disabled={isSavingChallenge}>
+                {isSavingChallenge ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.modalButtonText}>Criar Desafio</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -586,6 +956,12 @@ const styles = StyleSheet.create({
   },
   expiredText: { color: '#999' },
 
+  // Comparison bar styles for shared objectives
+  barraComparacao: { marginBottom: 6 },
+  comparacaoLabel: { fontSize: 12, color: '#666', marginBottom: 3 },
+  barraFundoComparacao: { height: 8, backgroundColor: '#E5E5E5', borderRadius: 4, overflow: 'hidden' },
+  barraProgressoComparacao: { height: 8, borderRadius: 4 },
+
   // Modal Styles
   modalOverlay: {
     flex: 1,
@@ -626,4 +1002,27 @@ const styles = StyleSheet.create({
   rewardCodeText: { fontSize: 18, fontWeight: '700', color: '#1B4332', letterSpacing: 1 },
   modalButton: { backgroundColor: '#1B4332', borderRadius: 12, padding: 15, alignItems: 'center', width: '100%' },
   modalButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+
+  // Styles for the new modal's buttons
+  botoesEdicao:     { flexDirection: 'row', gap: 10, width: '100%', marginTop: 10 },
+  botaoCancelar:    { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 12, padding: 15, alignItems: 'center' },
+  botaoCancelarTexto: { color: '#666', fontWeight: '600', fontSize: 16 },
+
+  // Styles for the deadline badge
+  deadlineBadge: {
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deadlineText: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 6
+  },
 });

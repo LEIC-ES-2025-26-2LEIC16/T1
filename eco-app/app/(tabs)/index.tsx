@@ -4,7 +4,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { auth } from '@/services/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { auth, db } from '@/services/firebase';
 import {
   ouvirEcopontos, seedEcopontos, getFavoritos,
   getHistoricoReciclagem, getObjetivos, getPerfilUtilizador,
@@ -43,15 +44,38 @@ export default function HomeScreen() {
   const [objective, setObjective] = useState<Objetivo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [ranking, setRanking] = useState<{ id: string; nome: string; username: string; totalPontos: number }[]>([]);
 
   const fetchData = () => {
     if (!auth.currentUser) return;
-    Promise.all([getFavoritos(), getHistoricoReciclagem(), getObjetivos(), getPerfilUtilizador()])
-      .then(([favs, recs, objs, prof]) => {
+    Promise.all([
+      getFavoritos(), getHistoricoReciclagem(), getObjetivos(), getPerfilUtilizador(),
+      getDocs(collection(db, 'utilizadores')),
+      getDocs(collection(db, 'registos_reciclagem')),
+    ])
+      .then(([favs, recs, objs, prof, userSnap, registosSnap]) => {
         setFavorites(favs);
         setRecords(recs);
         setObjective(objs.find(o => o.periodo === 'mensal') ?? objs[0] ?? null);
         setProfile(prof);
+
+        const pontosPorUser: Record<string, number> = {};
+        registosSnap.docs.forEach(d => {
+          const data = d.data();
+          const uid = data.userId;
+          const pts = data.pontosAtribuidos || 0;
+          pontosPorUser[uid] = (pontosPorUser[uid] || 0) + pts;
+        });
+
+        const todos = userSnap.docs
+          .map(d => {
+            const data = d.data();
+            const pts = data.totalPontos || pontosPorUser[d.id] || 0;
+            return { id: d.id, nome: data.nome || data.username || 'Utilizador', username: data.username || '', totalPontos: pts };
+          })
+          .sort((a, b) => b.totalPontos - a.totalPontos)
+          .slice(0, 5);
+        setRanking(todos);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -196,6 +220,30 @@ export default function HomeScreen() {
         ))
       )}
 
+      {/* Ranking */}
+      <View style={styles.secaoHeader}>
+        <Text style={styles.secaoTitulo}>Ranking</Text>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/leaderboard' as any)}>
+          <Text style={styles.verTodos}>ver tudo</Text>
+        </TouchableOpacity>
+      </View>
+      {ranking.map((u, i) => (
+        <TouchableOpacity key={u.id} style={styles.rankCard} activeOpacity={0.7}
+          onPress={() => router.push({ pathname: '/user-profile', params: { userId: u.id } } as any)}>
+          <View style={[styles.rankPos, i < 3 && { backgroundColor: i === 0 ? '#FEF3C7' : i === 1 ? '#F3F4F6' : '#FEF2F2' }]}>
+            <Text style={[styles.rankPosTexto, i < 3 && { color: i === 0 ? '#92400E' : i === 1 ? '#4B5563' : '#991B1B' }]}>{i + 1}</Text>
+          </View>
+          <View style={[styles.rankAvatar, { backgroundColor: i === 0 ? '#1B4332' : i === 1 ? '#4B5563' : i === 2 ? '#92400E' : '#E5E5E5' }]}>
+            <Text style={styles.rankAvatarTexto}>{getIniciais(u.nome)}</Text>
+          </View>
+          <View style={styles.rankInfo}>
+            <Text style={styles.rankNome} numberOfLines={1}>{u.nome}</Text>
+            {u.username ? <Text style={styles.rankUsername}>@{u.username}</Text> : null}
+          </View>
+          <Text style={styles.rankPontos}>{(u.totalPontos || 0).toLocaleString()} pts</Text>
+        </TouchableOpacity>
+      ))}
+
       {/* Objetivo do mês */}
       {objective && (
         <>
@@ -286,4 +334,17 @@ const styles = StyleSheet.create({
   barraProgresso:      { height: 10, backgroundColor: '#1B4332', borderRadius: 5 },
   objetivoKg:          { fontSize: 13, fontWeight: '700', color: '#1B4332', minWidth: 70, textAlign: 'right' },
   objetivoSub:         { fontSize: 13, color: '#639922' },
+
+  rankCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14,
+    padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#f0f0f0',
+  },
+  rankPos: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  rankPosTexto: { fontSize: 12, fontWeight: '700', color: '#999' },
+  rankAvatar: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  rankAvatarTexto: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  rankInfo: { flex: 1 },
+  rankNome: { fontSize: 14, fontWeight: '700', color: '#1a1a1a' },
+  rankUsername: { fontSize: 11, color: '#aaa', marginTop: 1 },
+  rankPontos: { fontSize: 13, fontWeight: '700', color: '#1B4332' },
 });

@@ -39,16 +39,19 @@ export default function LoginScreen() {
       <Text style={styles.subtitulo}>Entra na tua conta</Text>
 
       <TextInput
+        testID="login-email-input"
         style={styles.input}
         placeholder="Email"
         placeholderTextColor="#999"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
-        keyboardType="email-address"
+        autoCorrect={false}
+        spellCheck={false}
       />
 
       <TextInput
+        testID="login-password-input"
         style={styles.input}
         placeholder="Password"
         placeholderTextColor="#999"
@@ -56,6 +59,14 @@ export default function LoginScreen() {
         onChangeText={setPassword}
         secureTextEntry
       />
+
+      {__DEV__ && (
+        <TouchableOpacity 
+          testID="autofill-login" 
+          onPress={() => { setEmail('up202406974@up.pt'); setPassword('123456'); }}
+          style={{ width: 1, height: 1 }}
+        />
+      )}
 
       <TouchableOpacity
         style={[styles.botao, loading && { opacity: 0.7 }]}

@@ -84,6 +84,14 @@ export default function ReviewBinScreen() {
           onChangeText={setComment}
         />
 
+        {__DEV__ && (
+          <TouchableOpacity 
+            testID="autofill-review" 
+            onPress={() => { setComment('Muito bem localizado e limpo.'); setRating(5); }}
+            style={{ width: 1, height: 1 }}
+          />
+        )}
+
         {/* Botão Submeter */}
         <TouchableOpacity
           style={[styles.botaoSubmeter, (rating === 0 || isSubmitting) && styles.botaoDesativado]}

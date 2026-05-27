@@ -3,16 +3,29 @@ appId: com.myimpact.app
 - launchApp:
     clearState: false
 
+- extendedWaitUntil:
+    visible: "Entra na tua conta|Ver todos os ecopontos"
+    timeout: 30000
+
+- runFlow:
+    when:
+      visible: "Ver todos os ecopontos"
+    commands:
+      - tapOn:
+          id: "profile-avatar-button"
+      - scrollUntilVisible:
+          element: "Terminar sessão"
+          direction: DOWN
+      - tapOn: "Terminar sessão"
+      - tapOn: "Sair"
+      - waitForAnimationToEnd
+
 - assertVisible: "Entra na tua conta"
 
-- tapOn: "Email"
-- inputText: "up202406974@up.pt"
-
-- tapOn: "Password"
-- inputText: "123456"
-- hideKeyboard
+- tapOn:
+    id: "autofill-login"
 
 - tapOn: "Entrar"
 
 - waitForAnimationToEnd
-- assertVisible: "Ecopontos"
+- assertVisible: "Ver todos os ecopontos"

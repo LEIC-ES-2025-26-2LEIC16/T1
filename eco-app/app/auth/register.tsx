@@ -51,8 +51,16 @@ export default function RegisterScreen() {
     <ThemedView style={styles.container}>
       <ThemedText type="title">Bem-vindo ao My Impact</ThemedText>
       <ThemedText style={styles.subtitle}>Cria a tua conta para começar</ThemedText>
-      <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#ccc" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-      <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#ccc" value={password} onChangeText={setPassword} secureTextEntry />
+      <TextInput testID="register-email-input" style={styles.input} placeholder="Email" placeholderTextColor="#ccc" value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} spellCheck={false} />
+      <TextInput testID="register-password-input" style={styles.input} placeholder="Password" placeholderTextColor="#ccc" value={password} onChangeText={setPassword} secureTextEntry />
+      
+      {__DEV__ && (
+        <TouchableOpacity 
+          testID="autofill-register" 
+          onPress={() => { setEmail('maestro.test.new@up.pt'); setPassword('secure123'); }}
+          style={{ width: 1, height: 1 }}
+        />
+      )}
       <TouchableOpacity style={[styles.button, loading && { opacity: 0.7 }]} onPress={handleRegister} disabled={loading}>
         {loading ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.buttonText}>Registar</ThemedText>}
       </TouchableOpacity>

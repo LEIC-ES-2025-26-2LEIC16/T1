@@ -4,29 +4,40 @@ appId: com.myimpact.app
     clearState: false
 
 - extendedWaitUntil:
-    visible: "Entra na tua conta"
+    visible: "Entra na tua conta|Ver todos os ecopontos"
     timeout: 30000
 
-- tapOn: "Email"
-- inputText: "up202406974@up.pt"
-- tapOn: "Password"
-- inputText: "123456"
+- runFlow:
+    when:
+      visible: "Entra na tua conta"
+    commands:
+      - tapOn:
+          id: "autofill-login"
+      - tapOn: "Entrar"
+      - extendedWaitUntil:
+          visible: "Ver todos os ecopontos"
+          timeout: 20000
 
-- hideKeyboard
+- tapOn: "Ver todos os ecopontos"
 
-- tapOn: "Entrar"
+- extendedWaitUntil:
+    visible: "Ecopontos"
+    timeout: 10000
 
-- assertVisible: "Ecopontos"
+- tapOn:
+    id: "recycling-bin-marker"
+    index: 0
 
-- tapOn: "Ecoponto Rua das Flores"
+- extendedWaitUntil:
+    visible: "O QUE QUERES FAZER\\?"
+    timeout: 10000
 
-- tapOn: "Avaliar Ecoponto"
+- tapOn:
+    id: "review-bin-button"
+- tapOn:
+    id: "autofill-review"
 
-- tapOn: "★"
-- tapOn: "Ex: Muito limpo e f.cil de aceder.*"
-- inputText: "Muito bem localizado e limpo."
-
-- tapOn: "Submit Review"
+- tapOn: "Submeter"
 
 - assertVisible: "Sucesso"
 - tapOn: "OK"

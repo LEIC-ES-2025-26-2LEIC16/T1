@@ -3,21 +3,29 @@ appId: com.myimpact.app
 - launchApp:
     clearState: false
 
-- tapOn: "Email"
-- inputText: "up202406974@up.pt"
-- tapOn: "Password"
-- inputText: "123456"
-- tapOn: "Entrar"
+- extendedWaitUntil:
+    visible: "Entra na tua conta|Ver todos os ecopontos"
+    timeout: 30000
+
+- runFlow:
+    when:
+      visible: "Entra na tua conta"
+    commands:
+      - tapOn:
+          id: "autofill-login"
+      - tapOn: "Entrar"
+      - extendedWaitUntil:
+          visible: "Ver todos os ecopontos"
+          timeout: 20000
+
+- tapOn: "Ver todos os ecopontos"
 
 - assertVisible: "Ecopontos"
 
 - tapOn: "\\+ Adicionar"
 
-- tapOn: "Ex: Ecoponto Rua das Flores"
-- inputText: "Ecoponto FEUP Teste"
-
-- tapOn: "Ex: Rua das Flores, Porto"
-- inputText: "Rua Dr. Roberto Frias, Porto"
+- tapOn:
+    id: "autofill-ecoponto"
 
 - tapOn: "Operacional"
 

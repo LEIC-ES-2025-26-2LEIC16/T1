@@ -284,6 +284,14 @@ export default function ProfileScreen() {
                 numberOfLines={3}
               />
 
+              {__DEV__ && (
+                <TouchableOpacity 
+                  testID="autofill-profile" 
+                  onPress={() => setRascunho(r => ({ ...r, nome: 'Joao', username: 'jo', bio: 'test' }))}
+                  style={{ width: 1, height: 1 }}
+                />
+              )}
+
               <View style={styles.botoesEdicao}>
                 <TouchableOpacity style={styles.botaoCancelar} onPress={() => setEditando(false)} testID="profile-cancel-button">
                   <Text style={styles.botaoCancelarTexto}>Cancelar</Text>

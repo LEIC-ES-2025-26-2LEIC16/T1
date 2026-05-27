@@ -4,31 +4,39 @@ appId: com.myimpact.app
     clearState: false
 
 - extendedWaitUntil:
-    visible: "Entra na tua conta"
+    visible: "Entra na tua conta|Ver todos os ecopontos"
     timeout: 30000
 
-- tapOn: "Email"
-- inputText: "up202406974@up.pt"
-- tapOn: "Password"
-- inputText: "123456"
+- runFlow:
+    when:
+      visible: "Entra na tua conta"
+    commands:
+      - tapOn:
+          id: "autofill-login"
+      - tapOn: "Entrar"
+      - extendedWaitUntil:
+          visible: "Ver todos os ecopontos"
+          timeout: 20000
 
-- hideKeyboard
+- tapOn: "Ver todos os ecopontos"
 
-- tapOn: "Entrar"
+- extendedWaitUntil:
+    visible: "Ecopontos"
+    timeout: 10000
 
-- assertVisible: "Ecopontos"
+- tapOn:
+    id: "recycling-bin-marker"
+    index: 0
+
+- extendedWaitUntil:
+    visible: "O QUE QUERES FAZER\\?"
+    timeout: 10000
 
 - tapOn:
     id: "report-problem-button"
-    index: 0
-
-- assertVisible: "Tipo de problema \\*"
-
-- tapOn: "Descreve o problema..."
-- inputText: "O ecoponto amarelo esta a transbordar e tem sacos no chao."
 
 - tapOn:
-    id: "problem-type-bin-full"
+    id: "autofill-report"
 - tapOn: "Enviar Reporte"
 
 #o Maestro apenas precisa de esperar que o clique não dê erro.

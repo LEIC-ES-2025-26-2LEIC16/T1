@@ -239,6 +239,21 @@ export default function ObjectivesScreen() {
                 value={metaKg}
                 onChangeText={setMetaKg}
               />
+              
+              {__DEV__ && (
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity 
+                    testID="autofill-obj-10" 
+                    onPress={() => setMetaKg('10')}
+                    style={{ width: 1, height: 1 }}
+                  />
+                  <TouchableOpacity 
+                    testID="autofill-obj-20" 
+                    onPress={() => setMetaKg('20')}
+                    style={{ width: 1, height: 1 }}
+                  />
+                </View>
+              )}
 
               <Text style={styles.fieldLabel}>PERÍODO</Text>
               <View style={styles.chips}>

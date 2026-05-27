@@ -94,6 +94,8 @@ export default function AddEcopontoScreen() {
         placeholder="Ex: Ecoponto Rua das Flores"
         value={nome}
         onChangeText={setNome}
+        autoCorrect={false}
+        spellCheck={false}
       />
 
       <Text style={styles.label}>Morada {coordenadasGPS ? '(preenchida via GPS)' : ''}</Text>
@@ -102,6 +104,8 @@ export default function AddEcopontoScreen() {
         placeholder="Ex: Rua das Flores, Porto"
         value={morada}
         onChangeText={(t) => { setMorada(t); setCoordenadasGPS(null); }}
+        autoCorrect={false}
+        spellCheck={false}
       />
 
       <TouchableOpacity
@@ -146,6 +150,14 @@ export default function AddEcopontoScreen() {
           : <Text style={styles.botaoGuardarTexto}>Guardar Ecoponto</Text>
         }
       </TouchableOpacity>
+
+      {__DEV__ && (
+        <TouchableOpacity 
+          testID="autofill-ecoponto" 
+          onPress={() => { setNome('Ecoponto FEUP Teste'); setMorada('Rua Dr. Roberto Frias, Porto'); }}
+          style={{ width: 1, height: 1 }}
+        />
+      )}
     </ScrollView>
   );
 }

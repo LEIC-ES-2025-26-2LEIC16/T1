@@ -161,6 +161,14 @@ export default function LogRecyclingScreen() {
           </Text>
         )}
       </TouchableOpacity>
+
+      {__DEV__ && (
+        <TouchableOpacity 
+          testID="autofill-log" 
+          onPress={() => { setAmount('2'); setImage('https://dummyimage.com/200x200/000/fff'); }}
+          style={{ width: 1, height: 1 }}
+        />
+      )}
     </ScrollView>
   );
 }

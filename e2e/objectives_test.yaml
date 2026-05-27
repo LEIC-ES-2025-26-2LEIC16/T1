@@ -4,8 +4,19 @@ appId: com.myimpact.app
     clearState: false
 
 - extendedWaitUntil:
-    visible: "Ver todos os ecopontos"
+    visible: "Entra na tua conta|Ver todos os ecopontos"
     timeout: 30000
+
+- runFlow:
+    when:
+      visible: "Entra na tua conta"
+    commands:
+      - tapOn:
+          id: "autofill-login"
+      - tapOn: "Entrar"
+      - extendedWaitUntil:
+          visible: "Ver todos os ecopontos"
+          timeout: 20000
 
 - tapOn: "Objetivos"
 
@@ -17,13 +28,11 @@ appId: com.myimpact.app
 - tapOn:
     id: "chip-material-Plástico"
 
-- tapOn: "Ex: 10"
-- inputText: "10"
+- tapOn:
+    id: "autofill-obj-10"
 
 - tapOn:
     id: "chip-periodo-mensal"
-
-- hideKeyboard
 
 - tapOn:
     id: "objectives-create-button"
@@ -36,13 +45,11 @@ appId: com.myimpact.app
 - tapOn:
     id: "chip-material-Vidro"
 
-- tapOn: "Ex: 10"
-- inputText: "20"
+- tapOn:
+    id: "autofill-obj-20"
 
 - tapOn:
     id: "chip-periodo-semanal"
-
-- hideKeyboard
 
 - tapOn:
     id: "objectives-create-button"

@@ -605,9 +605,13 @@ The filtering logic for the objectives list was investigated and a conflict betw
 
 
 **Beggining of the Sprint 3**
+<img width="780" height="993" alt="imagem" src="https://github.com/user-attachments/assets/dc70302a-d868-4299-b217-7bca88558767" />
+<img width="771" height="1117" alt="imagem" src="https://github.com/user-attachments/assets/2a9119ec-e5f9-4c2e-8d99-b79703107070" />
+
 
 
 **Ending of the Sprint 3**
+<img width="806" height="965" alt="imagem" src="https://github.com/user-attachments/assets/e72ea9b6-4f0c-4f78-8a34-837a206e2c8d" />
 
 
 ### Final Release

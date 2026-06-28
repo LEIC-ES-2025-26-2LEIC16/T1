@@ -611,7 +611,7 @@ The filtering logic for the objectives list was investigated and a conflict betw
 
 
 **Ending of the Sprint 3**
-<img width="806" height="965" alt="imagem" src="https://github.com/user-attachments/assets/e72ea9b6-4f0c-4f78-8a34-837a206e2c8d" />
+<img width="771" height="1117" alt="imagem" src="https://github.com/user-attachments/assets/33e4ae78-1c85-4a36-b9b3-e0a57b4a1c6f" />
 
 
 ### Final Release
